@@ -1,0 +1,60 @@
+-- ============================================================
+-- KPI Measures for Business Dashboard
+-- Create these measures in the Orders table (or a dedicated
+-- Measures table) using Power BI Desktop > Data view >
+-- New measure.
+-- ============================================================
+
+-- ── Core Sales KPIs ────────────────────────────────────────
+
+Total Sales = SUM(Orders[Sales])
+
+Total Profit = SUM(Orders[Profit])
+
+Profit Margin % = DIVIDE([Total Profit], [Total Sales], 0)
+
+Total Orders = DISTINCTCOUNT(Orders[Order ID])
+
+Total Customers = DISTINCTCOUNT(Orders[Customer ID])
+
+Avg Order Value = DIVIDE([Total Sales], [Total Orders], 0)
+
+Total Quantity = SUM(Orders[Quantity])
+
+Avg Discount = AVERAGE(Orders[Discount])
+
+-- ── Returns KPIs ───────────────────────────────────────────
+
+Total Returns = COUNTROWS(Returns)
+
+Return Rate % = DIVIDE([Total Returns], [Total Orders], 0)
+
+-- ── Sales Growth ───────────────────────────────────────────
+
+Sales YoY % =
+VAR CurrentYear = CALCULATE([Total Sales], YEAR(Orders[Order Date]) = YEAR(TODAY()))
+VAR PriorYear   = CALCULATE([Total Sales], YEAR(Orders[Order Date]) = YEAR(TODAY()) - 1)
+RETURN DIVIDE(CurrentYear - PriorYear, PriorYear, 0)
+
+-- ── Monthly Targets (uses Monthly KPIs table) ──────────────
+
+Target Achievement % = DIVIDE([Total Sales], SUM('Monthly KPIs'[Target Sales]), 0)
+
+-- ── Customer Metrics ───────────────────────────────────────
+
+New Customers =
+CALCULATE(
+    DISTINCTCOUNT(Orders[Customer ID]),
+    FILTER(
+        VALUES(Orders[Customer ID]),
+        CALCULATE(MIN(Orders[Order Date])) = MIN(Orders[Order Date])
+    )
+)
+
+-- ── Product Metrics ────────────────────────────────────────
+
+Top Category =
+CALCULATE(
+    FIRSTNONBLANK(Orders[Category], 1),
+    TOPN(1, VALUES(Orders[Category]), [Total Sales])
+)
