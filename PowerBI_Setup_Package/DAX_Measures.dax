@@ -1,0 +1,203 @@
+// ============================================================
+// DAX MEASURES - Sales Analytics Dashboard
+// Paste these in Power BI Desktop > New Measure
+// All measures go in the "Sales" table unless noted
+// ============================================================
+
+// ============================================================
+// CORE REVENUE MEASURES
+// ============================================================
+
+Total Revenue =
+    SUM(Sales[Net Sales])
+
+Gross Sales =
+    SUM(Sales[Gross Sales])
+
+Total Discount =
+    SUM(Sales[Discount Amount])
+
+Total Cost =
+    SUM(Sales[Total Cost])
+
+Total Profit =
+    SUM(Sales[Profit])
+
+Profit Margin % =
+    DIVIDE([Total Profit], [Total Revenue], 0)
+
+Avg Discount % =
+    AVERAGE(Sales[Discount Pct])
+
+// ============================================================
+// ORDER MEASURES
+// ============================================================
+
+Total Orders =
+    COUNTROWS(Sales)
+
+Completed Orders =
+    CALCULATE(COUNTROWS(Sales), Sales[Order Status] = "Completed")
+
+Pending Orders =
+    CALCULATE(COUNTROWS(Sales), Sales[Order Status] = "Pending")
+
+Returned Orders =
+    CALCULATE(COUNTROWS(Sales), Sales[Order Status] = "Returned")
+
+Return Rate % =
+    DIVIDE([Returned Orders], [Total Orders], 0)
+
+Average Order Value =
+    DIVIDE([Total Revenue], [Total Orders], 0)
+
+Avg Days to Ship =
+    AVERAGEX(Sales, Sales[Days to Ship])
+
+// ============================================================
+// TIME INTELLIGENCE MEASURES
+// ============================================================
+
+Revenue PY =
+    CALCULATE([Total Revenue], SAMEPERIODLASTYEAR(DateTable[Date]))
+
+Revenue YoY Growth % =
+    DIVIDE(
+        [Total Revenue] - [Revenue PY],
+        [Revenue PY],
+        BLANK()
+    )
+
+Revenue YTD =
+    TOTALYTD([Total Revenue], DateTable[Date])
+
+Revenue QTD =
+    TOTALQTD([Total Revenue], DateTable[Date])
+
+Revenue MTD =
+    TOTALMTD([Total Revenue], DateTable[Date])
+
+Revenue PQ =
+    CALCULATE([Total Revenue], PREVIOUSQUARTER(DateTable[Date]))
+
+Revenue QoQ Growth % =
+    DIVIDE(
+        [Revenue QTD] - [Revenue PQ],
+        [Revenue PQ],
+        BLANK()
+    )
+
+Profit YTD =
+    TOTALYTD([Total Profit], DateTable[Date])
+
+Orders YTD =
+    TOTALYTD([Total Orders], DateTable[Date])
+
+// ============================================================
+// ROLLING / MOVING AVERAGES
+// ============================================================
+
+Revenue 3M Rolling Avg =
+    AVERAGEX(
+        DATESINPERIOD(DateTable[Date], LASTDATE(DateTable[Date]), -3, MONTH),
+        CALCULATE([Total Revenue])
+    )
+
+Revenue 12M Rolling =
+    CALCULATE(
+        [Total Revenue],
+        DATESINPERIOD(DateTable[Date], LASTDATE(DateTable[Date]), -12, MONTH)
+    )
+
+// ============================================================
+// TARGET & ACHIEVEMENT MEASURES
+// ============================================================
+
+Total Target =
+    SUM(Users[Sales Target])
+
+Target Achievement % =
+    DIVIDE([Total Revenue], [Total Target], 0)
+
+Target Gap =
+    [Total Target] - [Total Revenue]
+
+// ============================================================
+// CUSTOMER MEASURES
+// ============================================================
+
+Active Customers =
+    DISTINCTCOUNT(Sales[Customer ID])
+
+Revenue per Customer =
+    DIVIDE([Total Revenue], [Active Customers], 0)
+
+New Customers =
+    CALCULATE(
+        DISTINCTCOUNT(Sales[Customer ID]),
+        FILTER(
+            Sales,
+            CALCULATE(
+                MIN(Sales[Order Date]),
+                ALLEXCEPT(Sales, Sales[Customer ID])
+            ) >= MIN(DateTable[Date])
+        )
+    )
+
+// ============================================================
+// PRODUCT MEASURES
+// ============================================================
+
+Active Products =
+    DISTINCTCOUNT(Sales[Product ID])
+
+Revenue per Product =
+    DIVIDE([Total Revenue], [Active Products], 0)
+
+Top Category =
+    CALCULATE(
+        SELECTEDVALUE(Sales[Category]),
+        TOPN(1, VALUES(Sales[Category]), [Total Revenue], DESC)
+    )
+
+// ============================================================
+// TEAM / USER MEASURES
+// ============================================================
+
+Active Reps =
+    DISTINCTCOUNT(Sales[User ID])
+
+Revenue per Rep =
+    DIVIDE([Total Revenue], [Active Reps], 0)
+
+// ============================================================
+// FORMATTING HELPER MEASURES
+// ============================================================
+
+Revenue M =
+    DIVIDE([Total Revenue], 1000000)
+
+Revenue Display =
+    IF(
+        [Total Revenue] >= 1000000,
+        FORMAT([Total Revenue] / 1000000, "#,##0.0") & "M",
+        FORMAT([Total Revenue] / 1000, "#,##0") & "K"
+    )
+
+Profit Margin Display =
+    FORMAT([Profit Margin %], "0.0%")
+
+YoY Display =
+    IF(
+        ISBLANK([Revenue YoY Growth %]),
+        "N/A",
+        IF(
+            [Revenue YoY Growth %] >= 0,
+            "▲ " & FORMAT([Revenue YoY Growth %], "0.0%"),
+            "▼ " & FORMAT(ABS([Revenue YoY Growth %]), "0.0%")
+        )
+    )
+
+Achievement Display =
+    FORMAT([Target Achievement %], "0.0%") &
+    IF([Target Achievement %] >= 1, " ✓", " ✗")

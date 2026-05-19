@@ -1,0 +1,105 @@
+{
+  "data_model": "Sales Analytics",
+  "description": "Star schema with Sales as fact table and 4 dimensions",
+  "relationships": [
+    {
+      "name": "Sales → Customers",
+      "from_table": "Sales",
+      "from_column": "Customer ID",
+      "to_table": "Customers",
+      "to_column": "Customer ID",
+      "cardinality": "Many-to-One",
+      "cross_filter_direction": "Single",
+      "active": true,
+      "notes": "Each order is placed by one customer; one customer can have many orders"
+    },
+    {
+      "name": "Sales → Products",
+      "from_table": "Sales",
+      "from_column": "Product ID",
+      "to_table": "Products",
+      "to_column": "Product ID",
+      "cardinality": "Many-to-One",
+      "cross_filter_direction": "Single",
+      "active": true,
+      "notes": "Each order line references one product; one product can appear in many orders"
+    },
+    {
+      "name": "Sales → Users",
+      "from_table": "Sales",
+      "from_column": "User ID",
+      "to_table": "Users",
+      "to_column": "User ID",
+      "cardinality": "Many-to-One",
+      "cross_filter_direction": "Single",
+      "active": true,
+      "notes": "Each order is handled by one sales rep; enables RLS via Users[Location]"
+    },
+    {
+      "name": "Sales → DateTable",
+      "from_table": "Sales",
+      "from_column": "Order Date",
+      "to_table": "DateTable",
+      "to_column": "Date",
+      "cardinality": "Many-to-One",
+      "cross_filter_direction": "Single",
+      "active": true,
+      "notes": "Enables time intelligence functions (YTD, MTD, YoY comparisons)"
+    }
+  ],
+  "tables": {
+    "Sales": {
+      "type": "Fact",
+      "rows": 500,
+      "grain": "One row per order",
+      "key": "Order ID",
+      "date_columns": ["Order Date", "Ship Date"],
+      "measures": "All DAX measures defined here"
+    },
+    "Customers": {
+      "type": "Dimension",
+      "rows": 100,
+      "key": "Customer ID",
+      "rls": false
+    },
+    "Products": {
+      "type": "Dimension",
+      "rows": 80,
+      "key": "Product ID",
+      "rls": false
+    },
+    "Users": {
+      "type": "Dimension + RLS Bridge",
+      "rows": 30,
+      "key": "User ID",
+      "rls": true,
+      "rls_column": "Location",
+      "rls_notes": "RLS filter on Users[Location] propagates to Sales via relationship"
+    },
+    "DateTable": {
+      "type": "Date Dimension",
+      "rows": 1461,
+      "key": "Date",
+      "range": "2022-01-01 to 2025-12-31",
+      "rls": false,
+      "mark_as_date_table": true
+    }
+  },
+  "rls_data_by_location": {
+    "London": {
+      "users": ["USER-006", "USER-012", "USER-017"],
+      "user_names": ["Hannah Martin", "Robert Brown", "Lisa Taylor"],
+      "visible_orders": 45,
+      "visible_revenue": 283661
+    },
+    "Hamburg": {
+      "users": ["USER-001", "USER-019"],
+      "user_names": ["Noah White", "Patricia Davis"],
+      "visible_orders": "~35"
+    },
+    "Lyon": {
+      "users": ["USER-002", "USER-020"],
+      "user_names": ["Hannah Anderson", "Olivia Davis"]
+    }
+  }
+}

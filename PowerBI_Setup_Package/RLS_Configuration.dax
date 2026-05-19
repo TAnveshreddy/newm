@@ -1,0 +1,151 @@
+// ============================================================
+// ROW-LEVEL SECURITY (RLS) CONFIGURATION
+// Power BI Desktop > Modeling tab > Manage Roles
+// ============================================================
+//
+// ARCHITECTURE:
+//   Sales[User ID]  →  Users[User ID]  (relationship)
+//   Users[Location] = login user's location  (RLS filter)
+//   When Sales is filtered via relationship, only orders by
+//   that location's users are visible.
+//
+// HOW TO SET UP:
+//   1. Go to Modeling > Manage Roles > Create
+//   2. Create one role per location (or use dynamic role)
+//   3. Apply the DAX filter expression to the Users table
+//   4. Publish to Power BI Service > Security > Assign users
+// ============================================================
+
+
+// ============================================================
+// OPTION A: STATIC ROLES (one role per location)
+// Create in: Manage Roles > [Role Name] > Users table
+// ============================================================
+
+// --- Role: London ---
+[Location] = "London"
+
+// --- Role: Hamburg ---
+[Location] = "Hamburg"
+
+// --- Role: Lyon ---
+[Location] = "Lyon"
+
+// --- Role: Toronto ---
+[Location] = "Toronto"
+
+// --- Role: Berlin ---
+[Location] = "Berlin"
+
+// --- Role: Vancouver ---
+[Location] = "Vancouver"
+
+// --- Role: Frankfurt ---
+[Location] = "Frankfurt"
+
+// --- Role: Munich ---
+[Location] = "Munich"
+
+// --- Role: Abu Dhabi ---
+[Location] = "Abu Dhabi"
+
+// --- Role: Dubai ---
+[Location] = "Dubai"
+
+// --- Role: India (covers Mumbai, Hyderabad, Delhi) ---
+[Country] = "India"
+
+// --- Role: Australia (covers Brisbane, Perth) ---
+[Country] = "Australia"
+
+// --- Role: Canada (covers Toronto, Calgary, Vancouver) ---
+[Country] = "Canada"
+
+// --- Role: Sales Director (sees all under their reports) ---
+// First apply to Users table - Sales Directors see all locations in their department
+[Role] IN { "Sales Director", "Sales Manager" } ||
+[User ID] = USERPRINCIPALNAME()
+
+
+// ============================================================
+// OPTION B: DYNAMIC ROLE (recommended - single role for all)
+// Role Name: "ByLocation"
+// Apply to Users table:
+// ============================================================
+
+// Dynamic RLS using email matching:
+[Email] = USERPRINCIPALNAME()
+
+// OR using username portion:
+[Email] = LOWER(USERPRINCIPALNAME())
+
+
+// ============================================================
+// OPTION C: HIERARCHICAL RLS
+// Managers see their own + all direct reports' data
+// ============================================================
+
+// Apply to Users table in role "HierarchicalAccess":
+VAR CurrentUserEmail = LOWER(USERPRINCIPALNAME())
+VAR CurrentUserID =
+    CALCULATE(
+        SELECTEDVALUE(Users[User ID]),
+        Users[Email] = CurrentUserEmail
+    )
+VAR CurrentUserRole =
+    CALCULATE(
+        SELECTEDVALUE(Users[Role]),
+        Users[Email] = CurrentUserEmail
+    )
+RETURN
+    // Sales Directors and Managers see all
+    IF(
+        CurrentUserRole IN {"Sales Director", "Sales Manager"},
+        TRUE(),
+        // Others see only their own location
+        [Location] = CALCULATE(
+            SELECTEDVALUE(Users[Location]),
+            Users[Email] = CurrentUserEmail
+        )
+    )
+
+
+// ============================================================
+// LOCATION MAPPING TABLE (create as calculated table)
+// ============================================================
+
+LocationMapping =
+SUMMARIZE(
+    Users,
+    Users[Location],
+    Users[Country],
+    "User Count", COUNTROWS(Users),
+    "User IDs", CONCATENATEX(Users, Users[User ID], ", ")
+)
+
+
+// ============================================================
+// LONDON USERS (reference)
+// USER-006: Hannah Martin  | hannah.martin@company.com
+// USER-012: Robert Brown   | robert.brown@company.com
+// USER-017: Lisa Taylor    | lisa.taylor@company.com
+//
+// When a London user logs in, they see ONLY the 45 orders
+// handled by USER-006, USER-012, or USER-017.
+// Revenue visible to London: $283,661
+// ============================================================
+
+
+// ============================================================
+// TESTING RLS IN POWER BI DESKTOP
+// Modeling > View As > Select Role > Select User
+// ============================================================
+
+// Test expressions (Modeling > View As Roles):
+// Role "London" with user "hannah.martin@company.com"
+//   → Should show 45 orders, ~$283K revenue
+//
+// Role "ByLocation" with UPN "noah.white@company.com"
+//   → Should show Hamburg data only (USER-001)
+//
+// No role (Admin view) → All 500 orders visible

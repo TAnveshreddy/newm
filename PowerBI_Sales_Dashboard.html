@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Sales Analytics Dashboard | Power BI Report</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f3f2f1;color:#252423;min-height:100vh}
+  
+  /* Header */
+  .header{background:#252423;color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:48px;box-shadow:0 2px 8px rgba(0,0,0,.3);position:sticky;top:0;z-index:1000}
+  .header-brand{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600}
+  .header-brand .logo{width:24px;height:24px;background:linear-gradient(135deg,#f2a900,#f26000);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff}
+  .header-actions{display:flex;align-items:center;gap:16px;font-size:13px}
+  
+  /* RLS Bar */
+  .rls-bar{background:#0078d4;padding:8px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .rls-bar label{color:#fff;font-size:13px;font-weight:600;white-space:nowrap}
+  .rls-bar select{background:#fff;border:none;border-radius:4px;padding:5px 10px;font-size:13px;cursor:pointer;outline:none;min-width:280px}
+  .rls-badge{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:12px;padding:3px 12px;font-size:12px;font-weight:600}
+  .rls-info{color:rgba(255,255,255,.85);font-size:12px;margin-left:auto}
+  
+  /* Filters */
+  .filters{background:#fff;border-bottom:1px solid #e0e0e0;padding:10px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .filter-group{display:flex;align-items:center;gap:6px}
+  .filter-group label{font-size:12px;font-weight:600;color:#605e5c;white-space:nowrap}
+  .filter-group select{border:1px solid #c8c6c4;border-radius:4px;padding:5px 8px;font-size:13px;cursor:pointer;outline:none;background:#faf9f8}
+  .filter-group select:focus{border-color:#0078d4}
+  
+  /* Nav Tabs */
+  .nav-tabs{background:#fff;border-bottom:2px solid #edebe9;display:flex;padding:0 24px;gap:0;overflow-x:auto}
+  .nav-tab{padding:12px 20px;font-size:13px;font-weight:600;color:#605e5c;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .15s}
+  .nav-tab:hover{color:#252423;background:#f3f2f1}
+  .nav-tab.active{color:#0078d4;border-bottom-color:#0078d4}
+  
+  /* Pages */
+  .page{display:none;padding:24px}
+  .page.active{display:block}
+  
+  /* KPI Cards */
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+  .kpi-card{background:#fff;border-radius:8px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.08);border-left:4px solid #0078d4;position:relative;overflow:hidden}
+  .kpi-card.profit{border-left-color:#01b8aa}
+  .kpi-card.orders{border-left-color:#f2c80f}
+  .kpi-card.avg{border-left-color:#8764b8}
+  .kpi-card.return{border-left-color:#fd625e}
+  .kpi-card.target{border-left-color:#374649}
+  .kpi-card.margin{border-left-color:#01b8aa}
+  .kpi-label{font-size:12px;color:#605e5c;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+  .kpi-value{font-size:28px;font-weight:700;color:#252423;line-height:1}
+  .kpi-sub{font-size:12px;margin-top:6px;display:flex;align-items:center;gap:4px}
+  .kpi-up{color:#107c10}
+  .kpi-down{color:#d13438}
+  .kpi-neutral{color:#605e5c}
+  .kpi-icon{position:absolute;right:16px;top:16px;font-size:24px;opacity:.15}
+  
+  /* Chart Cards */
+  .chart-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+  .chart-card{background:#fff;border-radius:8px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  .chart-card.col-12{grid-column:span 12}
+  .chart-card.col-8{grid-column:span 8}
+  .chart-card.col-6{grid-column:span 6}
+  .chart-card.col-5{grid-column:span 5}
+  .chart-card.col-4{grid-column:span 4}
+  .chart-card.col-7{grid-column:span 7}
+  @media(max-width:900px){.chart-card.col-8,.chart-card.col-7,.chart-card.col-5,.chart-card.col-4{grid-column:span 12}.chart-card.col-6{grid-column:span 12}}
+  .chart-title{font-size:14px;font-weight:700;color:#252423;margin-bottom:4px}
+  .chart-subtitle{font-size:12px;color:#605e5c;margin-bottom:16px}
+  .chart-container{position:relative}
+  
+  /* Table */
+  .data-table{width:100%;border-collapse:collapse;font-size:13px}
+  .data-table th{background:#f3f2f1;padding:10px 12px;text-align:left;font-size:11px;font-weight:700;color:#605e5c;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #edebe9}
+  .data-table td{padding:10px 12px;border-bottom:1px solid #f3f2f1;color:#252423}
+  .data-table tr:hover td{background:#f9f8f7}
+  .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+  .badge-green{background:#dff6dd;color:#107c10}
+  .badge-yellow{background:#fff4ce;color:#8a6914}
+  .badge-red{background:#fde7e9;color:#d13438}
+  .badge-blue{background:#eff6fc;color:#0078d4}
+  .badge-purple{background:#f4f0ff;color:#7719aa}
+  
+  /* Progress bar */
+  .progress{background:#edebe9;border-radius:4px;height:6px;overflow:hidden}
+  .progress-bar{height:100%;border-radius:4px;background:#0078d4;transition:width .4s}
+  .progress-bar.green{background:#01b8aa}
+  .progress-bar.orange{background:#f2c80f}
+  .progress-bar.red{background:#fd625e}
+  
+  /* Heatmap */
+  .heatmap{display:grid;grid-template-columns:80px repeat(12,1fr);gap:2px;font-size:11px}
+  .heatmap-cell{padding:8px 4px;text-align:center;border-radius:3px;font-weight:600}
+  .heatmap-label{padding:8px 4px;font-weight:700;color:#605e5c;display:flex;align-items:center}
+  
+  /* Tooltip custom */
+  .chart-tooltip{background:#252423 !important;color:#fff !important;border-radius:6px !important;font-size:12px !important;padding:8px 12px !important}
+  
+  /* Scrollbar */
+  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar-track{background:#f3f2f1}
+  ::-webkit-scrollbar-thumb{background:#c8c6c4;border-radius:3px}
+  
+  .section-header{font-size:11px;font-weight:700;color:#605e5c;text-transform:uppercase;letter-spacing:1px;margin:0 0 16px;padding-bottom:8px;border-bottom:2px solid #edebe9}
+  
+  /* Trend sparkline */
+  .trend-line{display:inline-flex;gap:2px;align-items:flex-end;height:24px;margin-left:8px}
+  .trend-bar{width:4px;background:#0078d4;border-radius:1px}
+  
+  /* Metric row */
+  .metric-row{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px}
+  .metric-item{flex:1;min-width:120px}
+  .metric-item .label{font-size:11px;color:#605e5c;font-weight:600;text-transform:uppercase}
+  .metric-item .value{font-size:20px;font-weight:700;color:#252423}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-brand">
+    <div class="logo">&#9711;</div>
+    <span>Sales Analytics Dashboard</span>
+    <span style="color:#999;font-size:12px;font-weight:400;margin-left:4px">| PowerBI Report</span>
+  </div>
+  <div class="header-actions">
+    <span style="color:#999">Last refreshed: 19 May 2026</span>
+    <span style="background:#107c10;color:#fff;border-radius:3px;padding:2px 8px;font-size:11px;font-weight:600">&#9679; Live</span>
+  </div>
+</div>
+
+<!-- RLS BAR -->
+<div class="rls-bar">
+  <label>&#128100; Viewing as:</label>
+  <select id="userSelect" onchange="applyRLS()">
+    <option value="ALL">&#127758; Global Admin (All Regions)</option>
+  </select>
+  <span class="rls-badge" id="rlsBadge">ALL REGIONS</span>
+  <span class="rls-info" id="rlsInfo">500 orders &bull; $2,608,396 revenue visible</span>
+</div>
+
+<!-- FILTERS -->
+<div class="filters">
+  <span style="font-size:12px;font-weight:700;color:#252423">&#128269; Filters:</span>
+  <div class="filter-group">
+    <label>Year</label>
+    <select id="filterYear" onchange="applyFilters()">
+      <option value="ALL">All Years</option>
+      <option value="2022">2022</option>
+      <option value="2023">2023</option>
+      <option value="2024">2024</option>
+      <option value="2025">2025</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Quarter</label>
+    <select id="filterQ" onchange="applyFilters()">
+      <option value="ALL">All Quarters</option>
+      <option value="Q1">Q1</option>
+      <option value="Q2">Q2</option>
+      <option value="Q3">Q3</option>
+      <option value="Q4">Q4</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Category</label>
+    <select id="filterCat" onchange="applyFilters()">
+      <option value="ALL">All Categories</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Channel</label>
+    <select id="filterChannel" onchange="applyFilters()">
+      <option value="ALL">All Channels</option>
+      <option value="Online">Online</option>
+      <option value="Retail Store">Retail Store</option>
+      <option value="Direct Sales">Direct Sales</option>
+      <option value="Wholesale">Wholesale</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Status</label>
+    <select id="filterStatus" onchange="applyFilters()">
+      <option value="ALL">All Status</option>
+      <option value="Completed">Completed</option>
+      <option value="Pending">Pending</option>
+      <option value="Returned">Returned</option>
+    </select>
+  </div>
+  <button onclick="resetFilters()" style="margin-left:auto;background:none;border:1px solid #c8c6c4;border-radius:4px;padding:5px 12px;font-size:12px;cursor:pointer;color:#605e5c">&#10006; Reset</button>
+</div>
+
+<!-- NAV TABS -->
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="showPage('exec')">&#128200; Executive Summary</div>
+  <div class="nav-tab" onclick="showPage('sales')">&#128181; Sales Performance</div>
+  <div class="nav-tab" onclick="showPage('products')">&#128230; Product Analysis</div>
+  <div class="nav-tab" onclick="showPage('customers')">&#128101; Customer Insights</div>
+  <div class="nav-tab" onclick="showPage('team')">&#128084; Team Performance</div>
+</div>
+
+<!-- ======== PAGE 1: EXECUTIVE SUMMARY ======== -->
+<div class="page active" id="page-exec">
+  <div class="kpi-grid" id="kpiGrid"></div>
+  <div class="chart-grid">
+    <div class="chart-card col-8">
+      <div class="chart-title">Revenue & Profit Trend</div>
+      <div class="chart-subtitle">Monthly performance — Net Sales vs Profit</div>
+      <div class="chart-container"><canvas id="trendChart" height="180"></canvas></div>
+    </div>
+    <div class="chart-card col-4">
+      <div class="chart-title">Sales by Channel</div>
+      <div class="chart-subtitle">Revenue distribution across channels</div>
+      <div class="chart-container"><canvas id="channelChart" height="180"></canvas></div>
+    </div>
+    <div class="chart-card col-6">
+      <div class="chart-title">Revenue by Category</div>
+      <div class="chart-subtitle">Net Sales performance per product category</div>
+      <div class="chart-container"><canvas id="catChart" height="200"></canvas></div>
+    </div>
+    <div class="chart-card col-6">
+      <div class="chart-title">Order Status Breakdown</div>
+      <div class="chart-subtitle">Completed vs Pending vs Returned orders</div>
+      <div class="chart-container"><canvas id="statusChart" height="200"></canvas></div>
+    </div>
+    <div class="chart-card col-12">
+      <div class="chart-title">Year-over-Year Comparison</div>
+      <div class="chart-subtitle">Annual revenue, profit and order volume</div>
+      <div class="chart-container"><canvas id="yoyChart" height="120"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== PAGE 2: SALES PERFORMANCE ======== -->
+<div class="page" id="page-sales">
+  <div class="kpi-grid" id="salesKpiGrid"></div>
+  <div class="chart-grid">
+    <div class="chart-card col-12">
+      <div class="chart-title">Monthly Revenue Heatmap</div>
+      <div class="chart-subtitle">Sales intensity by Year &times; Month</div>
+      <div id="heatmapContainer"></div>
+    </div>
+    <div class="chart-card col-6">
+      <div class="chart-title">Revenue by Payment Method</div>
+      <div class="chart-subtitle">Net Sales split by payment type</div>
+      <div class="chart-container"><canvas id="paymentChart" height="220"></canvas></div>
+    </div>
+    <div class="chart-card col-6">
+      <div class="chart-title">Profit Margin by Category</div>
+      <div class="chart-subtitle">Gross margin % per category</div>
+      <div class="chart-container"><canvas id="marginChart" height="220"></canvas></div>
+    </div>
+    <div class="chart-card col-12">
+      <div class="chart-title">Revenue by Country</div>
+      <div class="chart-subtitle">Customer location revenue breakdown</div>
+      <div class="chart-container"><canvas id="countryChart" height="120"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== PAGE 3: PRODUCT ANALYSIS ======== -->
+<div class="page" id="page-products">
+  <div class="chart-grid">
+    <div class="chart-card col-7">
+      <div class="chart-title">Top 10 Products by Revenue</div>
+      <div class="chart-subtitle">Ranked by Net Sales</div>
+      <div class="chart-container"><canvas id="topProdChart" height="260"></canvas></div>
+    </div>
+    <div class="chart-card col-5">
+      <div class="chart-title">Category Performance Matrix</div>
+      <div class="chart-subtitle">Revenue vs Profit Margin bubble view</div>
+      <div class="chart-container"><canvas id="catBubble" height="260"></canvas></div>
+    </div>
+    <div class="chart-card col-12">
+      <div class="chart-title">Product Catalogue Summary</div>
+      <div class="chart-subtitle">Category breakdown by revenue, orders, and margin</div>
+      <div id="productTableContainer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== PAGE 4: CUSTOMER INSIGHTS ======== -->
+<div class="page" id="page-customers">
+  <div class="chart-grid">
+    <div class="chart-card col-6">
+      <div class="chart-title">Revenue by Customer Segment</div>
+      <div class="chart-subtitle">Sales distribution across customer types</div>
+      <div class="chart-container"><canvas id="segmentChart" height="260"></canvas></div>
+    </div>
+    <div class="chart-card col-6">
+      <div class="chart-title">Orders by Customer Country</div>
+      <div class="chart-subtitle">Geographic distribution of order volume</div>
+      <div class="chart-container"><canvas id="custCountryChart" height="260"></canvas></div>
+    </div>
+    <div class="chart-card col-12">
+      <div class="chart-title">Customer Segment Details</div>
+      <div class="chart-subtitle">Revenue, orders, and AOV by segment</div>
+      <div id="segmentTableContainer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== PAGE 5: TEAM PERFORMANCE ======== -->
+<div class="page" id="page-team">
+  <div class="chart-grid">
+    <div class="chart-card col-12">
+      <div class="chart-title">Sales Team Performance vs Target</div>
+      <div class="chart-subtitle">Actual revenue achieved vs sales target per representative</div>
+      <div class="chart-container"><canvas id="teamChart" height="200"></canvas></div>
+    </div>
+    <div class="chart-card col-12">
+      <div class="chart-title">Sales Representatives Detail</div>
+      <div class="chart-subtitle">Location-filtered view (based on your RLS role above)</div>
+      <div id="teamTableContainer"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const RAW_DATA = {"summary":{"total_revenue":2608396.38,"total_profit":1107682.95,"total_orders":500,"avg_order":5216.792759999999,"total_cost":1500713.43,"return_rate":19.0,"profit_margin":42.46605149789389,"total_customers":99},"monthly":[{"Year":2022,"Month":1,"Net_Sales":6549.93,"Profit":1942.73,"Orders":2},{"Year":2022,"Month":2,"Net_Sales":83196.09,"Profit":37873.659999999996,"Orders":17},{"Year":2022,"Month":3,"Net_Sales":21963.58,"Profit":8931.19,"Orders":5},{"Year":2022,"Month":4,"Net_Sales":67217.03,"Profit":30028.620000000003,"Orders":12},{"Year":2022,"Month":5,"Net_Sales":41992.55,"Profit":18783.809999999998,"Orders":9},{"Year":2022,"Month":6,"Net_Sales":34609.77,"Profit":14039.42,"Orders":6},{"Year":2022,"Month":7,"Net_Sales":38560.14,"Profit":12091.43,"Orders":9},{"Year":2022,"Month":8,"Net_Sales":99736.88,"Profit":40598.17,"Orders":15},{"Year":2022,"Month":9,"Net_Sales":34789.71,"Profit":15810.19,"Orders":10},{"Year":2022,"Month":10,"Net_Sales":95372.29000000001,"Profit":42497.39,"Orders":14},{"Year":2022,"Month":11,"Net_Sales":34127.17,"Profit":13060.41,"Orders":11},{"Year":2022,"Month":12,"Net_Sales":71334.56999999999,"Profit":27493.800000000003,"Orders":10},{"Year":2023,"Month":1,"Net_Sales":61812.590000000004,"Profit":23752.06,"Orders":11},{"Year":2023,"Month":2,"Net_Sales":48725.880000000005,"Profit":17382.579999999998,"Orders":11},{"Year":2023,"Month":3,"Net_Sales":37870.17,"Profit":16686.04,"Orders":9},{"Year":2023,"Month":4,"Net_Sales":67635.16,"Profit":29899.36,"Orders":12},{"Year":2023,"Month":5,"Net_Sales":14702.04,"Profit":5552.63,"Orders":4},{"Year":2023,"Month":6,"Net_Sales":75207.68000000001,"Profit":33569.89,"Orders":10},{"Year":2023,"Month":7,"Net_Sales":42922.63,"Profit":20485.01,"Orders":7},{"Year":2023,"Month":8,"Net_Sales":38254.36,"Profit":17800.9,"Orders":7},{"Year":2023,"Month":9,"Net_Sales":42322.21,"Profit":19223.57,"Orders":11},{"Year":2023,"Month":10,"Net_Sales":64351.369999999995,"Profit":28937.38,"Orders":8},{"Year":2023,"Month":11,"Net_Sales":65000.01,"Profit":25621.120000000003,"Orders":14},{"Year":2023,"Month":12,"Net_Sales":93391.91,"Profit":40879.21,"Orders":16},{"Year":2024,"Month":1,"Net_Sales":78046.92,"Profit":28079.059999999998,"Orders":20},{"Year":2024,"Month":2,"Net_Sales":113517.63,"Profit":48226.42,"Orders":16},{"Year":2024,"Month":3,"Net_Sales":57159.59,"Profit":21781.42,"Orders":12},{"Year":2024,"Month":4,"Net_Sales":43697.15,"Profit":19599.07,"Orders":10},{"Year":2024,"Month":5,"Net_Sales":54700.21,"Profit":25587.34,"Orders":8},{"Year":2024,"Month":6,"Net_Sales":48606.87,"Profit":22861.25,"Orders":8},{"Year":2024,"Month":7,"Net_Sales":52066.93,"Profit":24180.65,"Orders":8},{"Year":2024,"Month":8,"Net_Sales":55678.24,"Profit":20800.58,"Orders":11},{"Year":2024,"Month":9,"Net_Sales":29696.920000000002,"Profit":11540.220000000001,"Orders":8},{"Year":2024,"Month":10,"Net_Sales":24479.38,"Profit":10990.96,"Orders":7},{"Year":2024,"Month":11,"Net_Sales":28982.14,"Profit":15456.3,"Orders":5},{"Year":2024,"Month":12,"Net_Sales":40775.619999999995,"Profit":15091.14,"Orders":10},{"Year":2025,"Month":1,"Net_Sales":65693.14,"Profit":28137.33,"Orders":9},{"Year":2025,"Month":2,"Net_Sales":65215.89,"Profit":28352.550000000003,"Orders":13},{"Year":2025,"Month":3,"Net_Sales":69814.31,"Profit":31939.7,"Orders":16},{"Year":2025,"Month":4,"Net_Sales":49433.54,"Profit":21357.85,"Orders":12},{"Year":2025,"Month":5,"Net_Sales":43388.57,"Profit":22892.28,"Orders":7},{"Year":2025,"Month":6,"Net_Sales":80266.18,"Profit":32923.48,"Orders":13},{"Year":2025,"Month":7,"Net_Sales":37641.44,"Profit":15451.630000000001,"Orders":9},{"Year":2025,"Month":8,"Net_Sales":42022.92,"Profit":17395.66,"Orders":10},{"Year":2025,"Month":9,"Net_Sales":94292.78,"Profit":40613.74,"Orders":18},{"Year":2025,"Month":10,"Net_Sales":44703.2,"Profit":17613.99,"Orders":8},{"Year":2025,"Month":11,"Net_Sales":62931.13,"Profit":24668.829999999998,"Orders":12},{"Year":2025,"Month":12,"Net_Sales":43939.96,"Profit":19200.93,"Orders":10}],"categories":[{"Category":"Automotive","Net_Sales":288211.87,"Profit":122009.44,"Orders":56,"Margin":42.3},{"Category":"Beauty","Net_Sales":173304.34,"Profit":72663.31,"Orders":57,"Margin":41.9},{"Category":"Books","Net_Sales":294741.85,"Profit":115944.14,"Orders":49,"Margin":39.3},{"Category":"Clothing","Net_Sales":187897.5,"Profit":73846.55,"Orders":47,"Margin":39.3},{"Category":"Electronics","Net_Sales":459056.72,"Profit":201080.8,"Orders":64,"Margin":43.8},{"Category":"Food & Grocery","Net_Sales":140785.18,"Profit":57651.54,"Orders":45,"Margin":41.0},{"Category":"Home & Kitchen","Net_Sales":270385.31,"Profit":107920.09,"Orders":50,"Margin":39.9},{"Category":"Office Supplies","Net_Sales":274303.23,"Profit":118686.66,"Orders":43,"Margin":43.3},{"Category":"Sports","Net_Sales":215665.09,"Profit":104265.03,"Orders":45,"Margin":48.3},{"Category":"Toys","Net_Sales":304045.29,"Profit":133615.39,"Orders":44,"Margin":43.9}],"channels":[{"Sales Channel":"Direct Sales","Net_Sales":626685.46,"Orders":124},{"Sales Channel":"Online","Net_Sales":645803.84,"Orders":111},{"Sales Channel":"Retail Store","Net_Sales":665361.97,"Orders":134},{"Sales Channel":"Wholesale","Net_Sales":670545.11,"Orders":131}],"status":[{"Order Status":"Completed","Count":296,"Net_Sales":1590181.79},{"Order Status":"Pending","Count":109,"Net_Sales":529398.31},{"Order Status":"Returned","Count":95,"Net_Sales":488816.28}],"top_products":[{"Product Name":"Remote Car","Net_Sales":121703.04,"Orders":13},{"Product Name":"4K Monitor","Net_Sales":107760.67,"Orders":12},{"Product Name":"Webcam HD","Net_Sales":91119.35,"Orders":11},{"Product Name":"Sticky Notes","Net_Sales":89130.99,"Orders":8},{"Product Name":"Desk Lamp","Net_Sales":87910.19,"Orders":9},{"Product Name":"Marketing Mastery","Net_Sales":86085.67,"Orders":12},{"Product Name":"Bed Sheets","Net_Sales":82303.45,"Orders":8},{"Product Name":"Mechanical Keyboard","Net_Sales":79513.61,"Orders":8},{"Product Name":"Car Vacuum","Net_Sales":72979.35,"Orders":11},{"Product Name":"Finance 101","Net_Sales":70928.73,"Orders":10}],"countries":[{"Country":"USA","Net_Sales":461917.2,"Orders":77},{"Country":"France","Net_Sales":384854.21,"Orders":69},{"Country":"Germany","Net_Sales":351010.35,"Orders":72},{"Country":"Australia","Net_Sales":302639.51,"Orders":60},{"Country":"Canada","Net_Sales":261598.25,"Orders":59},{"Country":"UAE","Net_Sales":249890.73,"Orders":47},{"Country":"Japan","Net_Sales":186164.43,"Orders":39},{"Country":"India","Net_Sales":169648.85,"Orders":33},{"Country":"UK","Net_Sales":123192.21,"Orders":26},{"Country":"Brazil","Net_Sales":117480.64,"Orders":18}],"segments":[{"Segment":"Consumer","Net_Sales":702528.92,"Orders":133},{"Segment":"Corporate","Net_Sales":681265.5,"Orders":124},{"Segment":"Enterprise","Net_Sales":603424.84,"Orders":114},{"Segment":"Small Business","Net_Sales":621177.12,"Orders":129}],"team":[{"User ID":"USER-001","Net_Sales":81106.95999999999,"Orders":21,"Name":"Noah White","Location":"Hamburg","Country":"Germany","Role":"Account Manager","Sales Target":186889,"Achievement":43.4},{"User ID":"USER-002","Net_Sales":96151.17,"Orders":17,"Name":"Hannah Anderson","Location":"Lyon","Country":"France","Role":"Sales Director","Sales Target":415266,"Achievement":23.2},{"User ID":"USER-003","Net_Sales":57945.08,"Orders":12,"Name":"Sophia Taylor","Location":"Vancouver","Country":"Canada","Role":"Regional Manager","Sales Target":130194,"Achievement":44.5},{"User ID":"USER-004","Net_Sales":59224.71,"Orders":14,"Name":"Joseph Taylor","Location":"Toronto","Country":"Canada","Role":"Sales Executive","Sales Target":241272,"Achievement":24.5},{"User ID":"USER-005","Net_Sales":76287.19,"Orders":16,"Name":"James Williams","Location":"Calgary","Country":"Canada","Role":"Sales Manager","Sales Target":479613,"Achievement":15.9},{"User ID":"USER-006","Net_Sales":123058.70999999999,"Orders":16,"Name":"Hannah Martin","Location":"London","Country":"UK","Role":"Sales Director","Sales Target":254637,"Achievement":48.3},{"User ID":"USER-007","Net_Sales":152561.91,"Orders":31,"Name":"Patricia Thompson","Location":"Frankfurt","Country":"Germany","Role":"Sales Director","Sales Target":457282,"Achievement":33.4},{"User ID":"USER-008","Net_Sales":77879.69,"Orders":13,"Name":"Olivia Miller","Location":"Munich","Country":"Germany","Role":"Regional Manager","Sales Target":128231,"Achievement":60.7},{"User ID":"USER-009","Net_Sales":70443.52,"Orders":13,"Name":"Liam Johnson","Location":"Abu Dhabi","Country":"UAE","Role":"Sales Director","Sales Target":492763,"Achievement":14.3},{"User ID":"USER-010","Net_Sales":113232.5,"Orders":19,"Name":"Hannah Brown","Location":"Berlin","Country":"Germany","Role":"Account Manager","Sales Target":467771,"Achievement":24.2},{"User ID":"USER-011","Net_Sales":53246.39,"Orders":13,"Name":"Ava Jackson","Location":"Toulouse","Country":"France","Role":"Sales Director","Sales Target":129079,"Achievement":41.3},{"User ID":"USER-012","Net_Sales":90093.31,"Orders":16,"Name":"Robert Brown","Location":"London","Country":"UK","Role":"Regional Manager","Sales Target":65705,"Achievement":137.1},{"User ID":"USER-013","Net_Sales":108079.49,"Orders":14,"Name":"Karen Wilson","Location":"Mumbai","Country":"India","Role":"Sales Executive","Sales Target":275139,"Achievement":39.3},{"User ID":"USER-014","Net_Sales":91656.59,"Orders":22,"Name":"Sarah Taylor","Location":"Hyderabad","Country":"India","Role":"Sales Executive","Sales Target":153650,"Achievement":59.7},{"User ID":"USER-015","Net_Sales":104030.57,"Orders":15,"Name":"Emily Moore","Location":"Manchester","Country":"UK","Role":"Sales Director","Sales Target":105800,"Achievement":98.3},{"User ID":"USER-016","Net_Sales":124987.45,"Orders":18,"Name":"Charles Miller","Location":"Delhi","Country":"India","Role":"Sales Executive","Sales Target":85639,"Achievement":145.9},{"User ID":"USER-017","Net_Sales":70509.2,"Orders":13,"Name":"Lisa Taylor","Location":"London","Country":"UK","Role":"Sales Director","Sales Target":389794,"Achievement":18.1},{"User ID":"USER-018","Net_Sales":62869.99,"Orders":17,"Name":"Jennifer Young","Location":"Brisbane","Country":"Australia","Role":"Regional Manager","Sales Target":432440,"Achievement":14.5},{"User ID":"USER-019","Net_Sales":43555.03,"Orders":13,"Name":"Patricia Davis","Location":"Hamburg","Country":"Germany","Role":"Regional Manager","Sales Target":334839,"Achievement":13.0},{"User ID":"USER-020","Net_Sales":62836.94,"Orders":13,"Name":"Olivia Davis","Location":"Lyon","Country":"France","Role":"Sales Executive","Sales Target":194029,"Achievement":32.4},{"User ID":"USER-021","Net_Sales":54397.35,"Orders":13,"Name":"Ryan Jones","Location":"Perth","Country":"Australia","Role":"Account Manager","Sales Target":293185,"Achievement":18.6},{"User ID":"USER-022","Net_Sales":84445.97,"Orders":15,"Name":"Robert Johnson","Location":"New York","Country":"USA","Role":"Sales Manager","Sales Target":475626,"Achievement":17.8},{"User ID":"USER-023","Net_Sales":75826.44,"Orders":17,"Name":"Liam Jackson","Location":"Toronto","Country":"Canada","Role":"Account Manager","Sales Target":268549,"Achievement":28.2},{"User ID":"USER-024","Net_Sales":97221.2,"Orders":20,"Name":"Emily Harris","Location":"Ajman","Country":"UAE","Role":"Regional Manager","Sales Target":457934,"Achievement":21.2},{"User ID":"USER-025","Net_Sales":80111.98,"Orders":21,"Name":"Liam Smith","Location":"Bras\u00edlia","Country":"Brazil","Role":"Sales Director","Sales Target":274015,"Achievement":29.2},{"User ID":"USER-026","Net_Sales":99533.95,"Orders":19,"Name":"Liam Smith","Location":"Berlin","Country":"Germany","Role":"Sales Executive","Sales Target":423413,"Achievement":23.5},{"User ID":"USER-027","Net_Sales":121753.43,"Orders":17,"Name":"Thomas Miller","Location":"Toulouse","Country":"France","Role":"Regional Manager","Sales Target":102213,"Achievement":119.1},{"User ID":"USER-028","Net_Sales":78211.28,"Orders":15,"Name":"William Jones","Location":"Rio de Janeiro","Country":"Brazil","Role":"Account Manager","Sales Target":236393,"Achievement":33.1},{"User ID":"USER-029","Net_Sales":63162.94,"Orders":13,"Name":"Michael Garcia","Location":"Sharjah","Country":"UAE","Role":"Sales Executive","Sales Target":104994,"Achievement":60.2},{"User ID":"USER-030","Net_Sales":133975.44,"Orders":24,"Name":"Richard Johnson","Location":"Dubai","Country":"UAE","Role":"Regional Manager","Sales Target":263810,"Achievement":50.8}],"payments":[{"Payment Method":"Bank Transfer","Net_Sales":533973.37,"Orders":107},{"Payment Method":"Cash","Net_Sales":547606.18,"Orders":103},{"Payment Method":"Credit Card","Net_Sales":528738.28,"Orders":94},{"Payment Method":"PayPal","Net_Sales":450376.86,"Orders":93},{"Payment Method":"UPI","Net_Sales":547701.6900000001,"Orders":103}],"yearly":[{"Year":2022,"Net_Sales":629449.71,"Profit":263150.82,"Orders":120},{"Year":2023,"Net_Sales":652196.01,"Profit":279789.75,"Orders":120},{"Year":2024,"Net_Sales":627407.6,"Profit":264194.41,"Orders":123},{"Year":2025,"Net_Sales":699343.06,"Profit":300547.97000000003,"Orders":137}],"users_list":[{"User ID":"USER-001","Name":"Noah White","Location":"Hamburg","Country":"Germany","Role":"Account Manager"},{"User ID":"USER-002","Name":"Hannah Anderson","Location":"Lyon","Country":"France","Role":"Sales Director"},{"User ID":"USER-003","Name":"Sophia Taylor","Location":"Vancouver","Country":"Canada","Role":"Regional Manager"},{"User ID":"USER-004","Name":"Joseph Taylor","Location":"Toronto","Country":"Canada","Role":"Sales Executive"},{"User ID":"USER-005","Name":"James Williams","Location":"Calgary","Country":"Canada","Role":"Sales Manager"},{"User ID":"USER-006","Name":"Hannah Martin","Location":"London","Country":"UK","Role":"Sales Director"},{"User ID":"USER-007","Name":"Patricia Thompson","Location":"Frankfurt","Country":"Germany","Role":"Sales Director"},{"User ID":"USER-008","Name":"Olivia Miller","Location":"Munich","Country":"Germany","Role":"Regional Manager"},{"User ID":"USER-009","Name":"Liam Johnson","Location":"Abu Dhabi","Country":"UAE","Role":"Sales Director"},{"User ID":"USER-010","Name":"Hannah Brown","Location":"Berlin","Country":"Germany","Role":"Account Manager"},{"User ID":"USER-011","Name":"Ava Jackson","Location":"Toulouse","Country":"France","Role":"Sales Director"},{"User ID":"USER-012","Name":"Robert Brown","Location":"London","Country":"UK","Role":"Regional Manager"},{"User ID":"USER-013","Name":"Karen Wilson","Location":"Mumbai","Country":"India","Role":"Sales Executive"},{"User ID":"USER-014","Name":"Sarah Taylor","Location":"Hyderabad","Country":"India","Role":"Sales Executive"},{"User ID":"USER-015","Name":"Emily Moore","Location":"Manchester","Country":"UK","Role":"Sales Director"},{"User ID":"USER-016","Name":"Charles Miller","Location":"Delhi","Country":"India","Role":"Sales Executive"},{"User ID":"USER-017","Name":"Lisa Taylor","Location":"London","Country":"UK","Role":"Sales Director"},{"User ID":"USER-018","Name":"Jennifer Young","Location":"Brisbane","Country":"Australia","Role":"Regional Manager"},{"User ID":"USER-019","Name":"Patricia Davis","Location":"Hamburg","Country":"Germany","Role":"Regional Manager"},{"User ID":"USER-020","Name":"Olivia Davis","Location":"Lyon","Country":"France","Role":"Sales Executive"},{"User ID":"USER-021","Name":"Ryan Jones","Location":"Perth","Country":"Australia","Role":"Account Manager"},{"User ID":"USER-022","Name":"Robert Johnson","Location":"New York","Country":"USA","Role":"Sales Manager"},{"User ID":"USER-023","Name":"Liam Jackson","Location":"Toronto","Country":"Canada","Role":"Account Manager"},{"User ID":"USER-024","Name":"Emily Harris","Location":"Ajman","Country":"UAE","Role":"Regional Manager"},{"User ID":"USER-025","Name":"Liam Smith","Location":"Bras\u00edlia","Country":"Brazil","Role":"Sales Director"},{"User ID":"USER-026","Name":"Liam Smith","Location":"Berlin","Country":"Germany","Role":"Sales Executive"},{"User ID":"USER-027","Name":"Thomas Miller","Location":"Toulouse","Country":"France","Role":"Regional Manager"},{"User ID":"USER-028","Name":"William Jones","Location":"Rio de Janeiro","Country":"Brazil","Role":"Account Manager"},{"User ID":"USER-029","Name":"Michael Garcia","Location":"Sharjah","Country":"UAE","Role":"Sales Executive"},{"User ID":"USER-030","Name":"Richard Johnson","Location":"Dubai","Country":"UAE","Role":"Regional Manager"}],"user_data":{"USER-001":{"name":"Noah White","location":"Hamburg","country":"Germany","role":"Account Manager","target":186889.0,"net_sales":81106.96,"profit":33940.25,"orders":21,"monthly":[{"Year":2022,"Month":2,"Net Sales":889.24},{"Year":2022,"Month":5,"Net Sales":2275.27},{"Year":2022,"Month":8,"Net Sales":14282.31},{"Year":2022,"Month":9,"Net Sales":4699.86},{"Year":2023,"Month":1,"Net Sales":4309.29},{"Year":2023,"Month":2,"Net Sales":559.14},{"Year":2023,"Month":3,"Net Sales":2274.84},{"Year":2023,"Month":5,"Net Sales":1219.79},{"Year":2023,"Month":8,"Net Sales":15365.3},{"Year":2023,"Month":9,"Net Sales":7210.44},{"Year":2023,"Month":11,"Net Sales":229.59},{"Year":2023,"Month":12,"Net Sales":4649.49},{"Year":2024,"Month":1,"Net Sales":11375.7},{"Year":2024,"Month":8,"Net Sales":847.08},{"Year":2025,"Month":2,"Net Sales":3737.79},{"Year":2025,"Month":3,"Net Sales":1999.51},{"Year":2025,"Month":10,"Net Sales":4377.04},{"Year":2025,"Month":11,"Net Sales":805.28}],"cat":[{"Category":"Automotive","Net Sales":14484.96},{"Category":"Beauty","Net Sales":15595.57},{"Category":"Books","Net Sales":4699.86},{"Category":"Clothing","Net Sales":2274.84},{"Category":"Electronics","Net Sales":15365.3},{"Category":"Food & Grocery","Net Sales":7456.74},{"Category":"Home & Kitchen","Net Sales":2275.27},{"Category":"Office Supplies","Net Sales":7402.95},{"Category":"Sports","Net Sales":4377.04},{"Category":"Toys","Net Sales":7174.43}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":21271.629999999997},{"Sales Channel":"Online","Net Sales":21739.05},{"Sales Channel":"Retail Store","Net Sales":18159.68},{"Sales Channel":"Wholesale","Net Sales":19936.6}],"status":[{"Order Status":"Completed","Net Sales":44179.149999999994},{"Order Status":"Pending","Net Sales":19035.16},{"Order Status":"Returned","Net Sales":17892.65}]},"USER-002":{"name":"Hannah Anderson","location":"Lyon","country":"France","role":"Sales Director","target":415266.0,"net_sales":96151.16999999998,"profit":39609.310000000005,"orders":17,"monthly":[{"Year":2022,"Month":4,"Net Sales":2949.91},{"Year":2022,"Month":7,"Net Sales":6817.97},{"Year":2022,"Month":10,"Net Sales":11750.93},{"Year":2023,"Month":2,"Net Sales":1713.98},{"Year":2023,"Month":3,"Net Sales":6266.48},{"Year":2023,"Month":6,"Net Sales":7536.65},{"Year":2023,"Month":7,"Net Sales":2640.6},{"Year":2023,"Month":9,"Net Sales":11057.300000000001},{"Year":2023,"Month":12,"Net Sales":8184.6},{"Year":2024,"Month":1,"Net Sales":5040.59},{"Year":2024,"Month":7,"Net Sales":3393.67},{"Year":2025,"Month":2,"Net Sales":12277.11},{"Year":2025,"Month":7,"Net Sales":223.14},{"Year":2025,"Month":9,"Net Sales":16298.24}],"cat":[{"Category":"Automotive","Net Sales":21122.34},{"Category":"Beauty","Net Sales":1937.12},{"Category":"Books","Net Sales":32638.77},{"Category":"Clothing","Net Sales":13943.06},{"Category":"Home & Kitchen","Net Sales":3393.67},{"Category":"Office Supplies","Net Sales":16298.24},{"Category":"Sports","Net Sales":6817.97}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":33190.159999999996},{"Sales Channel":"Online","Net Sales":26535.61},{"Sales Channel":"Retail Store","Net Sales":28888.75},{"Sales Channel":"Wholesale","Net Sales":7536.65}],"status":[{"Order Status":"Completed","Net Sales":77593.45},{"Order Status":"Pending","Net Sales":5040.59},{"Order Status":"Returned","Net Sales":13517.130000000001}]},"USER-003":{"name":"Sophia Taylor","location":"Vancouver","country":"Canada","role":"Regional Manager","target":130194.0,"net_sales":57945.08,"profit":24849.420000000002,"orders":12,"monthly":[{"Year":2022,"Month":2,"Net Sales":13204.779999999999},{"Year":2022,"Month":9,"Net Sales":4583.88},{"Year":2022,"Month":10,"Net Sales":329.15},{"Year":2022,"Month":11,"Net Sales":14954.76},{"Year":2023,"Month":12,"Net Sales":4658.0},{"Year":2024,"Month":3,"Net Sales":929.04},{"Year":2024,"Month":7,"Net Sales":8100.96},{"Year":2025,"Month":2,"Net Sales":464.97},{"Year":2025,"Month":5,"Net Sales":7049.79},{"Year":2025,"Month":10,"Net Sales":3669.75}],"cat":[{"Category":"Automotive","Net Sales":329.15},{"Category":"Books","Net Sales":11707.79},{"Category":"Clothing","Net Sales":932.65},{"Category":"Electronics","Net Sales":21854.72},{"Category":"Food & Grocery","Net Sales":8565.93},{"Category":"Home & Kitchen","Net Sales":5372.17},{"Category":"Office Supplies","Net Sales":4583.88},{"Category":"Sports","Net Sales":929.04},{"Category":"Toys","Net Sales":3669.75}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":22465.91},{"Sales Channel":"Online","Net Sales":4913.03},{"Sales Channel":"Retail Store","Net Sales":16866.22},{"Sales Channel":"Wholesale","Net Sales":13699.92}],"status":[{"Order Status":"Completed","Net Sales":32036.940000000002},{"Order Status":"Pending","Net Sales":8100.96},{"Order Status":"Returned","Net Sales":17807.18}]},"USER-004":{"name":"Joseph Taylor","location":"Toronto","country":"Canada","role":"Sales Executive","target":241272.0,"net_sales":59224.70999999999,"profit":22204.13,"orders":14,"monthly":[{"Year":2022,"Month":5,"Net Sales":8423.32},{"Year":2022,"Month":9,"Net Sales":4774.35},{"Year":2022,"Month":10,"Net Sales":7743.93},{"Year":2023,"Month":6,"Net Sales":1469.51},{"Year":2023,"Month":9,"Net Sales":567.77},{"Year":2024,"Month":2,"Net Sales":5453.71},{"Year":2024,"Month":3,"Net Sales":12273.36},{"Year":2024,"Month":4,"Net Sales":816.56},{"Year":2024,"Month":8,"Net Sales":7947.39},{"Year":2025,"Month":8,"Net Sales":3730.87},{"Year":2025,"Month":9,"Net Sales":3029.84},{"Year":2025,"Month":12,"Net Sales":2994.1}],"cat":[{"Category":"Automotive","Net Sales":13197.67},{"Category":"Books","Net Sales":7743.93},{"Category":"Electronics","Net Sales":13089.919999999998},{"Category":"Food & Grocery","Net Sales":3561.87},{"Category":"Home & Kitchen","Net Sales":9416.9},{"Category":"Toys","Net Sales":12214.42}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":21338.8},{"Sales Channel":"Online","Net Sales":7684.97},{"Sales Channel":"Retail Store","Net Sales":3029.84},{"Sales Channel":"Wholesale","Net Sales":27171.1}],"status":[{"Order Status":"Completed","Net Sales":48376.64},{"Order Status":"Returned","Net Sales":10848.07}]},"USER-005":{"name":"James Williams","location":"Calgary","country":"Canada","role":"Sales Manager","target":479613.0,"net_sales":76287.19,"profit":31370.090000000004,"orders":16,"monthly":[{"Year":2022,"Month":11,"Net Sales":2770.92},{"Year":2023,"Month":1,"Net Sales":7421.31},{"Year":2023,"Month":2,"Net Sales":415.31},{"Year":2023,"Month":3,"Net Sales":2517.9},{"Year":2023,"Month":7,"Net Sales":1318.88},{"Year":2023,"Month":12,"Net Sales":9005.49},{"Year":2024,"Month":2,"Net Sales":15028.6},{"Year":2024,"Month":3,"Net Sales":7800.15},{"Year":2024,"Month":6,"Net Sales":1985.39},{"Year":2024,"Month":11,"Net Sales":308.55},{"Year":2025,"Month":6,"Net Sales":8460.55},{"Year":2025,"Month":8,"Net Sales":528.12},{"Year":2025,"Month":9,"Net Sales":12945.380000000001},{"Year":2025,"Month":10,"Net Sales":5780.64}],"cat":[{"Category":"Beauty","Net Sales":15878.59},{"Category":"Books","Net Sales":8097.37},{"Category":"Electronics","Net Sales":23489.15},{"Category":"Food & Grocery","Net Sales":9406.7},{"Category":"Home & Kitchen","Net Sales":13403.84},{"Category":"Office Supplies","Net Sales":5780.64},{"Category":"Sports","Net Sales":230.9}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":2770.92},{"Sales Channel":"Online","Net Sales":30374.68},{"Sales Channel":"Retail Store","Net Sales":33922.020000000004},{"Sales Channel":"Wholesale","Net Sales":9219.57}],"status":[{"Order Status":"Completed","Net Sales":30472.92},{"Order Status":"Pending","Net Sales":2513.51},{"Order Status":"Returned","Net Sales":43300.76}]},"USER-006":{"name":"Hannah Martin","location":"London","country":"UK","role":"Sales Director","target":254637.0,"net_sales":123058.70999999999,"profit":52203.11,"orders":16,"monthly":[{"Year":2022,"Month":4,"Net Sales":5704.38},{"Year":2022,"Month":8,"Net Sales":8733.75},{"Year":2023,"Month":1,"Net Sales":10089.43},{"Year":2023,"Month":3,"Net Sales":588.26},{"Year":2023,"Month":5,"Net Sales":12537.84},{"Year":2023,"Month":10,"Net Sales":9218.76},{"Year":2023,"Month":11,"Net Sales":189.57},{"Year":2024,"Month":2,"Net Sales":12958.95},{"Year":2024,"Month":3,"Net Sales":9469.4},{"Year":2024,"Month":6,"Net Sales":3307.1},{"Year":2024,"Month":8,"Net Sales":9529.56},{"Year":2025,"Month":1,"Net Sales":10699.92},{"Year":2025,"Month":6,"Net Sales":6241.62},{"Year":2025,"Month":7,"Net Sales":2895.44},{"Year":2025,"Month":10,"Net Sales":11264.8},{"Year":2025,"Month":11,"Net Sales":9629.93}],"cat":[{"Category":"Automotive","Net Sales":39530.42},{"Category":"Books","Net Sales":20847.95},{"Category":"Clothing","Net Sales":189.57},{"Category":"Electronics","Net Sales":3307.1},{"Category":"Food & Grocery","Net Sales":588.26},{"Category":"Home & Kitchen","Net Sales":21354.23},{"Category":"Office Supplies","Net Sales":15233.939999999999},{"Category":"Sports","Net Sales":9469.4},{"Category":"Toys","Net Sales":12537.84}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":51049.79},{"Sales Channel":"Online","Net Sales":26599.11},{"Sales Channel":"Retail Store","Net Sales":21583.6},{"Sales Channel":"Wholesale","Net Sales":23826.21}],"status":[{"Order Status":"Completed","Net Sales":92856.02},{"Order Status":"Pending","Net Sales":30202.69}]},"USER-007":{"name":"Patricia Thompson","location":"Frankfurt","country":"Germany","role":"Sales Director","target":457282.0,"net_sales":152561.91,"profit":65832.71999999999,"orders":31,"monthly":[{"Year":2022,"Month":2,"Net Sales":10941.59},{"Year":2022,"Month":3,"Net Sales":12140.86},{"Year":2022,"Month":5,"Net Sales":2069.1},{"Year":2022,"Month":12,"Net Sales":2215.42},{"Year":2023,"Month":1,"Net Sales":5123.52},{"Year":2023,"Month":2,"Net Sales":5350.55},{"Year":2023,"Month":4,"Net Sales":3493.33},{"Year":2023,"Month":6,"Net Sales":1482.06},{"Year":2023,"Month":8,"Net Sales":1740.4},{"Year":2023,"Month":9,"Net Sales":9685.7},{"Year":2023,"Month":10,"Net Sales":4804.7},{"Year":2023,"Month":11,"Net Sales":7211.22},{"Year":2023,"Month":12,"Net Sales":18514.43},{"Year":2024,"Month":8,"Net Sales":4538.9},{"Year":2024,"Month":9,"Net Sales":10643.5},{"Year":2024,"Month":12,"Net Sales":1530.72},{"Year":2025,"Month":3,"Net Sales":1118.28},{"Year":2025,"Month":4,"Net Sales":12177.6},{"Year":2025,"Month":5,"Net Sales":11700.279999999999},{"Year":2025,"Month":6,"Net Sales":4341.74},{"Year":2025,"Month":9,"Net Sales":7709.209999999999},{"Year":2025,"Month":11,"Net Sales":14028.8}],"cat":[{"Category":"Automotive","Net Sales":27581.4},{"Category":"Beauty","Net Sales":11220.57},{"Category":"Books","Net Sales":19865.39},{"Category":"Clothing","Net Sales":24624.21},{"Category":"Electronics","Net Sales":7338.9400000000005},{"Category":"Food & Grocery","Net Sales":5909.74},{"Category":"Home & Kitchen","Net Sales":14758.11},{"Category":"Office Supplies","Net Sales":10234.77},{"Category":"Sports","Net Sales":5779.74},{"Category":"Toys","Net Sales":25249.04}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":28188.370000000003},{"Sales Channel":"Online","Net Sales":15205.18},{"Sales Channel":"Retail Store","Net Sales":61419.5},{"Sales Channel":"Wholesale","Net Sales":47748.86}],"status":[{"Order Status":"Completed","Net Sales":106465.1},{"Order Status":"Pending","Net Sales":25249.7},{"Order Status":"Returned","Net Sales":20847.11}]},"USER-008":{"name":"Olivia Miller","location":"Munich","country":"Germany","role":"Regional Manager","target":128231.0,"net_sales":77879.69,"profit":30970.11,"orders":13,"monthly":[{"Year":2022,"Month":2,"Net Sales":1272.49},{"Year":2022,"Month":4,"Net Sales":12672.9},{"Year":2022,"Month":6,"Net Sales":8734.0},{"Year":2022,"Month":7,"Net Sales":1089.0},{"Year":2022,"Month":8,"Net Sales":9898.25},{"Year":2022,"Month":9,"Net Sales":2491.86},{"Year":2023,"Month":6,"Net Sales":1458.4},{"Year":2023,"Month":12,"Net Sales":11614.710000000001},{"Year":2024,"Month":10,"Net Sales":7027.76},{"Year":2025,"Month":2,"Net Sales":11911.95},{"Year":2025,"Month":4,"Net Sales":5873.37},{"Year":2025,"Month":10,"Net Sales":3835.0}],"cat":[{"Category":"Beauty","Net Sales":2491.86},{"Category":"Books","Net Sales":20472.940000000002},{"Category":"Clothing","Net Sales":3835.0},{"Category":"Food & Grocery","Net Sales":2730.8900000000003},{"Category":"Home & Kitchen","Net Sales":13761.9},{"Category":"Office Supplies","Net Sales":18825.34},{"Category":"Sports","Net Sales":7027.76},{"Category":"Toys","Net Sales":8734.0}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":3950.26},{"Sales Channel":"Retail Store","Net Sales":35686.58},{"Sales Channel":"Wholesale","Net Sales":38242.85}],"status":[{"Order Status":"Completed","Net Sales":46937.17},{"Order Status":"Pending","Net Sales":16532.83},{"Order Status":"Returned","Net Sales":14409.69}]},"USER-009":{"name":"Liam Johnson","location":"Abu Dhabi","country":"UAE","role":"Sales Director","target":492763.0,"net_sales":70443.52,"profit":30690.63,"orders":13,"monthly":[{"Year":2022,"Month":1,"Net Sales":3916.55},{"Year":2022,"Month":2,"Net Sales":1364.61},{"Year":2022,"Month":8,"Net Sales":4392.34},{"Year":2022,"Month":11,"Net Sales":1481.12},{"Year":2023,"Month":1,"Net Sales":12150.19},{"Year":2023,"Month":7,"Net Sales":20372.8},{"Year":2023,"Month":11,"Net Sales":10896.84},{"Year":2024,"Month":6,"Net Sales":5531.26},{"Year":2024,"Month":8,"Net Sales":4922.25},{"Year":2025,"Month":2,"Net Sales":706.61},{"Year":2025,"Month":4,"Net Sales":2305.47},{"Year":2025,"Month":7,"Net Sales":2403.48}],"cat":[{"Category":"Automotive","Net Sales":682.05},{"Category":"Beauty","Net Sales":14806.0},{"Category":"Books","Net Sales":15734.67},{"Category":"Clothing","Net Sales":6697.8099999999995},{"Category":"Office Supplies","Net Sales":32522.989999999998}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":5175.25},{"Sales Channel":"Online","Net Sales":11242.28},{"Sales Channel":"Retail Store","Net Sales":12150.19},{"Sales Channel":"Wholesale","Net Sales":41875.8}],"status":[{"Order Status":"Completed","Net Sales":62264.59},{"Order Status":"Pending","Net Sales":6697.8099999999995},{"Order Status":"Returned","Net Sales":1481.12}]},"USER-010":{"name":"Hannah Brown","location":"Berlin","country":"Germany","role":"Account Manager","target":467771.0,"net_sales":113232.50000000001,"profit":47431.82000000001,"orders":19,"monthly":[{"Year":2022,"Month":2,"Net Sales":12322.23},{"Year":2022,"Month":5,"Net Sales":8905.84},{"Year":2022,"Month":7,"Net Sales":3031.64},{"Year":2022,"Month":8,"Net Sales":14794.93},{"Year":2023,"Month":2,"Net Sales":6336.45},{"Year":2023,"Month":8,"Net Sales":2794.25},{"Year":2023,"Month":9,"Net Sales":7885.36},{"Year":2023,"Month":10,"Net Sales":22441.61},{"Year":2024,"Month":1,"Net Sales":3005.82},{"Year":2024,"Month":2,"Net Sales":8984.79},{"Year":2024,"Month":4,"Net Sales":16037.43},{"Year":2024,"Month":10,"Net Sales":538.94},{"Year":2024,"Month":12,"Net Sales":393.0},{"Year":2025,"Month":2,"Net Sales":3493.5},{"Year":2025,"Month":9,"Net Sales":537.87},{"Year":2025,"Month":11,"Net Sales":1728.84}],"cat":[{"Category":"Automotive","Net Sales":11368.66},{"Category":"Beauty","Net Sales":10214.79},{"Category":"Books","Net Sales":3493.5},{"Category":"Electronics","Net Sales":43628.0},{"Category":"Food & Grocery","Net Sales":6339.01},{"Category":"Home & Kitchen","Net Sales":26904.4},{"Category":"Sports","Net Sales":537.87},{"Category":"Toys","Net Sales":10746.27}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":14291.0},{"Sales Channel":"Online","Net Sales":23779.72},{"Sales Channel":"Retail Store","Net Sales":29403.829999999998},{"Sales Channel":"Wholesale","Net Sales":45757.95}],"status":[{"Order Status":"Completed","Net Sales":70192.06},{"Order Status":"Pending","Net Sales":29493.530000000002},{"Order Status":"Returned","Net Sales":13546.91}]},"USER-011":{"name":"Ava Jackson","location":"Toulouse","country":"France","role":"Sales Director","target":129079.0,"net_sales":53246.39,"profit":22301.41,"orders":13,"monthly":[{"Year":2022,"Month":2,"Net Sales":5104.0},{"Year":2022,"Month":8,"Net Sales":4392.47},{"Year":2023,"Month":4,"Net Sales":2271.75},{"Year":2023,"Month":10,"Net Sales":12672.9},{"Year":2023,"Month":12,"Net Sales":1851.4},{"Year":2024,"Month":1,"Net Sales":2881.98},{"Year":2024,"Month":3,"Net Sales":3566.64},{"Year":2024,"Month":4,"Net Sales":5151.66},{"Year":2024,"Month":7,"Net Sales":8184.6},{"Year":2024,"Month":12,"Net Sales":608.42},{"Year":2025,"Month":2,"Net Sales":5589.6},{"Year":2025,"Month":3,"Net Sales":970.97}],"cat":[{"Category":"Automotive","Net Sales":16984.32},{"Category":"Beauty","Net Sales":1851.4},{"Category":"Books","Net Sales":15133.73},{"Category":"Clothing","Net Sales":2271.75},{"Category":"Electronics","Net Sales":3490.4},{"Category":"Home & Kitchen","Net Sales":12672.9},{"Category":"Sports","Net Sales":841.89}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":22928.559999999998},{"Sales Channel":"Online","Net Sales":3566.64},{"Sales Channel":"Retail Store","Net Sales":9313.47},{"Sales Channel":"Wholesale","Net Sales":17437.72}],"status":[{"Order Status":"Completed","Net Sales":42923.41},{"Order Status":"Pending","Net Sales":10322.98}]},"USER-012":{"name":"Robert Brown","location":"London","country":"UK","role":"Regional Manager","target":65705.0,"net_sales":90093.31,"profit":39739.75,"orders":16,"monthly":[{"Year":2022,"Month":2,"Net Sales":3198.72},{"Year":2022,"Month":3,"Net Sales":531.18},{"Year":2022,"Month":11,"Net Sales":1621.16},{"Year":2023,"Month":9,"Net Sales":597.63},{"Year":2023,"Month":11,"Net Sales":11130.869999999999},{"Year":2023,"Month":12,"Net Sales":3829.91},{"Year":2024,"Month":3,"Net Sales":4764.78},{"Year":2024,"Month":4,"Net Sales":1972.72},{"Year":2024,"Month":11,"Net Sales":16909.73},{"Year":2024,"Month":12,"Net Sales":10598.77},{"Year":2025,"Month":3,"Net Sales":9987.45},{"Year":2025,"Month":8,"Net Sales":11936.28},{"Year":2025,"Month":9,"Net Sales":12567.83},{"Year":2025,"Month":12,"Net Sales":446.28}],"cat":[{"Category":"Automotive","Net Sales":30467.17},{"Category":"Beauty","Net Sales":2950.18},{"Category":"Clothing","Net Sales":3009.0},{"Category":"Electronics","Net Sales":11553.970000000001},{"Category":"Food & Grocery","Net Sales":3198.72},{"Category":"Home & Kitchen","Net Sales":10598.77},{"Category":"Office Supplies","Net Sales":15766.09},{"Category":"Sports","Net Sales":12549.41}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":27051.15},{"Sales Channel":"Online","Net Sales":17761.690000000002},{"Sales Channel":"Retail Store","Net Sales":23647.23},{"Sales Channel":"Wholesale","Net Sales":21633.239999999998}],"status":[{"Order Status":"Completed","Net Sales":52608.43},{"Order Status":"Pending","Net Sales":12054.890000000001},{"Order Status":"Returned","Net Sales":25429.989999999998}]},"USER-013":{"name":"Karen Wilson","location":"Mumbai","country":"India","role":"Sales Executive","target":275139.0,"net_sales":108079.49,"profit":47609.46,"orders":14,"monthly":[{"Year":2022,"Month":2,"Net Sales":2455.38},{"Year":2022,"Month":8,"Net Sales":6328.64},{"Year":2022,"Month":12,"Net Sales":4174.49},{"Year":2023,"Month":2,"Net Sales":12300.03},{"Year":2023,"Month":6,"Net Sales":16439.2},{"Year":2023,"Month":11,"Net Sales":8434.67},{"Year":2024,"Month":2,"Net Sales":1860.24},{"Year":2024,"Month":3,"Net Sales":13641.24},{"Year":2024,"Month":5,"Net Sales":6288.05},{"Year":2024,"Month":7,"Net Sales":1641.39},{"Year":2025,"Month":1,"Net Sales":7658.55},{"Year":2025,"Month":3,"Net Sales":4946.0},{"Year":2025,"Month":6,"Net Sales":10164.86},{"Year":2025,"Month":9,"Net Sales":11746.75}],"cat":[{"Category":"Automotive","Net Sales":2455.38},{"Category":"Electronics","Net Sales":16093.220000000001},{"Category":"Food & Grocery","Net Sales":10503.130000000001},{"Category":"Home & Kitchen","Net Sales":6288.05},{"Category":"Office Supplies","Net Sales":40498.85},{"Category":"Sports","Net Sales":19940.83},{"Category":"Toys","Net Sales":12300.03}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":28583.72},{"Sales Channel":"Online","Net Sales":42646.31},{"Sales Channel":"Retail Store","Net Sales":27587.84},{"Sales Channel":"Wholesale","Net Sales":9261.619999999999}],"status":[{"Order Status":"Completed","Net Sales":74893.24},{"Order Status":"Pending","Net Sales":11274.64},{"Order Status":"Returned","Net Sales":21911.61}]},"USER-014":{"name":"Sarah Taylor","location":"Hyderabad","country":"India","role":"Sales Executive","target":153650.0,"net_sales":91656.59,"profit":33976.26,"orders":22,"monthly":[{"Year":2022,"Month":4,"Net Sales":3719.74},{"Year":2022,"Month":5,"Net Sales":6940.8099999999995},{"Year":2022,"Month":6,"Net Sales":2731.4},{"Year":2022,"Month":7,"Net Sales":6928.78},{"Year":2022,"Month":8,"Net Sales":7204.6},{"Year":2022,"Month":10,"Net Sales":5443.74},{"Year":2023,"Month":3,"Net Sales":1722.48},{"Year":2023,"Month":4,"Net Sales":5717.59},{"Year":2023,"Month":5,"Net Sales":174.36},{"Year":2023,"Month":6,"Net Sales":7204.6},{"Year":2023,"Month":7,"Net Sales":4468.8},{"Year":2023,"Month":10,"Net Sales":1180.0},{"Year":2023,"Month":11,"Net Sales":4651.47},{"Year":2024,"Month":5,"Net Sales":15139.93},{"Year":2024,"Month":9,"Net Sales":808.7},{"Year":2024,"Month":10,"Net Sales":4649.67},{"Year":2025,"Month":1,"Net Sales":1188.17},{"Year":2025,"Month":3,"Net Sales":3043.36},{"Year":2025,"Month":4,"Net Sales":6481.64},{"Year":2025,"Month":8,"Net Sales":2256.75}],"cat":[{"Category":"Automotive","Net Sales":4997.3099999999995},{"Category":"Beauty","Net Sales":9992.740000000002},{"Category":"Books","Net Sales":9660.18},{"Category":"Clothing","Net Sales":21686.29},{"Category":"Electronics","Net Sales":21392.37},{"Category":"Food & Grocery","Net Sales":15166.75},{"Category":"Toys","Net Sales":8760.95}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":21349.16},{"Sales Channel":"Online","Net Sales":12737.630000000001},{"Sales Channel":"Retail Store","Net Sales":15938.560000000001},{"Sales Channel":"Wholesale","Net Sales":41631.24}],"status":[{"Order Status":"Completed","Net Sales":49935.0},{"Order Status":"Pending","Net Sales":29420.91},{"Order Status":"Returned","Net Sales":12300.68}]},"USER-015":{"name":"Emily Moore","location":"Manchester","country":"UK","role":"Sales Director","target":105800.0,"net_sales":104030.57,"profit":47881.56999999999,"orders":15,"monthly":[{"Year":2022,"Month":2,"Net Sales":757.55},{"Year":2023,"Month":2,"Net Sales":1945.82},{"Year":2023,"Month":3,"Net Sales":11022.54},{"Year":2023,"Month":4,"Net Sales":6521.2},{"Year":2023,"Month":6,"Net Sales":9895.52},{"Year":2024,"Month":1,"Net Sales":24942.82},{"Year":2024,"Month":6,"Net Sales":13315.44},{"Year":2024,"Month":7,"Net Sales":6605.55},{"Year":2024,"Month":9,"Net Sales":2823.03},{"Year":2025,"Month":1,"Net Sales":15454.23},{"Year":2025,"Month":2,"Net Sales":3478.74},{"Year":2025,"Month":11,"Net Sales":7268.13}],"cat":[{"Category":"Beauty","Net Sales":2823.03},{"Category":"Books","Net Sales":14138.75},{"Category":"Clothing","Net Sales":6521.2},{"Category":"Electronics","Net Sales":20583.57},{"Category":"Food & Grocery","Net Sales":7495.469999999999},{"Category":"Home & Kitchen","Net Sales":6787.34},{"Category":"Sports","Net Sales":29856.66},{"Category":"Toys","Net Sales":15824.55}],"channel":[{"Sales Channel":"Online","Net Sales":26689.7},{"Sales Channel":"Retail Store","Net Sales":47190.21},{"Sales Channel":"Wholesale","Net Sales":30150.66}],"status":[{"Order Status":"Completed","Net Sales":67663.59},{"Order Status":"Pending","Net Sales":29374.2},{"Order Status":"Returned","Net Sales":6992.78}]},"USER-016":{"name":"Charles Miller","location":"Delhi","country":"India","role":"Sales Executive","target":85639.0,"net_sales":124987.45,"profit":53008.9,"orders":18,"monthly":[{"Year":2022,"Month":2,"Net Sales":17209.06},{"Year":2022,"Month":4,"Net Sales":2698.78},{"Year":2022,"Month":7,"Net Sales":6529.06},{"Year":2023,"Month":2,"Net Sales":8964.03},{"Year":2023,"Month":3,"Net Sales":565.29},{"Year":2023,"Month":6,"Net Sales":16496.6},{"Year":2023,"Month":11,"Net Sales":1118.28},{"Year":2023,"Month":12,"Net Sales":10755.71},{"Year":2024,"Month":1,"Net Sales":484.81},{"Year":2024,"Month":2,"Net Sales":5253.71},{"Year":2024,"Month":5,"Net Sales":24542.3},{"Year":2024,"Month":12,"Net Sales":10424.72},{"Year":2025,"Month":6,"Net Sales":8936.89},{"Year":2025,"Month":11,"Net Sales":825.82},{"Year":2025,"Month":12,"Net Sales":10182.39}],"cat":[{"Category":"Beauty","Net Sales":1683.57},{"Category":"Books","Net Sales":12853.439999999999},{"Category":"Electronics","Net Sales":57256.27},{"Category":"Home & Kitchen","Net Sales":2787.66},{"Category":"Office Supplies","Net Sales":21670.11},{"Category":"Sports","Net Sales":28736.399999999998}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":44457.01},{"Sales Channel":"Online","Net Sales":45198.68},{"Sales Channel":"Retail Store","Net Sales":13688.79},{"Sales Channel":"Wholesale","Net Sales":21642.97}],"status":[{"Order Status":"Completed","Net Sales":84089.51},{"Order Status":"Pending","Net Sales":14410.79},{"Order Status":"Returned","Net Sales":26487.15}]},"USER-017":{"name":"Lisa Taylor","location":"London","country":"UK","role":"Sales Director","target":389794.0,"net_sales":70509.20000000001,"profit":30016.84,"orders":13,"monthly":[{"Year":2022,"Month":2,"Net Sales":8905.84},{"Year":2022,"Month":8,"Net Sales":1530.03},{"Year":2022,"Month":9,"Net Sales":4880.52},{"Year":2023,"Month":4,"Net Sales":22808.010000000002},{"Year":2023,"Month":8,"Net Sales":10006.04},{"Year":2023,"Month":10,"Net Sales":791.08},{"Year":2024,"Month":2,"Net Sales":3647.61},{"Year":2024,"Month":9,"Net Sales":954.14},{"Year":2024,"Month":12,"Net Sales":2305.58},{"Year":2025,"Month":5,"Net Sales":5708.26},{"Year":2025,"Month":8,"Net Sales":7897.56},{"Year":2025,"Month":9,"Net Sales":1074.53}],"cat":[{"Category":"Automotive","Net Sales":4722.14},{"Category":"Beauty","Net Sales":7238.29},{"Category":"Books","Net Sales":4880.52},{"Category":"Electronics","Net Sales":11211.42},{"Category":"Food & Grocery","Net Sales":791.08},{"Category":"Office Supplies","Net Sales":17903.600000000002},{"Category":"Sports","Net Sales":954.14},{"Category":"Toys","Net Sales":22808.010000000002}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":4880.52},{"Sales Channel":"Online","Net Sales":45433.75},{"Sales Channel":"Retail Store","Net Sales":10498.01},{"Sales Channel":"Wholesale","Net Sales":9696.92}],"status":[{"Order Status":"Completed","Net Sales":45312.630000000005},{"Order Status":"Pending","Net Sales":19488.31},{"Order Status":"Returned","Net Sales":5708.26}]},"USER-018":{"name":"Jennifer Young","location":"Brisbane","country":"Australia","role":"Regional Manager","target":432440.0,"net_sales":62869.990000000005,"profit":23981.66,"orders":17,"monthly":[{"Year":2022,"Month":5,"Net Sales":1333.85},{"Year":2022,"Month":6,"Net Sales":17401.14},{"Year":2022,"Month":7,"Net Sales":11602.34},{"Year":2023,"Month":2,"Net Sales":1586.4},{"Year":2023,"Month":4,"Net Sales":3304.8},{"Year":2023,"Month":7,"Net Sales":3669.75},{"Year":2024,"Month":1,"Net Sales":8622.0},{"Year":2024,"Month":2,"Net Sales":4092.3},{"Year":2024,"Month":4,"Net Sales":217.32},{"Year":2024,"Month":8,"Net Sales":4262.75},{"Year":2024,"Month":12,"Net Sales":1113.23},{"Year":2025,"Month":4,"Net Sales":864.42},{"Year":2025,"Month":9,"Net Sales":4130.0},{"Year":2025,"Month":12,"Net Sales":669.69}],"cat":[{"Category":"Automotive","Net Sales":11586.56},{"Category":"Clothing","Net Sales":8392.75},{"Category":"Electronics","Net Sales":1113.23},{"Category":"Food & Grocery","Net Sales":7352.790000000001},{"Category":"Home & Kitchen","Net Sales":10351.84},{"Category":"Office Supplies","Net Sales":669.69},{"Category":"Sports","Net Sales":217.32},{"Category":"Toys","Net Sales":23185.809999999998}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":28041.62},{"Sales Channel":"Online","Net Sales":11127.9},{"Sales Channel":"Retail Store","Net Sales":12056.960000000001},{"Sales Channel":"Wholesale","Net Sales":11643.51}],"status":[{"Order Status":"Completed","Net Sales":34784.09},{"Order Status":"Pending","Net Sales":12272.03},{"Order Status":"Returned","Net Sales":15813.87}]},"USER-019":{"name":"Patricia Davis","location":"Hamburg","country":"Germany","role":"Regional Manager","target":334839.0,"net_sales":43555.030000000006,"profit":18032.09,"orders":13,"monthly":[{"Year":2022,"Month":4,"Net Sales":446.28},{"Year":2022,"Month":10,"Net Sales":2110.6},{"Year":2023,"Month":2,"Net Sales":9432.45},{"Year":2023,"Month":12,"Net Sales":402.64},{"Year":2024,"Month":1,"Net Sales":838.71},{"Year":2024,"Month":2,"Net Sales":4548.08},{"Year":2025,"Month":2,"Net Sales":14750.4},{"Year":2025,"Month":3,"Net Sales":4166.03},{"Year":2025,"Month":4,"Net Sales":128.73},{"Year":2025,"Month":6,"Net Sales":251.61},{"Year":2025,"Month":7,"Net Sales":4848.1},{"Year":2025,"Month":8,"Net Sales":1631.4}],"cat":[{"Category":"Beauty","Net Sales":4049.84},{"Category":"Books","Net Sales":9432.45},{"Category":"Clothing","Net Sales":3730.56},{"Category":"Electronics","Net Sales":946.25},{"Category":"Home & Kitchen","Net Sales":4848.1},{"Category":"Office Supplies","Net Sales":1631.4},{"Category":"Toys","Net Sales":18916.43}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":6276.629999999999},{"Sales Channel":"Online","Net Sales":15002.01},{"Sales Channel":"Retail Store","Net Sales":1241.35},{"Sales Channel":"Wholesale","Net Sales":21035.04}],"status":[{"Order Status":"Completed","Net Sales":30144.65},{"Order Status":"Pending","Net Sales":4144.639999999999},{"Order Status":"Returned","Net Sales":9265.74}]},"USER-020":{"name":"Olivia Davis","location":"Lyon","country":"France","role":"Sales Executive","target":194029.0,"net_sales":62836.94,"profit":27024.469999999998,"orders":13,"monthly":[{"Year":2022,"Month":3,"Net Sales":2395.28},{"Year":2022,"Month":4,"Net Sales":13292.51},{"Year":2022,"Month":5,"Net Sales":1635.66},{"Year":2022,"Month":7,"Net Sales":2102.05},{"Year":2023,"Month":1,"Net Sales":2610.87},{"Year":2023,"Month":4,"Net Sales":2881.98},{"Year":2024,"Month":1,"Net Sales":3367.56},{"Year":2024,"Month":2,"Net Sales":4092.3},{"Year":2024,"Month":7,"Net Sales":4274.54},{"Year":2024,"Month":8,"Net Sales":11523.98},{"Year":2024,"Month":11,"Net Sales":2350.84},{"Year":2025,"Month":2,"Net Sales":1659.41},{"Year":2025,"Month":6,"Net Sales":10649.96}],"cat":[{"Category":"Automotive","Net Sales":8366.84},{"Category":"Books","Net Sales":1659.41},{"Category":"Clothing","Net Sales":1635.66},{"Category":"Electronics","Net Sales":30309.34},{"Category":"Food & Grocery","Net Sales":2395.28},{"Category":"Home & Kitchen","Net Sales":10649.96},{"Category":"Office Supplies","Net Sales":2102.05},{"Category":"Sports","Net Sales":3367.56},{"Category":"Toys","Net Sales":2350.84}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":11375.550000000001},{"Sales Channel":"Online","Net Sales":30049.309999999998},{"Sales Channel":"Retail Store","Net Sales":19016.8},{"Sales Channel":"Wholesale","Net Sales":2395.28}],"status":[{"Order Status":"Completed","Net Sales":36676.5},{"Order Status":"Pending","Net Sales":14636.46},{"Order Status":"Returned","Net Sales":11523.98}]},"USER-021":{"name":"Ryan Jones","location":"Perth","country":"Australia","role":"Account Manager","target":293185.0,"net_sales":54397.350000000006,"profit":26151.09,"orders":13,"monthly":[{"Year":2022,"Month":5,"Net Sales":10408.7},{"Year":2022,"Month":9,"Net Sales":972.62},{"Year":2023,"Month":4,"Net Sales":7057.29},{"Year":2023,"Month":6,"Net Sales":4095.06},{"Year":2023,"Month":8,"Net Sales":947.85},{"Year":2023,"Month":9,"Net Sales":527.55},{"Year":2024,"Month":3,"Net Sales":4016.3100000000004},{"Year":2024,"Month":6,"Net Sales":4699.86},{"Year":2024,"Month":7,"Net Sales":18741.6},{"Year":2024,"Month":11,"Net Sales":1912.54},{"Year":2025,"Month":12,"Net Sales":1017.97}],"cat":[{"Category":"Automotive","Net Sales":1337.44},{"Category":"Beauty","Net Sales":1912.54},{"Category":"Books","Net Sales":8396.7},{"Category":"Clothing","Net Sales":20662.07},{"Category":"Electronics","Net Sales":10408.7},{"Category":"Food & Grocery","Net Sales":940.8},{"Category":"Home & Kitchen","Net Sales":527.55},{"Category":"Sports","Net Sales":4095.06},{"Category":"Toys","Net Sales":6116.49}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":5717.83},{"Sales Channel":"Online","Net Sales":6963.51},{"Sales Channel":"Retail Store","Net Sales":20630.249999999996},{"Sales Channel":"Wholesale","Net Sales":21085.760000000002}],"status":[{"Order Status":"Completed","Net Sales":22441.96},{"Order Status":"Pending","Net Sales":29016.95},{"Order Status":"Returned","Net Sales":2938.44}]},"USER-022":{"name":"Robert Johnson","location":"New York","country":"USA","role":"Sales Manager","target":475626.0,"net_sales":84445.97000000002,"profit":39150.03,"orders":15,"monthly":[{"Year":2022,"Month":3,"Net Sales":6896.26},{"Year":2022,"Month":10,"Net Sales":12493.34},{"Year":2022,"Month":12,"Net Sales":12619.9},{"Year":2023,"Month":1,"Net Sales":568.71},{"Year":2023,"Month":3,"Net Sales":11936.28},{"Year":2023,"Month":4,"Net Sales":3730.87},{"Year":2023,"Month":11,"Net Sales":5471.3},{"Year":2024,"Month":1,"Net Sales":2591.96},{"Year":2024,"Month":6,"Net Sales":11531.28},{"Year":2024,"Month":10,"Net Sales":4327.75},{"Year":2025,"Month":2,"Net Sales":2026.45},{"Year":2025,"Month":5,"Net Sales":1721.94},{"Year":2025,"Month":6,"Net Sales":407.66},{"Year":2025,"Month":7,"Net Sales":8122.27}],"cat":[{"Category":"Automotive","Net Sales":22914.940000000002},{"Category":"Beauty","Net Sales":9488.220000000001},{"Category":"Clothing","Net Sales":568.71},{"Category":"Electronics","Net Sales":20742.17},{"Category":"Office Supplies","Net Sales":4735.41},{"Category":"Sports","Net Sales":5471.3},{"Category":"Toys","Net Sales":20525.22}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":12639.77},{"Sales Channel":"Online","Net Sales":27882.05},{"Sales Channel":"Retail Store","Net Sales":29961.42},{"Sales Channel":"Wholesale","Net Sales":13962.730000000001}],"status":[{"Order Status":"Completed","Net Sales":27987.08},{"Order Status":"Pending","Net Sales":23997.39},{"Order Status":"Returned","Net Sales":32461.5}]},"USER-023":{"name":"Liam Jackson","location":"Toronto","country":"Canada","role":"Account Manager","target":268549.0,"net_sales":75826.44,"profit":33614.68,"orders":17,"monthly":[{"Year":2022,"Month":8,"Net Sales":688.82},{"Year":2022,"Month":10,"Net Sales":13139.18},{"Year":2022,"Month":12,"Net Sales":17952.68},{"Year":2023,"Month":2,"Net Sales":121.72},{"Year":2023,"Month":5,"Net Sales":770.05},{"Year":2023,"Month":8,"Net Sales":3956.64},{"Year":2023,"Month":12,"Net Sales":490.22},{"Year":2024,"Month":1,"Net Sales":547.02},{"Year":2024,"Month":9,"Net Sales":8216.04},{"Year":2025,"Month":3,"Net Sales":1535.52},{"Year":2025,"Month":4,"Net Sales":3847.96},{"Year":2025,"Month":6,"Net Sales":12110.8},{"Year":2025,"Month":9,"Net Sales":7569.0},{"Year":2025,"Month":10,"Net Sales":4235.39},{"Year":2025,"Month":12,"Net Sales":645.4}],"cat":[{"Category":"Automotive","Net Sales":12540.77},{"Category":"Books","Net Sales":14067.29},{"Category":"Clothing","Net Sales":13646.32},{"Category":"Food & Grocery","Net Sales":4885.200000000001},{"Category":"Home & Kitchen","Net Sales":17095.82},{"Category":"Office Supplies","Net Sales":810.5400000000001},{"Category":"Toys","Net Sales":12780.5}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":19991.68},{"Sales Channel":"Online","Net Sales":28445.98},{"Sales Channel":"Retail Store","Net Sales":22131.38},{"Sales Channel":"Wholesale","Net Sales":5257.4}],"status":[{"Order Status":"Completed","Net Sales":43862.26},{"Order Status":"Pending","Net Sales":8192.03},{"Order Status":"Returned","Net Sales":23772.15}]},"USER-024":{"name":"Emily Harris","location":"Ajman","country":"UAE","role":"Regional Manager","target":457934.0,"net_sales":97221.2,"profit":43349.64,"orders":20,"monthly":[{"Year":2022,"Month":1,"Net Sales":2633.38},{"Year":2022,"Month":8,"Net Sales":3550.9},{"Year":2022,"Month":10,"Net Sales":23183.010000000002},{"Year":2022,"Month":11,"Net Sales":43.46},{"Year":2022,"Month":12,"Net Sales":1220.52},{"Year":2023,"Month":9,"Net Sales":908.7},{"Year":2023,"Month":10,"Net Sales":13242.32},{"Year":2024,"Month":1,"Net Sales":1026.73},{"Year":2024,"Month":4,"Net Sales":4524.32},{"Year":2024,"Month":5,"Net Sales":3836.78},{"Year":2024,"Month":9,"Net Sales":2969.39},{"Year":2024,"Month":10,"Net Sales":969.62},{"Year":2024,"Month":11,"Net Sales":7500.48},{"Year":2025,"Month":1,"Net Sales":16226.28},{"Year":2025,"Month":2,"Net Sales":5119.36},{"Year":2025,"Month":3,"Net Sales":5677.66},{"Year":2025,"Month":7,"Net Sales":1740.4},{"Year":2025,"Month":9,"Net Sales":2847.89}],"cat":[{"Category":"Automotive","Net Sales":11116.17},{"Category":"Beauty","Net Sales":4577.63},{"Category":"Clothing","Net Sales":14879.34},{"Category":"Electronics","Net Sales":25264.15},{"Category":"Food & Grocery","Net Sales":8525.55},{"Category":"Home & Kitchen","Net Sales":6088.98},{"Category":"Office Supplies","Net Sales":13242.32},{"Category":"Sports","Net Sales":1783.8600000000001},{"Category":"Toys","Net Sales":11743.2}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":13446.55},{"Sales Channel":"Online","Net Sales":16354.93},{"Sales Channel":"Retail Store","Net Sales":21915.309999999998},{"Sales Channel":"Wholesale","Net Sales":45504.41}],"status":[{"Order Status":"Completed","Net Sales":46546.13},{"Order Status":"Pending","Net Sales":40662.2},{"Order Status":"Returned","Net Sales":10012.87}]},"USER-025":{"name":"Liam Smith","location":"Bras\u00edlia","country":"Brazil","role":"Sales Director","target":274015.0,"net_sales":80111.98,"profit":34172.15,"orders":21,"monthly":[{"Year":2022,"Month":4,"Net Sales":6902.07},{"Year":2022,"Month":8,"Net Sales":6642.92},{"Year":2022,"Month":9,"Net Sales":1368.98},{"Year":2022,"Month":10,"Net Sales":5927.54},{"Year":2022,"Month":11,"Net Sales":4361.22},{"Year":2022,"Month":12,"Net Sales":4705.09},{"Year":2023,"Month":1,"Net Sales":4947.76},{"Year":2023,"Month":3,"Net Sales":976.1},{"Year":2024,"Month":5,"Net Sales":1434.95},{"Year":2025,"Month":3,"Net Sales":17901.809999999998},{"Year":2025,"Month":5,"Net Sales":12755.38},{"Year":2025,"Month":6,"Net Sales":3871.58},{"Year":2025,"Month":8,"Net Sales":1895.7},{"Year":2025,"Month":10,"Net Sales":5974.6},{"Year":2025,"Month":12,"Net Sales":446.28}],"cat":[{"Category":"Automotive","Net Sales":3388.31},{"Category":"Beauty","Net Sales":5686.84},{"Category":"Books","Net Sales":16419.83},{"Category":"Clothing","Net Sales":5858.2300000000005},{"Category":"Electronics","Net Sales":13398.759999999998},{"Category":"Food & Grocery","Net Sales":14091.3},{"Category":"Home & Kitchen","Net Sales":5428.66},{"Category":"Office Supplies","Net Sales":852.04},{"Category":"Sports","Net Sales":972.91},{"Category":"Toys","Net Sales":14015.1}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":16974.26},{"Sales Channel":"Online","Net Sales":11188.36},{"Sales Channel":"Retail Store","Net Sales":33176.1},{"Sales Channel":"Wholesale","Net Sales":18773.260000000002}],"status":[{"Order Status":"Completed","Net Sales":35125.52},{"Order Status":"Pending","Net Sales":24512.45},{"Order Status":"Returned","Net Sales":20474.01}]},"USER-026":{"name":"Liam Smith","location":"Berlin","country":"Germany","role":"Sales Executive","target":423413.0,"net_sales":99533.94999999998,"profit":40902.31999999999,"orders":19,"monthly":[{"Year":2022,"Month":2,"Net Sales":3737.79},{"Year":2022,"Month":6,"Net Sales":5743.23},{"Year":2022,"Month":10,"Net Sales":10151.21},{"Year":2022,"Month":11,"Net Sales":287.76},{"Year":2022,"Month":12,"Net Sales":10182.39},{"Year":2023,"Month":9,"Net Sales":3881.76},{"Year":2023,"Month":11,"Net Sales":15666.2},{"Year":2023,"Month":12,"Net Sales":5617.15},{"Year":2024,"Month":2,"Net Sales":13498.56},{"Year":2024,"Month":3,"Net Sales":698.67},{"Year":2024,"Month":4,"Net Sales":5596.91},{"Year":2024,"Month":8,"Net Sales":7024.0},{"Year":2024,"Month":9,"Net Sales":3282.12},{"Year":2024,"Month":10,"Net Sales":4491.15},{"Year":2025,"Month":3,"Net Sales":4051.18},{"Year":2025,"Month":8,"Net Sales":1851.3},{"Year":2025,"Month":11,"Net Sales":3772.57}],"cat":[{"Category":"Automotive","Net Sales":13498.56},{"Category":"Beauty","Net Sales":3737.79},{"Category":"Books","Net Sales":26741.38},{"Category":"Clothing","Net Sales":2188.29},{"Category":"Electronics","Net Sales":19661.059999999998},{"Category":"Food & Grocery","Net Sales":11545.84},{"Category":"Home & Kitchen","Net Sales":6392.67},{"Category":"Sports","Net Sales":10151.21},{"Category":"Toys","Net Sales":5617.15}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":53361.64},{"Sales Channel":"Online","Net Sales":1900.53},{"Sales Channel":"Retail Store","Net Sales":16962.12},{"Sales Channel":"Wholesale","Net Sales":27309.659999999996}],"status":[{"Order Status":"Completed","Net Sales":65900.16},{"Order Status":"Pending","Net Sales":17232.18},{"Order Status":"Returned","Net Sales":16401.61}]},"USER-027":{"name":"Thomas Miller","location":"Toulouse","country":"France","role":"Regional Manager","target":102213.0,"net_sales":121753.43,"profit":48642.950000000004,"orders":17,"monthly":[{"Year":2022,"Month":4,"Net Sales":11020.98},{"Year":2023,"Month":1,"Net Sales":12839.9},{"Year":2023,"Month":4,"Net Sales":9848.34},{"Year":2023,"Month":8,"Net Sales":3443.88},{"Year":2023,"Month":12,"Net Sales":11835.94},{"Year":2024,"Month":1,"Net Sales":1115.9},{"Year":2024,"Month":2,"Net Sales":26162.53},{"Year":2024,"Month":4,"Net Sales":9380.23},{"Year":2024,"Month":5,"Net Sales":768.53},{"Year":2024,"Month":7,"Net Sales":1124.62},{"Year":2024,"Month":12,"Net Sales":9644.8},{"Year":2025,"Month":1,"Net Sales":6331.79},{"Year":2025,"Month":5,"Net Sales":4452.92},{"Year":2025,"Month":7,"Net Sales":3459.38},{"Year":2025,"Month":12,"Net Sales":10323.69}],"cat":[{"Category":"Automotive","Net Sales":13955.8},{"Category":"Beauty","Net Sales":14477.630000000001},{"Category":"Clothing","Net Sales":10879.189999999999},{"Category":"Electronics","Net Sales":29202.99},{"Category":"Home & Kitchen","Net Sales":12469.14},{"Category":"Office Supplies","Net Sales":10323.69},{"Category":"Sports","Net Sales":9848.34},{"Category":"Toys","Net Sales":20596.65}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":12469.14},{"Sales Channel":"Online","Net Sales":60075.55},{"Sales Channel":"Retail Store","Net Sales":23500.09},{"Sales Channel":"Wholesale","Net Sales":25708.65}],"status":[{"Order Status":"Completed","Net Sales":70666.28},{"Order Status":"Pending","Net Sales":17137.27},{"Order Status":"Returned","Net Sales":33949.88}]},"USER-028":{"name":"William Jones","location":"Rio de Janeiro","country":"Brazil","role":"Account Manager","target":236393.0,"net_sales":78211.28,"profit":38057.25000000001,"orders":15,"monthly":[{"Year":2022,"Month":2,"Net Sales":1832.81},{"Year":2022,"Month":4,"Net Sales":7809.48},{"Year":2022,"Month":8,"Net Sales":17296.92},{"Year":2022,"Month":9,"Net Sales":678.82},{"Year":2023,"Month":7,"Net Sales":8589.48},{"Year":2023,"Month":12,"Net Sales":1982.22},{"Year":2024,"Month":8,"Net Sales":1583.51},{"Year":2024,"Month":12,"Net Sales":4156.38},{"Year":2025,"Month":1,"Net Sales":8134.2},{"Year":2025,"Month":3,"Net Sales":4043.5},{"Year":2025,"Month":9,"Net Sales":5926.14},{"Year":2025,"Month":11,"Net Sales":5316.7},{"Year":2025,"Month":12,"Net Sales":10861.12}],"cat":[{"Category":"Automotive","Net Sales":1583.51},{"Category":"Beauty","Net Sales":17143.510000000002},{"Category":"Books","Net Sales":8134.2},{"Category":"Clothing","Net Sales":6981.219999999999},{"Category":"Electronics","Net Sales":14326.06},{"Category":"Home & Kitchen","Net Sales":4156.38},{"Category":"Sports","Net Sales":8589.48},{"Category":"Toys","Net Sales":17296.92}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":26966.73},{"Sales Channel":"Online","Net Sales":21254.629999999997},{"Sales Channel":"Retail Store","Net Sales":12639.400000000001},{"Sales Channel":"Wholesale","Net Sales":17350.52}],"status":[{"Order Status":"Completed","Net Sales":26921.11},{"Order Status":"Pending","Net Sales":15233.08},{"Order Status":"Returned","Net Sales":36057.09}]},"USER-029":{"name":"Michael Garcia","location":"Sharjah","country":"UAE","role":"Sales Executive","target":104994.0,"net_sales":63162.94,"profit":24044.739999999998,"orders":13,"monthly":[{"Year":2022,"Month":9,"Net Sales":10338.82},{"Year":2022,"Month":10,"Net Sales":3099.66},{"Year":2023,"Month":7,"Net Sales":1862.32},{"Year":2024,"Month":6,"Net Sales":7921.8},{"Year":2024,"Month":8,"Net Sales":3498.82},{"Year":2025,"Month":6,"Net Sales":14828.91},{"Year":2025,"Month":8,"Net Sales":10294.94},{"Year":2025,"Month":11,"Net Sales":11317.67}],"cat":[{"Category":"Books","Net Sales":7921.8},{"Category":"Clothing","Net Sales":5310.0},{"Category":"Electronics","Net Sales":4873.610000000001},{"Category":"Home & Kitchen","Net Sales":11317.67},{"Category":"Office Supplies","Net Sales":13926.01},{"Category":"Sports","Net Sales":19813.85}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":11088.369999999999},{"Sales Channel":"Online","Net Sales":15166.8},{"Sales Channel":"Retail Store","Net Sales":13231.8},{"Sales Channel":"Wholesale","Net Sales":23675.97}],"status":[{"Order Status":"Completed","Net Sales":26008.48},{"Order Status":"Pending","Net Sales":33754.36},{"Order Status":"Returned","Net Sales":3400.1}]},"USER-030":{"name":"Richard Johnson","location":"Dubai","country":"UAE","role":"Regional Manager","target":263810.0,"net_sales":133975.44,"profit":56924.100000000006,"orders":24,"monthly":[{"Year":2022,"Month":7,"Net Sales":459.3},{"Year":2022,"Month":11,"Net Sales":8606.77},{"Year":2022,"Month":12,"Net Sales":18264.08},{"Year":2023,"Month":1,"Net Sales":1751.61},{"Year":2023,"Month":6,"Net Sales":9130.08},{"Year":2024,"Month":1,"Net Sales":12205.32},{"Year":2024,"Month":2,"Net Sales":7936.25},{"Year":2024,"Month":5,"Net Sales":2689.67},{"Year":2024,"Month":6,"Net Sales":314.74},{"Year":2024,"Month":10,"Net Sales":2474.49},{"Year":2025,"Month":3,"Net Sales":10373.04},{"Year":2025,"Month":4,"Net Sales":17754.35},{"Year":2025,"Month":7,"Net Sales":13949.230000000001},{"Year":2025,"Month":9,"Net Sales":7910.099999999999},{"Year":2025,"Month":10,"Net Sales":5565.98},{"Year":2025,"Month":11,"Net Sales":8237.39},{"Year":2025,"Month":12,"Net Sales":6353.04}],"cat":[{"Category":"Beauty","Net Sales":13546.630000000001},{"Category":"Clothing","Net Sales":7179.78},{"Category":"Electronics","Net Sales":19156.05},{"Category":"Food & Grocery","Net Sales":9334.13},{"Category":"Home & Kitchen","Net Sales":31283.33},{"Category":"Office Supplies","Net Sales":19288.68},{"Category":"Sports","Net Sales":23305.15},{"Category":"Toys","Net Sales":10881.69}],"channel":[{"Sales Channel":"Direct Sales","Net Sales":55393.479999999996},{"Sales Channel":"Online","Net Sales":38284.25},{"Sales Channel":"Retail Store","Net Sales":29924.67},{"Sales Channel":"Wholesale","Net Sales":10373.04}],"status":[{"Order Status":"Completed","Net Sales":94317.72},{"Order Status":"Pending","Net Sales":19393.77},{"Order Status":"Returned","Net Sales":20263.95}]}},"location_data":{"Hamburg":{"users":["USER-001","USER-019"],"net_sales":124661.98999999999,"profit":51972.340000000004,"orders":34,"monthly":[{"Year":2022,"Month":2,"Net_Sales":889.24},{"Year":2022,"Month":4,"Net_Sales":446.28},{"Year":2022,"Month":5,"Net_Sales":2275.27},{"Year":2022,"Month":8,"Net_Sales":14282.31},{"Year":2022,"Month":9,"Net_Sales":4699.86},{"Year":2022,"Month":10,"Net_Sales":2110.6},{"Year":2023,"Month":1,"Net_Sales":4309.29},{"Year":2023,"Month":2,"Net_Sales":9991.59},{"Year":2023,"Month":3,"Net_Sales":2274.84},{"Year":2023,"Month":5,"Net_Sales":1219.79},{"Year":2023,"Month":8,"Net_Sales":15365.3},{"Year":2023,"Month":9,"Net_Sales":7210.44},{"Year":2023,"Month":11,"Net_Sales":229.59},{"Year":2023,"Month":12,"Net_Sales":5052.13},{"Year":2024,"Month":1,"Net_Sales":12214.41},{"Year":2024,"Month":2,"Net_Sales":4548.08},{"Year":2024,"Month":8,"Net_Sales":847.08},{"Year":2025,"Month":2,"Net_Sales":18488.19},{"Year":2025,"Month":3,"Net_Sales":6165.54},{"Year":2025,"Month":4,"Net_Sales":128.73},{"Year":2025,"Month":6,"Net_Sales":251.61},{"Year":2025,"Month":7,"Net_Sales":4848.1},{"Year":2025,"Month":8,"Net_Sales":1631.4},{"Year":2025,"Month":10,"Net_Sales":4377.04},{"Year":2025,"Month":11,"Net_Sales":805.28}],"cat":[{"Category":"Automotive","Net_Sales":14484.96},{"Category":"Beauty","Net_Sales":19645.41},{"Category":"Books","Net_Sales":14132.310000000001},{"Category":"Clothing","Net_Sales":6005.4},{"Category":"Electronics","Net_Sales":16311.55},{"Category":"Food & Grocery","Net_Sales":7456.74},{"Category":"Home & Kitchen","Net_Sales":7123.370000000001},{"Category":"Office Supplies","Net_Sales":9034.35},{"Category":"Sports","Net_Sales":4377.04},{"Category":"Toys","Net_Sales":26090.86}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":27548.26},{"Sales Channel":"Online","Net_Sales":36741.06},{"Sales Channel":"Retail Store","Net_Sales":19401.03},{"Sales Channel":"Wholesale","Net_Sales":40971.64}],"status":[{"Order Status":"Completed","Count":16},{"Order Status":"Pending","Count":11},{"Order Status":"Returned","Count":7}],"top_prod":[{"Product Name":"Laptop Pro","Net_Sales":15365.3},{"Product Name":"Puzzle 1000pc","Net_Sales":14750.4},{"Product Name":"Tire Inflator","Net_Sales":12748.64},{"Product Name":"Marketing Mastery","Net_Sales":9432.45},{"Product Name":"Eye Cream","Net_Sales":7210.44}]},"Lyon":{"users":["USER-002","USER-020"],"net_sales":158988.11000000004,"profit":66633.78,"orders":30,"monthly":[{"Year":2022,"Month":3,"Net_Sales":2395.28},{"Year":2022,"Month":4,"Net_Sales":16242.42},{"Year":2022,"Month":5,"Net_Sales":1635.66},{"Year":2022,"Month":7,"Net_Sales":8920.02},{"Year":2022,"Month":10,"Net_Sales":11750.93},{"Year":2023,"Month":1,"Net_Sales":2610.87},{"Year":2023,"Month":2,"Net_Sales":1713.98},{"Year":2023,"Month":3,"Net_Sales":6266.48},{"Year":2023,"Month":4,"Net_Sales":2881.98},{"Year":2023,"Month":6,"Net_Sales":7536.65},{"Year":2023,"Month":7,"Net_Sales":2640.6},{"Year":2023,"Month":9,"Net_Sales":11057.300000000001},{"Year":2023,"Month":12,"Net_Sales":8184.6},{"Year":2024,"Month":1,"Net_Sales":8408.15},{"Year":2024,"Month":2,"Net_Sales":4092.3},{"Year":2024,"Month":7,"Net_Sales":7668.21},{"Year":2024,"Month":8,"Net_Sales":11523.98},{"Year":2024,"Month":11,"Net_Sales":2350.84},{"Year":2025,"Month":2,"Net_Sales":13936.52},{"Year":2025,"Month":6,"Net_Sales":10649.96},{"Year":2025,"Month":7,"Net_Sales":223.14},{"Year":2025,"Month":9,"Net_Sales":16298.24}],"cat":[{"Category":"Automotive","Net_Sales":29489.18},{"Category":"Beauty","Net_Sales":1937.12},{"Category":"Books","Net_Sales":34298.18},{"Category":"Clothing","Net_Sales":15578.72},{"Category":"Electronics","Net_Sales":30309.34},{"Category":"Food & Grocery","Net_Sales":2395.28},{"Category":"Home & Kitchen","Net_Sales":14043.63},{"Category":"Office Supplies","Net_Sales":18400.29},{"Category":"Sports","Net_Sales":10185.53},{"Category":"Toys","Net_Sales":2350.84}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":44565.71},{"Sales Channel":"Online","Net_Sales":56584.92},{"Sales Channel":"Retail Store","Net_Sales":47905.55},{"Sales Channel":"Wholesale","Net_Sales":9931.93}],"status":[{"Order Status":"Completed","Count":20},{"Order Status":"Pending","Count":5},{"Order Status":"Returned","Count":5}],"top_prod":[{"Product Name":"Car Vacuum","Net_Sales":19813.55},{"Product Name":"Sticky Notes","Net_Sales":16298.24},{"Product Name":"Smart Watch","Net_Sales":13292.51},{"Product Name":"Business Analytics","Net_Sales":11750.93},{"Product Name":"Data Science Guide","Net_Sales":11671.45}]},"Vancouver":{"users":["USER-003"],"net_sales":57945.08,"profit":24849.420000000002,"orders":12,"monthly":[{"Year":2022,"Month":2,"Net_Sales":13204.779999999999},{"Year":2022,"Month":9,"Net_Sales":4583.88},{"Year":2022,"Month":10,"Net_Sales":329.15},{"Year":2022,"Month":11,"Net_Sales":14954.76},{"Year":2023,"Month":12,"Net_Sales":4658.0},{"Year":2024,"Month":3,"Net_Sales":929.04},{"Year":2024,"Month":7,"Net_Sales":8100.96},{"Year":2025,"Month":2,"Net_Sales":464.97},{"Year":2025,"Month":5,"Net_Sales":7049.79},{"Year":2025,"Month":10,"Net_Sales":3669.75}],"cat":[{"Category":"Automotive","Net_Sales":329.15},{"Category":"Books","Net_Sales":11707.79},{"Category":"Clothing","Net_Sales":932.65},{"Category":"Electronics","Net_Sales":21854.72},{"Category":"Food & Grocery","Net_Sales":8565.93},{"Category":"Home & Kitchen","Net_Sales":5372.17},{"Category":"Office Supplies","Net_Sales":4583.88},{"Category":"Sports","Net_Sales":929.04},{"Category":"Toys","Net_Sales":3669.75}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":22465.91},{"Sales Channel":"Online","Net_Sales":4913.03},{"Sales Channel":"Retail Store","Net_Sales":16866.22},{"Sales Channel":"Wholesale","Net_Sales":13699.92}],"status":[{"Order Status":"Completed","Count":7},{"Order Status":"Pending","Count":1},{"Order Status":"Returned","Count":4}],"top_prod":[{"Product Name":"Mechanical Keyboard","Net_Sales":14022.11},{"Product Name":"Green Tea Box","Net_Sales":8100.96},{"Product Name":"Webcam HD","Net_Sales":7832.61},{"Product Name":"Finance 101","Net_Sales":7049.79},{"Product Name":"Cookware Set","Net_Sales":5372.17}]},"Toronto":{"users":["USER-004","USER-023"],"net_sales":135051.15000000002,"profit":55818.81,"orders":31,"monthly":[{"Year":2022,"Month":5,"Net_Sales":8423.32},{"Year":2022,"Month":8,"Net_Sales":688.82},{"Year":2022,"Month":9,"Net_Sales":4774.35},{"Year":2022,"Month":10,"Net_Sales":20883.11},{"Year":2022,"Month":12,"Net_Sales":17952.68},{"Year":2023,"Month":2,"Net_Sales":121.72},{"Year":2023,"Month":5,"Net_Sales":770.05},{"Year":2023,"Month":6,"Net_Sales":1469.51},{"Year":2023,"Month":8,"Net_Sales":3956.64},{"Year":2023,"Month":9,"Net_Sales":567.77},{"Year":2023,"Month":12,"Net_Sales":490.22},{"Year":2024,"Month":1,"Net_Sales":547.02},{"Year":2024,"Month":2,"Net_Sales":5453.71},{"Year":2024,"Month":3,"Net_Sales":12273.36},{"Year":2024,"Month":4,"Net_Sales":816.56},{"Year":2024,"Month":8,"Net_Sales":7947.39},{"Year":2024,"Month":9,"Net_Sales":8216.04},{"Year":2025,"Month":3,"Net_Sales":1535.52},{"Year":2025,"Month":4,"Net_Sales":3847.96},{"Year":2025,"Month":6,"Net_Sales":12110.8},{"Year":2025,"Month":8,"Net_Sales":3730.87},{"Year":2025,"Month":9,"Net_Sales":10598.84},{"Year":2025,"Month":10,"Net_Sales":4235.39},{"Year":2025,"Month":12,"Net_Sales":3639.5}],"cat":[{"Category":"Automotive","Net_Sales":25738.440000000002},{"Category":"Books","Net_Sales":21811.22},{"Category":"Clothing","Net_Sales":13646.32},{"Category":"Electronics","Net_Sales":13089.919999999998},{"Category":"Food & Grocery","Net_Sales":8447.07},{"Category":"Home & Kitchen","Net_Sales":26512.72},{"Category":"Office Supplies","Net_Sales":810.5400000000001},{"Category":"Toys","Net_Sales":24994.920000000002}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":41330.48},{"Sales Channel":"Online","Net_Sales":36130.950000000004},{"Sales Channel":"Retail Store","Net_Sales":25161.22},{"Sales Channel":"Wholesale","Net_Sales":32428.5}],"status":[{"Order Status":"Completed","Count":21},{"Order Status":"Pending","Count":2},{"Order Status":"Returned","Count":8}],"top_prod":[{"Product Name":"Marketing Mastery","Net_Sales":18806.68},{"Product Name":"Coffee Maker","Net_Sales":14608.69},{"Product Name":"Car Vacuum","Net_Sales":13197.67},{"Product Name":"Remote Car","Net_Sales":12780.5},{"Product Name":"Sports Shorts","Net_Sales":12110.8}]},"Calgary":{"users":["USER-005"],"net_sales":76287.19,"profit":31370.090000000004,"orders":16,"monthly":[{"Year":2022,"Month":11,"Net_Sales":2770.92},{"Year":2023,"Month":1,"Net_Sales":7421.31},{"Year":2023,"Month":2,"Net_Sales":415.31},{"Year":2023,"Month":3,"Net_Sales":2517.9},{"Year":2023,"Month":7,"Net_Sales":1318.88},{"Year":2023,"Month":12,"Net_Sales":9005.49},{"Year":2024,"Month":2,"Net_Sales":15028.6},{"Year":2024,"Month":3,"Net_Sales":7800.15},{"Year":2024,"Month":6,"Net_Sales":1985.39},{"Year":2024,"Month":11,"Net_Sales":308.55},{"Year":2025,"Month":6,"Net_Sales":8460.55},{"Year":2025,"Month":8,"Net_Sales":528.12},{"Year":2025,"Month":9,"Net_Sales":12945.380000000001},{"Year":2025,"Month":10,"Net_Sales":5780.64}],"cat":[{"Category":"Beauty","Net_Sales":15878.59},{"Category":"Books","Net_Sales":8097.37},{"Category":"Electronics","Net_Sales":23489.15},{"Category":"Food & Grocery","Net_Sales":9406.7},{"Category":"Home & Kitchen","Net_Sales":13403.84},{"Category":"Office Supplies","Net_Sales":5780.64},{"Category":"Sports","Net_Sales":230.9}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":2770.92},{"Sales Channel":"Online","Net_Sales":30374.68},{"Sales Channel":"Retail Store","Net_Sales":33922.020000000004},{"Sales Channel":"Wholesale","Net_Sales":9219.57}],"status":[{"Order Status":"Completed","Count":9},{"Order Status":"Pending","Count":2},{"Order Status":"Returned","Count":5}],"top_prod":[{"Product Name":"4K Monitor","Net_Sales":23489.15},{"Product Name":"Air Fryer","Net_Sales":11776.41},{"Product Name":"Marketing Mastery","Net_Sales":7569.25},{"Product Name":"Face Moisturizer","Net_Sales":7500.96},{"Product Name":"Dark Chocolate","Net_Sales":7421.31}]},"London":{"users":["USER-006","USER-012","USER-017"],"net_sales":283661.22000000003,"profit":121959.70000000001,"orders":45,"monthly":[{"Year":2022,"Month":2,"Net_Sales":12104.56},{"Year":2022,"Month":3,"Net_Sales":531.18},{"Year":2022,"Month":4,"Net_Sales":5704.38},{"Year":2022,"Month":8,"Net_Sales":10263.78},{"Year":2022,"Month":9,"Net_Sales":4880.52},{"Year":2022,"Month":11,"Net_Sales":1621.16},{"Year":2023,"Month":1,"Net_Sales":10089.43},{"Year":2023,"Month":3,"Net_Sales":588.26},{"Year":2023,"Month":4,"Net_Sales":22808.010000000002},{"Year":2023,"Month":5,"Net_Sales":12537.84},{"Year":2023,"Month":8,"Net_Sales":10006.04},{"Year":2023,"Month":9,"Net_Sales":597.63},{"Year":2023,"Month":10,"Net_Sales":10009.84},{"Year":2023,"Month":11,"Net_Sales":11320.44},{"Year":2023,"Month":12,"Net_Sales":3829.91},{"Year":2024,"Month":2,"Net_Sales":16606.56},{"Year":2024,"Month":3,"Net_Sales":14234.18},{"Year":2024,"Month":4,"Net_Sales":1972.72},{"Year":2024,"Month":6,"Net_Sales":3307.1},{"Year":2024,"Month":8,"Net_Sales":9529.56},{"Year":2024,"Month":9,"Net_Sales":954.14},{"Year":2024,"Month":11,"Net_Sales":16909.73},{"Year":2024,"Month":12,"Net_Sales":12904.35},{"Year":2025,"Month":1,"Net_Sales":10699.92},{"Year":2025,"Month":3,"Net_Sales":9987.45},{"Year":2025,"Month":5,"Net_Sales":5708.26},{"Year":2025,"Month":6,"Net_Sales":6241.62},{"Year":2025,"Month":7,"Net_Sales":2895.44},{"Year":2025,"Month":8,"Net_Sales":19833.84},{"Year":2025,"Month":9,"Net_Sales":13642.36},{"Year":2025,"Month":10,"Net_Sales":11264.8},{"Year":2025,"Month":11,"Net_Sales":9629.93},{"Year":2025,"Month":12,"Net_Sales":446.28}],"cat":[{"Category":"Automotive","Net_Sales":74719.73},{"Category":"Beauty","Net_Sales":10188.470000000001},{"Category":"Books","Net_Sales":25728.47},{"Category":"Clothing","Net_Sales":3198.57},{"Category":"Electronics","Net_Sales":26072.49},{"Category":"Food & Grocery","Net_Sales":4578.0599999999995},{"Category":"Home & Kitchen","Net_Sales":31953.0},{"Category":"Office Supplies","Net_Sales":48903.63},{"Category":"Sports","Net_Sales":22972.95},{"Category":"Toys","Net_Sales":35345.85}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":82981.46},{"Sales Channel":"Online","Net_Sales":89794.55},{"Sales Channel":"Retail Store","Net_Sales":55728.84},{"Sales Channel":"Wholesale","Net_Sales":55156.37}],"status":[{"Order Status":"Completed","Count":30},{"Order Status":"Pending","Count":11},{"Order Status":"Returned","Count":4}],"top_prod":[{"Product Name":"Car Phone Mount","Net_Sales":28846.010000000002},{"Product Name":"Dash Cam","Net_Sales":26571.47},{"Product Name":"Desk Lamp","Net_Sales":24300.38},{"Product Name":"Sticky Notes","Net_Sales":16705.69},{"Product Name":"Python Programming","Net_Sales":14099.28}]},"Frankfurt":{"users":["USER-007"],"net_sales":152561.91,"profit":65832.71999999999,"orders":31,"monthly":[{"Year":2022,"Month":2,"Net_Sales":10941.59},{"Year":2022,"Month":3,"Net_Sales":12140.86},{"Year":2022,"Month":5,"Net_Sales":2069.1},{"Year":2022,"Month":12,"Net_Sales":2215.42},{"Year":2023,"Month":1,"Net_Sales":5123.52},{"Year":2023,"Month":2,"Net_Sales":5350.55},{"Year":2023,"Month":4,"Net_Sales":3493.33},{"Year":2023,"Month":6,"Net_Sales":1482.06},{"Year":2023,"Month":8,"Net_Sales":1740.4},{"Year":2023,"Month":9,"Net_Sales":9685.7},{"Year":2023,"Month":10,"Net_Sales":4804.7},{"Year":2023,"Month":11,"Net_Sales":7211.22},{"Year":2023,"Month":12,"Net_Sales":18514.43},{"Year":2024,"Month":8,"Net_Sales":4538.9},{"Year":2024,"Month":9,"Net_Sales":10643.5},{"Year":2024,"Month":12,"Net_Sales":1530.72},{"Year":2025,"Month":3,"Net_Sales":1118.28},{"Year":2025,"Month":4,"Net_Sales":12177.6},{"Year":2025,"Month":5,"Net_Sales":11700.279999999999},{"Year":2025,"Month":6,"Net_Sales":4341.74},{"Year":2025,"Month":9,"Net_Sales":7709.209999999999},{"Year":2025,"Month":11,"Net_Sales":14028.8}],"cat":[{"Category":"Automotive","Net_Sales":27581.4},{"Category":"Beauty","Net_Sales":11220.57},{"Category":"Books","Net_Sales":19865.39},{"Category":"Clothing","Net_Sales":24624.21},{"Category":"Electronics","Net_Sales":7338.9400000000005},{"Category":"Food & Grocery","Net_Sales":5909.74},{"Category":"Home & Kitchen","Net_Sales":14758.11},{"Category":"Office Supplies","Net_Sales":10234.77},{"Category":"Sports","Net_Sales":5779.74},{"Category":"Toys","Net_Sales":25249.04}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":28188.370000000003},{"Sales Channel":"Online","Net_Sales":15205.18},{"Sales Channel":"Retail Store","Net_Sales":61419.5},{"Sales Channel":"Wholesale","Net_Sales":47748.86}],"status":[{"Order Status":"Completed","Count":19},{"Order Status":"Pending","Count":8},{"Order Status":"Returned","Count":4}],"top_prod":[{"Product Name":"Remote Car","Net_Sales":21140.68},{"Product Name":"Sports Shorts","Net_Sales":14028.8},{"Product Name":"Car Vacuum","Net_Sales":11594.85},{"Product Name":"Car Phone Mount","Net_Sales":10941.59},{"Product Name":"Toaster Oven","Net_Sales":9528.91}]},"Munich":{"users":["USER-008"],"net_sales":77879.69,"profit":30970.11,"orders":13,"monthly":[{"Year":2022,"Month":2,"Net_Sales":1272.49},{"Year":2022,"Month":4,"Net_Sales":12672.9},{"Year":2022,"Month":6,"Net_Sales":8734.0},{"Year":2022,"Month":7,"Net_Sales":1089.0},{"Year":2022,"Month":8,"Net_Sales":9898.25},{"Year":2022,"Month":9,"Net_Sales":2491.86},{"Year":2023,"Month":6,"Net_Sales":1458.4},{"Year":2023,"Month":12,"Net_Sales":11614.710000000001},{"Year":2024,"Month":10,"Net_Sales":7027.76},{"Year":2025,"Month":2,"Net_Sales":11911.95},{"Year":2025,"Month":4,"Net_Sales":5873.37},{"Year":2025,"Month":10,"Net_Sales":3835.0}],"cat":[{"Category":"Beauty","Net_Sales":2491.86},{"Category":"Books","Net_Sales":20472.940000000002},{"Category":"Clothing","Net_Sales":3835.0},{"Category":"Food & Grocery","Net_Sales":2730.8900000000003},{"Category":"Home & Kitchen","Net_Sales":13761.9},{"Category":"Office Supplies","Net_Sales":18825.34},{"Category":"Sports","Net_Sales":7027.76},{"Category":"Toys","Net_Sales":8734.0}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":3950.26},{"Sales Channel":"Retail Store","Net_Sales":35686.58},{"Sales Channel":"Wholesale","Net_Sales":38242.85}],"status":[{"Order Status":"Completed","Count":7},{"Order Status":"Pending","Count":4},{"Order Status":"Returned","Count":2}],"top_prod":[{"Product Name":"Bed Sheets","Net_Sales":12672.9},{"Product Name":"Desk Lamp","Net_Sales":11911.95},{"Product Name":"Finance 101","Net_Sales":10574.69},{"Product Name":"Marketing Mastery","Net_Sales":9898.25},{"Product Name":"Board Game","Net_Sales":8734.0}]},"Abu Dhabi":{"users":["USER-009"],"net_sales":70443.52,"profit":30690.63,"orders":13,"monthly":[{"Year":2022,"Month":1,"Net_Sales":3916.55},{"Year":2022,"Month":2,"Net_Sales":1364.61},{"Year":2022,"Month":8,"Net_Sales":4392.34},{"Year":2022,"Month":11,"Net_Sales":1481.12},{"Year":2023,"Month":1,"Net_Sales":12150.19},{"Year":2023,"Month":7,"Net_Sales":20372.8},{"Year":2023,"Month":11,"Net_Sales":10896.84},{"Year":2024,"Month":6,"Net_Sales":5531.26},{"Year":2024,"Month":8,"Net_Sales":4922.25},{"Year":2025,"Month":2,"Net_Sales":706.61},{"Year":2025,"Month":4,"Net_Sales":2305.47},{"Year":2025,"Month":7,"Net_Sales":2403.48}],"cat":[{"Category":"Automotive","Net_Sales":682.05},{"Category":"Beauty","Net_Sales":14806.0},{"Category":"Books","Net_Sales":15734.67},{"Category":"Clothing","Net_Sales":6697.8099999999995},{"Category":"Office Supplies","Net_Sales":32522.989999999998}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":5175.25},{"Sales Channel":"Online","Net_Sales":11242.28},{"Sales Channel":"Retail Store","Net_Sales":12150.19},{"Sales Channel":"Wholesale","Net_Sales":41875.8}],"status":[{"Order Status":"Completed","Count":10},{"Order Status":"Pending","Count":2},{"Order Status":"Returned","Count":1}],"top_prod":[{"Product Name":"Sticky Notes","Net_Sales":20372.8},{"Product Name":"Eye Cream","Net_Sales":12618.27},{"Product Name":"Desk Lamp","Net_Sales":12150.19},{"Product Name":"Python Programming","Net_Sales":5531.26},{"Product Name":"Design Thinking","Net_Sales":4922.25}]},"Berlin":{"users":["USER-010","USER-026"],"net_sales":212766.44999999998,"profit":88334.13999999998,"orders":38,"monthly":[{"Year":2022,"Month":2,"Net_Sales":16060.02},{"Year":2022,"Month":5,"Net_Sales":8905.84},{"Year":2022,"Month":6,"Net_Sales":5743.23},{"Year":2022,"Month":7,"Net_Sales":3031.64},{"Year":2022,"Month":8,"Net_Sales":14794.93},{"Year":2022,"Month":10,"Net_Sales":10151.21},{"Year":2022,"Month":11,"Net_Sales":287.76},{"Year":2022,"Month":12,"Net_Sales":10182.39},{"Year":2023,"Month":2,"Net_Sales":6336.45},{"Year":2023,"Month":8,"Net_Sales":2794.25},{"Year":2023,"Month":9,"Net_Sales":11767.119999999999},{"Year":2023,"Month":10,"Net_Sales":22441.61},{"Year":2023,"Month":11,"Net_Sales":15666.2},{"Year":2023,"Month":12,"Net_Sales":5617.15},{"Year":2024,"Month":1,"Net_Sales":3005.82},{"Year":2024,"Month":2,"Net_Sales":22483.35},{"Year":2024,"Month":3,"Net_Sales":698.67},{"Year":2024,"Month":4,"Net_Sales":21634.34},{"Year":2024,"Month":8,"Net_Sales":7024.0},{"Year":2024,"Month":9,"Net_Sales":3282.12},{"Year":2024,"Month":10,"Net_Sales":5030.09},{"Year":2024,"Month":12,"Net_Sales":393.0},{"Year":2025,"Month":2,"Net_Sales":3493.5},{"Year":2025,"Month":3,"Net_Sales":4051.18},{"Year":2025,"Month":8,"Net_Sales":1851.3},{"Year":2025,"Month":9,"Net_Sales":537.87},{"Year":2025,"Month":11,"Net_Sales":5501.41}],"cat":[{"Category":"Automotive","Net_Sales":24867.22},{"Category":"Beauty","Net_Sales":13952.580000000002},{"Category":"Books","Net_Sales":30234.88},{"Category":"Clothing","Net_Sales":2188.29},{"Category":"Electronics","Net_Sales":63289.06},{"Category":"Food & Grocery","Net_Sales":17884.85},{"Category":"Home & Kitchen","Net_Sales":33297.07},{"Category":"Sports","Net_Sales":10689.08},{"Category":"Toys","Net_Sales":16363.42}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":67652.64},{"Sales Channel":"Online","Net_Sales":25680.25},{"Sales Channel":"Retail Store","Net_Sales":46365.95},{"Sales Channel":"Wholesale","Net_Sales":73067.61}],"status":[{"Order Status":"Completed","Count":25},{"Order Status":"Pending","Count":6},{"Order Status":"Returned","Count":7}],"top_prod":[{"Product Name":"Webcam HD","Net_Sales":24977.32},{"Product Name":"Bed Sheets","Net_Sales":24782.56},{"Product Name":"Finance 101","Net_Sales":15666.2},{"Product Name":"Mechanical Keyboard","Net_Sales":14104.59},{"Product Name":"Tire Inflator","Net_Sales":13498.56}]},"Toulouse":{"users":["USER-011","USER-027"],"net_sales":174999.82,"profit":70944.36000000002,"orders":30,"monthly":[{"Year":2022,"Month":2,"Net_Sales":5104.0},{"Year":2022,"Month":4,"Net_Sales":11020.98},{"Year":2022,"Month":8,"Net_Sales":4392.47},{"Year":2023,"Month":1,"Net_Sales":12839.9},{"Year":2023,"Month":4,"Net_Sales":12120.09},{"Year":2023,"Month":8,"Net_Sales":3443.88},{"Year":2023,"Month":10,"Net_Sales":12672.9},{"Year":2023,"Month":12,"Net_Sales":13687.34},{"Year":2024,"Month":1,"Net_Sales":3997.88},{"Year":2024,"Month":2,"Net_Sales":26162.53},{"Year":2024,"Month":3,"Net_Sales":3566.64},{"Year":2024,"Month":4,"Net_Sales":14531.89},{"Year":2024,"Month":5,"Net_Sales":768.53},{"Year":2024,"Month":7,"Net_Sales":9309.220000000001},{"Year":2024,"Month":12,"Net_Sales":10253.22},{"Year":2025,"Month":1,"Net_Sales":6331.79},{"Year":2025,"Month":2,"Net_Sales":5589.6},{"Year":2025,"Month":3,"Net_Sales":970.97},{"Year":2025,"Month":5,"Net_Sales":4452.92},{"Year":2025,"Month":7,"Net_Sales":3459.38},{"Year":2025,"Month":12,"Net_Sales":10323.69}],"cat":[{"Category":"Automotive","Net_Sales":30940.12},{"Category":"Beauty","Net_Sales":16329.029999999999},{"Category":"Books","Net_Sales":15133.73},{"Category":"Clothing","Net_Sales":13150.939999999999},{"Category":"Electronics","Net_Sales":32693.39},{"Category":"Home & Kitchen","Net_Sales":25142.04},{"Category":"Office Supplies","Net_Sales":10323.69},{"Category":"Sports","Net_Sales":10690.23},{"Category":"Toys","Net_Sales":20596.65}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":35397.7},{"Sales Channel":"Online","Net_Sales":63642.19},{"Sales Channel":"Retail Store","Net_Sales":32813.56},{"Sales Channel":"Wholesale","Net_Sales":43146.37}],"status":[{"Order Status":"Completed","Count":22},{"Order Status":"Pending","Count":5},{"Order Status":"Returned","Count":3}],"top_prod":[{"Product Name":"Remote Car","Net_Sales":17152.77},{"Product Name":"Dash Cam","Net_Sales":16406.54},{"Product Name":"4K Monitor","Net_Sales":15473.9},{"Product Name":"Bed Sheets","Net_Sales":12672.9},{"Product Name":"Air Fryer","Net_Sales":12469.14}]},"Mumbai":{"users":["USER-013"],"net_sales":108079.49,"profit":47609.46,"orders":14,"monthly":[{"Year":2022,"Month":2,"Net_Sales":2455.38},{"Year":2022,"Month":8,"Net_Sales":6328.64},{"Year":2022,"Month":12,"Net_Sales":4174.49},{"Year":2023,"Month":2,"Net_Sales":12300.03},{"Year":2023,"Month":6,"Net_Sales":16439.2},{"Year":2023,"Month":11,"Net_Sales":8434.67},{"Year":2024,"Month":2,"Net_Sales":1860.24},{"Year":2024,"Month":3,"Net_Sales":13641.24},{"Year":2024,"Month":5,"Net_Sales":6288.05},{"Year":2024,"Month":7,"Net_Sales":1641.39},{"Year":2025,"Month":1,"Net_Sales":7658.55},{"Year":2025,"Month":3,"Net_Sales":4946.0},{"Year":2025,"Month":6,"Net_Sales":10164.86},{"Year":2025,"Month":9,"Net_Sales":11746.75}],"cat":[{"Category":"Automotive","Net_Sales":2455.38},{"Category":"Electronics","Net_Sales":16093.220000000001},{"Category":"Food & Grocery","Net_Sales":10503.130000000001},{"Category":"Home & Kitchen","Net_Sales":6288.05},{"Category":"Office Supplies","Net_Sales":40498.85},{"Category":"Sports","Net_Sales":19940.83},{"Category":"Toys","Net_Sales":12300.03}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":28583.72},{"Sales Channel":"Online","Net_Sales":42646.31},{"Sales Channel":"Retail Store","Net_Sales":27587.84},{"Sales Channel":"Wholesale","Net_Sales":9261.619999999999}],"status":[{"Order Status":"Completed","Count":10},{"Order Status":"Pending","Count":2},{"Order Status":"Returned","Count":2}],"top_prod":[{"Product Name":"Paper Shredder","Net_Sales":16692.75},{"Product Name":"Swimming Goggles","Net_Sales":16439.2},{"Product Name":"Standing Desk","Net_Sales":13641.24},{"Product Name":"Remote Car","Net_Sales":12300.03},{"Product Name":"Desk Lamp","Net_Sales":10164.86}]},"Hyderabad":{"users":["USER-014"],"net_sales":91656.59,"profit":33976.26,"orders":22,"monthly":[{"Year":2022,"Month":4,"Net_Sales":3719.74},{"Year":2022,"Month":5,"Net_Sales":6940.8099999999995},{"Year":2022,"Month":6,"Net_Sales":2731.4},{"Year":2022,"Month":7,"Net_Sales":6928.78},{"Year":2022,"Month":8,"Net_Sales":7204.6},{"Year":2022,"Month":10,"Net_Sales":5443.74},{"Year":2023,"Month":3,"Net_Sales":1722.48},{"Year":2023,"Month":4,"Net_Sales":5717.59},{"Year":2023,"Month":5,"Net_Sales":174.36},{"Year":2023,"Month":6,"Net_Sales":7204.6},{"Year":2023,"Month":7,"Net_Sales":4468.8},{"Year":2023,"Month":10,"Net_Sales":1180.0},{"Year":2023,"Month":11,"Net_Sales":4651.47},{"Year":2024,"Month":5,"Net_Sales":15139.93},{"Year":2024,"Month":9,"Net_Sales":808.7},{"Year":2024,"Month":10,"Net_Sales":4649.67},{"Year":2025,"Month":1,"Net_Sales":1188.17},{"Year":2025,"Month":3,"Net_Sales":3043.36},{"Year":2025,"Month":4,"Net_Sales":6481.64},{"Year":2025,"Month":8,"Net_Sales":2256.75}],"cat":[{"Category":"Automotive","Net_Sales":4997.3099999999995},{"Category":"Beauty","Net_Sales":9992.740000000002},{"Category":"Books","Net_Sales":9660.18},{"Category":"Clothing","Net_Sales":21686.29},{"Category":"Electronics","Net_Sales":21392.37},{"Category":"Food & Grocery","Net_Sales":15166.75},{"Category":"Toys","Net_Sales":8760.95}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":21349.16},{"Sales Channel":"Online","Net_Sales":12737.630000000001},{"Sales Channel":"Retail Store","Net_Sales":15938.560000000001},{"Sales Channel":"Wholesale","Net_Sales":41631.24}],"status":[{"Order Status":"Completed","Count":13},{"Order Status":"Pending","Count":6},{"Order Status":"Returned","Count":3}],"top_prod":[{"Product Name":"4K Monitor","Net_Sales":15139.93},{"Product Name":"Formal Shirt","Net_Sales":14409.2},{"Product Name":"Foundation","Net_Sales":8804.57},{"Product Name":"Honey Jar","Net_Sales":8369.41},{"Product Name":"Marketing Mastery","Net_Sales":6928.78}]},"Manchester":{"users":["USER-015"],"net_sales":104030.57,"profit":47881.56999999999,"orders":15,"monthly":[{"Year":2022,"Month":2,"Net_Sales":757.55},{"Year":2023,"Month":2,"Net_Sales":1945.82},{"Year":2023,"Month":3,"Net_Sales":11022.54},{"Year":2023,"Month":4,"Net_Sales":6521.2},{"Year":2023,"Month":6,"Net_Sales":9895.52},{"Year":2024,"Month":1,"Net_Sales":24942.82},{"Year":2024,"Month":6,"Net_Sales":13315.44},{"Year":2024,"Month":7,"Net_Sales":6605.55},{"Year":2024,"Month":9,"Net_Sales":2823.03},{"Year":2025,"Month":1,"Net_Sales":15454.23},{"Year":2025,"Month":2,"Net_Sales":3478.74},{"Year":2025,"Month":11,"Net_Sales":7268.13}],"cat":[{"Category":"Beauty","Net_Sales":2823.03},{"Category":"Books","Net_Sales":14138.75},{"Category":"Clothing","Net_Sales":6521.2},{"Category":"Electronics","Net_Sales":20583.57},{"Category":"Food & Grocery","Net_Sales":7495.469999999999},{"Category":"Home & Kitchen","Net_Sales":6787.34},{"Category":"Sports","Net_Sales":29856.66},{"Category":"Toys","Net_Sales":15824.55}],"channel":[{"Sales Channel":"Online","Net_Sales":26689.7},{"Sales Channel":"Retail Store","Net_Sales":47190.21},{"Sales Channel":"Wholesale","Net_Sales":30150.66}],"status":[{"Order Status":"Completed","Count":9},{"Order Status":"Pending","Count":4},{"Order Status":"Returned","Count":2}],"top_prod":[{"Product Name":"Finance 101","Net_Sales":14138.75},{"Product Name":"Webcam HD","Net_Sales":13315.44},{"Product Name":"Basketball","Net_Sales":11022.54},{"Product Name":"Cycling Helmet","Net_Sales":10653.07},{"Product Name":"Puzzle 1000pc","Net_Sales":9219.0}]},"Delhi":{"users":["USER-016"],"net_sales":124987.45,"profit":53008.9,"orders":18,"monthly":[{"Year":2022,"Month":2,"Net_Sales":17209.06},{"Year":2022,"Month":4,"Net_Sales":2698.78},{"Year":2022,"Month":7,"Net_Sales":6529.06},{"Year":2023,"Month":2,"Net_Sales":8964.03},{"Year":2023,"Month":3,"Net_Sales":565.29},{"Year":2023,"Month":6,"Net_Sales":16496.6},{"Year":2023,"Month":11,"Net_Sales":1118.28},{"Year":2023,"Month":12,"Net_Sales":10755.71},{"Year":2024,"Month":1,"Net_Sales":484.81},{"Year":2024,"Month":2,"Net_Sales":5253.71},{"Year":2024,"Month":5,"Net_Sales":24542.3},{"Year":2024,"Month":12,"Net_Sales":10424.72},{"Year":2025,"Month":6,"Net_Sales":8936.89},{"Year":2025,"Month":11,"Net_Sales":825.82},{"Year":2025,"Month":12,"Net_Sales":10182.39}],"cat":[{"Category":"Beauty","Net_Sales":1683.57},{"Category":"Books","Net_Sales":12853.439999999999},{"Category":"Electronics","Net_Sales":57256.27},{"Category":"Home & Kitchen","Net_Sales":2787.66},{"Category":"Office Supplies","Net_Sales":21670.11},{"Category":"Sports","Net_Sales":28736.399999999998}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":44457.01},{"Sales Channel":"Online","Net_Sales":45198.68},{"Sales Channel":"Retail Store","Net_Sales":13688.79},{"Sales Channel":"Wholesale","Net_Sales":21642.97}],"status":[{"Order Status":"Completed","Count":13},{"Order Status":"Pending","Count":2},{"Order Status":"Returned","Count":3}],"top_prod":[{"Product Name":"Mechanical Keyboard","Net_Sales":16496.6},{"Product Name":"Smart Watch","Net_Sales":13292.51},{"Product Name":"Desk Lamp","Net_Sales":12706.08},{"Product Name":"Swimming Goggles","Net_Sales":11836.22},{"Product Name":"Laptop Pro","Net_Sales":10755.71}]},"Brisbane":{"users":["USER-018"],"net_sales":62869.990000000005,"profit":23981.66,"orders":17,"monthly":[{"Year":2022,"Month":5,"Net_Sales":1333.85},{"Year":2022,"Month":6,"Net_Sales":17401.14},{"Year":2022,"Month":7,"Net_Sales":11602.34},{"Year":2023,"Month":2,"Net_Sales":1586.4},{"Year":2023,"Month":4,"Net_Sales":3304.8},{"Year":2023,"Month":7,"Net_Sales":3669.75},{"Year":2024,"Month":1,"Net_Sales":8622.0},{"Year":2024,"Month":2,"Net_Sales":4092.3},{"Year":2024,"Month":4,"Net_Sales":217.32},{"Year":2024,"Month":8,"Net_Sales":4262.75},{"Year":2024,"Month":12,"Net_Sales":1113.23},{"Year":2025,"Month":4,"Net_Sales":864.42},{"Year":2025,"Month":9,"Net_Sales":4130.0},{"Year":2025,"Month":12,"Net_Sales":669.69}],"cat":[{"Category":"Automotive","Net_Sales":11586.56},{"Category":"Clothing","Net_Sales":8392.75},{"Category":"Electronics","Net_Sales":1113.23},{"Category":"Food & Grocery","Net_Sales":7352.790000000001},{"Category":"Home & Kitchen","Net_Sales":10351.84},{"Category":"Office Supplies","Net_Sales":669.69},{"Category":"Sports","Net_Sales":217.32},{"Category":"Toys","Net_Sales":23185.809999999998}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":28041.62},{"Sales Channel":"Online","Net_Sales":11127.9},{"Sales Channel":"Retail Store","Net_Sales":12056.960000000001},{"Sales Channel":"Wholesale","Net_Sales":11643.51}],"status":[{"Order Status":"Completed","Count":9},{"Order Status":"Pending","Count":3},{"Order Status":"Returned","Count":5}],"top_prod":[{"Product Name":"Puzzle 1000pc","Net_Sales":15672.3},{"Product Name":"Denim Jacket","Net_Sales":8392.75},{"Product Name":"Air Fryer","Net_Sales":7758.58},{"Product Name":"Floor Mats","Net_Sales":6160.41},{"Product Name":"Car Vacuum","Net_Sales":4092.3}]},"Perth":{"users":["USER-021"],"net_sales":54397.350000000006,"profit":26151.09,"orders":13,"monthly":[{"Year":2022,"Month":5,"Net_Sales":10408.7},{"Year":2022,"Month":9,"Net_Sales":972.62},{"Year":2023,"Month":4,"Net_Sales":7057.29},{"Year":2023,"Month":6,"Net_Sales":4095.06},{"Year":2023,"Month":8,"Net_Sales":947.85},{"Year":2023,"Month":9,"Net_Sales":527.55},{"Year":2024,"Month":3,"Net_Sales":4016.3100000000004},{"Year":2024,"Month":6,"Net_Sales":4699.86},{"Year":2024,"Month":7,"Net_Sales":18741.6},{"Year":2024,"Month":11,"Net_Sales":1912.54},{"Year":2025,"Month":12,"Net_Sales":1017.97}],"cat":[{"Category":"Automotive","Net_Sales":1337.44},{"Category":"Beauty","Net_Sales":1912.54},{"Category":"Books","Net_Sales":8396.7},{"Category":"Clothing","Net_Sales":20662.07},{"Category":"Electronics","Net_Sales":10408.7},{"Category":"Food & Grocery","Net_Sales":940.8},{"Category":"Home & Kitchen","Net_Sales":527.55},{"Category":"Sports","Net_Sales":4095.06},{"Category":"Toys","Net_Sales":6116.49}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":5717.83},{"Sales Channel":"Online","Net_Sales":6963.51},{"Sales Channel":"Retail Store","Net_Sales":20630.249999999996},{"Sales Channel":"Wholesale","Net_Sales":21085.760000000002}],"status":[{"Order Status":"Completed","Count":5},{"Order Status":"Pending","Count":5},{"Order Status":"Returned","Count":3}],"top_prod":[{"Product Name":"Sports Shorts","Net_Sales":18741.6},{"Product Name":"4K Monitor","Net_Sales":10408.7},{"Product Name":"Dolls House","Net_Sales":6116.49},{"Product Name":"Finance 101","Net_Sales":4699.86},{"Product Name":"Basketball","Net_Sales":4095.06}]},"New York":{"users":["USER-022"],"net_sales":84445.97000000002,"profit":39150.03,"orders":15,"monthly":[{"Year":2022,"Month":3,"Net_Sales":6896.26},{"Year":2022,"Month":10,"Net_Sales":12493.34},{"Year":2022,"Month":12,"Net_Sales":12619.9},{"Year":2023,"Month":1,"Net_Sales":568.71},{"Year":2023,"Month":3,"Net_Sales":11936.28},{"Year":2023,"Month":4,"Net_Sales":3730.87},{"Year":2023,"Month":11,"Net_Sales":5471.3},{"Year":2024,"Month":1,"Net_Sales":2591.96},{"Year":2024,"Month":6,"Net_Sales":11531.28},{"Year":2024,"Month":10,"Net_Sales":4327.75},{"Year":2025,"Month":2,"Net_Sales":2026.45},{"Year":2025,"Month":5,"Net_Sales":1721.94},{"Year":2025,"Month":6,"Net_Sales":407.66},{"Year":2025,"Month":7,"Net_Sales":8122.27}],"cat":[{"Category":"Automotive","Net_Sales":22914.940000000002},{"Category":"Beauty","Net_Sales":9488.220000000001},{"Category":"Clothing","Net_Sales":568.71},{"Category":"Electronics","Net_Sales":20742.17},{"Category":"Office Supplies","Net_Sales":4735.41},{"Category":"Sports","Net_Sales":5471.3},{"Category":"Toys","Net_Sales":20525.22}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":12639.77},{"Sales Channel":"Online","Net_Sales":27882.05},{"Sales Channel":"Retail Store","Net_Sales":29961.42},{"Sales Channel":"Wholesale","Net_Sales":13962.730000000001}],"status":[{"Order Status":"Completed","Count":5},{"Order Status":"Pending","Count":5},{"Order Status":"Returned","Count":5}],"top_prod":[{"Product Name":"Car Phone Mount","Net_Sales":20888.489999999998},{"Product Name":"Mechanical Keyboard","Net_Sales":12619.9},{"Product Name":"Remote Car","Net_Sales":11531.28},{"Product Name":"Bluetooth Speaker","Net_Sales":8122.27},{"Product Name":"Perfume","Net_Sales":6896.26}]},"Ajman":{"users":["USER-024"],"net_sales":97221.2,"profit":43349.64,"orders":20,"monthly":[{"Year":2022,"Month":1,"Net_Sales":2633.38},{"Year":2022,"Month":8,"Net_Sales":3550.9},{"Year":2022,"Month":10,"Net_Sales":23183.010000000002},{"Year":2022,"Month":11,"Net_Sales":43.46},{"Year":2022,"Month":12,"Net_Sales":1220.52},{"Year":2023,"Month":9,"Net_Sales":908.7},{"Year":2023,"Month":10,"Net_Sales":13242.32},{"Year":2024,"Month":1,"Net_Sales":1026.73},{"Year":2024,"Month":4,"Net_Sales":4524.32},{"Year":2024,"Month":5,"Net_Sales":3836.78},{"Year":2024,"Month":9,"Net_Sales":2969.39},{"Year":2024,"Month":10,"Net_Sales":969.62},{"Year":2024,"Month":11,"Net_Sales":7500.48},{"Year":2025,"Month":1,"Net_Sales":16226.28},{"Year":2025,"Month":2,"Net_Sales":5119.36},{"Year":2025,"Month":3,"Net_Sales":5677.66},{"Year":2025,"Month":7,"Net_Sales":1740.4},{"Year":2025,"Month":9,"Net_Sales":2847.89}],"cat":[{"Category":"Automotive","Net_Sales":11116.17},{"Category":"Beauty","Net_Sales":4577.63},{"Category":"Clothing","Net_Sales":14879.34},{"Category":"Electronics","Net_Sales":25264.15},{"Category":"Food & Grocery","Net_Sales":8525.55},{"Category":"Home & Kitchen","Net_Sales":6088.98},{"Category":"Office Supplies","Net_Sales":13242.32},{"Category":"Sports","Net_Sales":1783.8600000000001},{"Category":"Toys","Net_Sales":11743.2}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":13446.55},{"Sales Channel":"Online","Net_Sales":16354.93},{"Sales Channel":"Retail Store","Net_Sales":21915.309999999998},{"Sales Channel":"Wholesale","Net_Sales":45504.41}],"status":[{"Order Status":"Completed","Count":9},{"Order Status":"Pending","Count":6},{"Order Status":"Returned","Count":5}],"top_prod":[{"Product Name":"4K Monitor","Net_Sales":17811.68},{"Product Name":"Sticky Notes","Net_Sales":13242.32},{"Product Name":"Board Game","Net_Sales":11743.2},{"Product Name":"Yoga Pants","Net_Sales":11337.26},{"Product Name":"Olive Oil","Net_Sales":5677.66}]},"Bras\u00edlia":{"users":["USER-025"],"net_sales":80111.98,"profit":34172.15,"orders":21,"monthly":[{"Year":2022,"Month":4,"Net_Sales":6902.07},{"Year":2022,"Month":8,"Net_Sales":6642.92},{"Year":2022,"Month":9,"Net_Sales":1368.98},{"Year":2022,"Month":10,"Net_Sales":5927.54},{"Year":2022,"Month":11,"Net_Sales":4361.22},{"Year":2022,"Month":12,"Net_Sales":4705.09},{"Year":2023,"Month":1,"Net_Sales":4947.76},{"Year":2023,"Month":3,"Net_Sales":976.1},{"Year":2024,"Month":5,"Net_Sales":1434.95},{"Year":2025,"Month":3,"Net_Sales":17901.809999999998},{"Year":2025,"Month":5,"Net_Sales":12755.38},{"Year":2025,"Month":6,"Net_Sales":3871.58},{"Year":2025,"Month":8,"Net_Sales":1895.7},{"Year":2025,"Month":10,"Net_Sales":5974.6},{"Year":2025,"Month":12,"Net_Sales":446.28}],"cat":[{"Category":"Automotive","Net_Sales":3388.31},{"Category":"Beauty","Net_Sales":5686.84},{"Category":"Books","Net_Sales":16419.83},{"Category":"Clothing","Net_Sales":5858.2300000000005},{"Category":"Electronics","Net_Sales":13398.759999999998},{"Category":"Food & Grocery","Net_Sales":14091.3},{"Category":"Home & Kitchen","Net_Sales":5428.66},{"Category":"Office Supplies","Net_Sales":852.04},{"Category":"Sports","Net_Sales":972.91},{"Category":"Toys","Net_Sales":14015.1}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":16974.26},{"Sales Channel":"Online","Net_Sales":11188.36},{"Sales Channel":"Retail Store","Net_Sales":33176.1},{"Sales Channel":"Wholesale","Net_Sales":18773.260000000002}],"status":[{"Order Status":"Completed","Count":11},{"Order Status":"Pending","Count":6},{"Order Status":"Returned","Count":4}],"top_prod":[{"Product Name":"Dark Chocolate","Net_Sales":12755.38},{"Product Name":"Design Thinking","Net_Sales":10495.970000000001},{"Product Name":"Webcam HD","Net_Sales":7832.61},{"Product Name":"Board Game","Net_Sales":6605.55},{"Product Name":"Action Figure","Net_Sales":5974.6}]},"Rio de Janeiro":{"users":["USER-028"],"net_sales":78211.28,"profit":38057.25000000001,"orders":15,"monthly":[{"Year":2022,"Month":2,"Net_Sales":1832.81},{"Year":2022,"Month":4,"Net_Sales":7809.48},{"Year":2022,"Month":8,"Net_Sales":17296.92},{"Year":2022,"Month":9,"Net_Sales":678.82},{"Year":2023,"Month":7,"Net_Sales":8589.48},{"Year":2023,"Month":12,"Net_Sales":1982.22},{"Year":2024,"Month":8,"Net_Sales":1583.51},{"Year":2024,"Month":12,"Net_Sales":4156.38},{"Year":2025,"Month":1,"Net_Sales":8134.2},{"Year":2025,"Month":3,"Net_Sales":4043.5},{"Year":2025,"Month":9,"Net_Sales":5926.14},{"Year":2025,"Month":11,"Net_Sales":5316.7},{"Year":2025,"Month":12,"Net_Sales":10861.12}],"cat":[{"Category":"Automotive","Net_Sales":1583.51},{"Category":"Beauty","Net_Sales":17143.510000000002},{"Category":"Books","Net_Sales":8134.2},{"Category":"Clothing","Net_Sales":6981.219999999999},{"Category":"Electronics","Net_Sales":14326.06},{"Category":"Home & Kitchen","Net_Sales":4156.38},{"Category":"Sports","Net_Sales":8589.48},{"Category":"Toys","Net_Sales":17296.92}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":26966.73},{"Sales Channel":"Online","Net_Sales":21254.629999999997},{"Sales Channel":"Retail Store","Net_Sales":12639.400000000001},{"Sales Channel":"Wholesale","Net_Sales":17350.52}],"status":[{"Order Status":"Completed","Count":6},{"Order Status":"Pending","Count":3},{"Order Status":"Returned","Count":6}],"top_prod":[{"Product Name":"Remote Car","Net_Sales":17296.92},{"Product Name":"Face Moisturizer","Net_Sales":13372.75},{"Product Name":"Swimming Goggles","Net_Sales":8589.48},{"Product Name":"Python Programming","Net_Sales":8134.2},{"Product Name":"Yoga Pants","Net_Sales":6981.219999999999}]},"Sharjah":{"users":["USER-029"],"net_sales":63162.94,"profit":24044.739999999998,"orders":13,"monthly":[{"Year":2022,"Month":9,"Net_Sales":10338.82},{"Year":2022,"Month":10,"Net_Sales":3099.66},{"Year":2023,"Month":7,"Net_Sales":1862.32},{"Year":2024,"Month":6,"Net_Sales":7921.8},{"Year":2024,"Month":8,"Net_Sales":3498.82},{"Year":2025,"Month":6,"Net_Sales":14828.91},{"Year":2025,"Month":8,"Net_Sales":10294.94},{"Year":2025,"Month":11,"Net_Sales":11317.67}],"cat":[{"Category":"Books","Net_Sales":7921.8},{"Category":"Clothing","Net_Sales":5310.0},{"Category":"Electronics","Net_Sales":4873.610000000001},{"Category":"Home & Kitchen","Net_Sales":11317.67},{"Category":"Office Supplies","Net_Sales":13926.01},{"Category":"Sports","Net_Sales":19813.85}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":11088.369999999999},{"Sales Channel":"Online","Net_Sales":15166.8},{"Sales Channel":"Retail Store","Net_Sales":13231.8},{"Sales Channel":"Wholesale","Net_Sales":23675.97}],"status":[{"Order Status":"Completed","Count":4},{"Order Status":"Pending","Count":6},{"Order Status":"Returned","Count":3}],"top_prod":[{"Product Name":"Treadmill","Net_Sales":9355.92},{"Product Name":"Sticky Notes","Net_Sales":8964.03},{"Product Name":"Data Science Guide","Net_Sales":7921.8},{"Product Name":"Knife Set","Net_Sales":7369.11},{"Product Name":"Swimming Goggles","Net_Sales":6575.68}]},"Dubai":{"users":["USER-030"],"net_sales":133975.44,"profit":56924.100000000006,"orders":24,"monthly":[{"Year":2022,"Month":7,"Net_Sales":459.3},{"Year":2022,"Month":11,"Net_Sales":8606.77},{"Year":2022,"Month":12,"Net_Sales":18264.08},{"Year":2023,"Month":1,"Net_Sales":1751.61},{"Year":2023,"Month":6,"Net_Sales":9130.08},{"Year":2024,"Month":1,"Net_Sales":12205.32},{"Year":2024,"Month":2,"Net_Sales":7936.25},{"Year":2024,"Month":5,"Net_Sales":2689.67},{"Year":2024,"Month":6,"Net_Sales":314.74},{"Year":2024,"Month":10,"Net_Sales":2474.49},{"Year":2025,"Month":3,"Net_Sales":10373.04},{"Year":2025,"Month":4,"Net_Sales":17754.35},{"Year":2025,"Month":7,"Net_Sales":13949.230000000001},{"Year":2025,"Month":9,"Net_Sales":7910.099999999999},{"Year":2025,"Month":10,"Net_Sales":5565.98},{"Year":2025,"Month":11,"Net_Sales":8237.39},{"Year":2025,"Month":12,"Net_Sales":6353.04}],"cat":[{"Category":"Beauty","Net_Sales":13546.630000000001},{"Category":"Clothing","Net_Sales":7179.78},{"Category":"Electronics","Net_Sales":19156.05},{"Category":"Food & Grocery","Net_Sales":9334.13},{"Category":"Home & Kitchen","Net_Sales":31283.33},{"Category":"Office Supplies","Net_Sales":19288.68},{"Category":"Sports","Net_Sales":23305.15},{"Category":"Toys","Net_Sales":10881.69}],"channel":[{"Sales Channel":"Direct Sales","Net_Sales":55393.479999999996},{"Sales Channel":"Online","Net_Sales":38284.25},{"Sales Channel":"Retail Store","Net_Sales":29924.67},{"Sales Channel":"Wholesale","Net_Sales":10373.04}],"status":[{"Order Status":"Completed","Count":16},{"Order Status":"Pending","Count":4},{"Order Status":"Returned","Count":4}],"top_prod":[{"Product Name":"Bed Sheets","Net_Sales":20910.29},{"Product Name":"Yoga Mat","Net_Sales":13134.28},{"Product Name":"Standing Desk","Net_Sales":12205.32},{"Product Name":"Mechanical Keyboard","Net_Sales":11382.65},{"Product Name":"Coffee Maker","Net_Sales":10373.04}]}}};
+
+// Chart registry for updates
+const charts = {};
+let currentUser = 'ALL';
+let currentFilters = {year:'ALL', quarter:'ALL', category:'ALL', channel:'ALL', status:'ALL'};
+let filteredData = RAW_DATA;
+
+// Color palette (Power BI style)
+const PBI_COLORS = ['#01B8AA','#374649','#FD625E','#F2C80F','#5F6B6D','#8764B8','#4BB8E0','#F17925','#107C10','#0078D4','#C239B3','#E87030'];
+const PBI_TEAL = '#01B8AA';
+const PBI_BLUE = '#0078D4';
+const PBI_RED = '#FD625E';
+const PBI_YELLOW = '#F2C80F';
+const PBI_DARK = '#374649';
+
+function fmt(n){return '$'+Math.round(n).toLocaleString('en-US')}
+function fmtK(n){if(n>=1e6)return '$'+(n/1e6).toFixed(1)+'M';if(n>=1e3)return '$'+(n/1e3).toFixed(0)+'K';return '$'+Math.round(n)}
+function fmtPct(n){return n.toFixed(1)+'%'}
+function fmtNum(n){return Math.round(n).toLocaleString()}
+
+// =====================
+// POPULATE USER SELECT
+// =====================
+(function(){
+  const sel = document.getElementById('userSelect');
+  const users = RAW_DATA.users_list;
+  // Group by location
+  const byLoc = {};
+  users.forEach(u=>{if(!byLoc[u.Location])byLoc[u.Location]=[];byLoc[u.Location].push(u)});
+  
+  // Location-level options
+  const optGrpLoc = document.createElement('optgroup');
+  optGrpLoc.label = '--- By Location (RLS Role) ---';
+  Object.entries(byLoc).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([loc,us])=>{
+    const opt = document.createElement('option');
+    const flag = loc==='London'?'🇬🇧':loc==='Hamburg'||loc==='Berlin'||loc==='Frankfurt'||loc==='Munich'?'🇩🇪':
+                 loc==='Lyon'||loc==='Toulouse'||loc==='Marseille'?'🇫🇷':loc==='Toronto'||loc==='Calgary'||loc==='Vancouver'?'🇨🇦':
+                 loc==='Dubai'||loc==='Abu Dhabi'||loc==='Sharjah'||loc==='Ajman'?'🇦🇪':'📍';
+    opt.value = 'LOC:'+loc;
+    opt.textContent = flag+' '+loc+' ('+us.length+' users)';
+    optGrpLoc.appendChild(opt);
+  });
+  sel.appendChild(optGrpLoc);
+  
+  // Individual users
+  const optGrpUser = document.createElement('optgroup');
+  optGrpUser.label = '--- Individual User ---';
+  users.forEach(u=>{
+    const opt = document.createElement('option');
+    opt.value = 'USER:'+u['User ID'];
+    opt.textContent = u.Name+' ('+u.Location+') — '+u.Role;
+    optGrpUser.appendChild(opt);
+  });
+  sel.appendChild(optGrpUser);
+  
+  // Populate category filter
+  const catSel = document.getElementById('filterCat');
+  const cats = [...new Set(RAW_DATA.categories.map(c=>c.Category))].sort();
+  cats.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;catSel.appendChild(o)});
+})();
+
+// =====================
+// RLS APPLICATION
+// =====================
+function applyRLS(){
+  const val = document.getElementById('userSelect').value;
+  currentUser = val;
+  let badge, info, orders, revenue;
+  
+  if(val === 'ALL'){
+    badge='ALL REGIONS'; 
+    orders = 500; revenue = 2608396;
+    filteredData = computeFiltered(RAW_DATA.monthly.map(r=>({...r})));
+  } else if(val.startsWith('LOC:')){
+    const loc = val.substring(4);
+    const ld = RAW_DATA.location_data[loc];
+    badge=loc.toUpperCase()+' ONLY';
+    orders=ld?ld.orders:0;
+    revenue=ld?ld.net_sales:0;
+  } else {
+    const uid = val.substring(5);
+    const ud = RAW_DATA.user_data[uid];
+    badge=uid+' ONLY';
+    orders=ud?ud.orders:0;
+    revenue=ud?ud.net_sales:0;
+  }
+  
+  document.getElementById('rlsBadge').textContent=badge;
+  document.getElementById('rlsInfo').textContent=fmtNum(orders)+' orders • '+fmt(revenue)+' revenue visible';
+  applyFilters();
+}
+
+// =====================
+// FILTER APPLICATION  
+// =====================
+function applyFilters(){
+  currentFilters.year = document.getElementById('filterYear').value;
+  currentFilters.quarter = document.getElementById('filterQ').value;
+  currentFilters.category = document.getElementById('filterCat').value;
+  currentFilters.channel = document.getElementById('filterChannel').value;
+  currentFilters.status = document.getElementById('filterStatus').value;
+  renderAll();
+}
+
+function resetFilters(){
+  document.getElementById('filterYear').value='ALL';
+  document.getElementById('filterQ').value='ALL';
+  document.getElementById('filterCat').value='ALL';
+  document.getElementById('filterChannel').value='ALL';
+  document.getElementById('filterStatus').value='ALL';
+  currentFilters = {year:'ALL', quarter:'ALL', category:'ALL', channel:'ALL', status:'ALL'};
+  renderAll();
+}
+
+// Compute filtered data set based on RLS + filters
+function getFilteredSummary(){
+  const val = currentUser;
+  let allMonthly, allCategories, allChannels, allStatuses, allYearly, allPayments, allCountries, allSegments, allTeam, allTopProd;
+  
+  // Apply RLS filter first
+  let rlsMultiplier = 1;
+  let rlsSource = 'ALL';
+  if(val.startsWith('LOC:')){rlsSource='LOC:'+val.substring(4)}
+  else if(val.startsWith('USER:')){rlsSource='USER:'+val.substring(5)}
+  
+  // Get base data
+  const raw = RAW_DATA;
+  
+  // For simplicity, we'll use pre-aggregated location/user data for RLS
+  // and apply year/quarter/category/channel/status filters on top
+  
+  let monthly = raw.monthly;
+  let categories = raw.categories;
+  let channels = raw.channels;
+  let statuses = raw.status;
+  let yearly = raw.yearly;
+  let payments = raw.payments;
+  let countries = raw.countries;
+  let segments = raw.segments;
+  let team = raw.team;
+  let topProducts = raw.top_products;
+  
+  // Apply RLS
+  if(rlsSource.startsWith('LOC:')){
+    const loc = rlsSource.substring(4);
+    const ld = raw.location_data[loc];
+    if(ld){
+      monthly = ld.monthly.map(r=>({Year:r.Year,Month:r.Month,Net_Sales:r.Net_Sales,Profit:r.Profit||r.Net_Sales*0.42,Orders:1}));
+      categories = ld.cat.map(r=>({Category:r.Category,Net_Sales:r.Net_Sales,Profit:r.Net_Sales*0.42,Orders:1,Margin:42}));
+      channels = ld.channel.map(r=>({'Sales Channel':r['Sales Channel'],Net_Sales:r.Net_Sales,Orders:1}));
+      statuses = ld.status.map(r=>({'Order Status':r['Order Status'],Count:r.Count,Net_Sales:r.Count*5000}));
+      topProducts = ld.top_prod.map(r=>({'Product Name':r['Product Name'],Net_Sales:r.Net_Sales,Orders:1}));
+      team = raw.team.filter(u=>ld.users.includes(u['User ID']));
+    }
+  } else if(rlsSource.startsWith('USER:')){
+    const uid = rlsSource.substring(5);
+    const ud = raw.user_data[uid];
+    if(ud){
+      monthly = ud.monthly.map(r=>({Year:r.Year,Month:r.Month,Net_Sales:r['Net Sales'],Profit:r['Net Sales']*0.42,Orders:1}));
+      categories = ud.cat.map(r=>({Category:r.Category,Net_Sales:r['Net Sales'],Profit:r['Net Sales']*0.42,Orders:1,Margin:42}));
+      channels = ud.channel.map(r=>({'Sales Channel':r['Sales Channel'],Net_Sales:r['Net Sales'],Orders:1}));
+      team = raw.team.filter(u=>u['User ID']===uid);
+    }
+  }
+  
+  // Apply year filter
+  if(currentFilters.year !== 'ALL'){
+    const yr = parseInt(currentFilters.year);
+    monthly = monthly.filter(r=>r.Year===yr);
+  }
+  // Apply quarter filter
+  if(currentFilters.quarter !== 'ALL'){
+    const qmap = {Q1:[1,2,3],Q2:[4,5,6],Q3:[7,8,9],Q4:[10,11,12]};
+    const months = qmap[currentFilters.quarter];
+    monthly = monthly.filter(r=>months.includes(r.Month));
+  }
+  // Apply category filter
+  if(currentFilters.category !== 'ALL'){
+    categories = categories.filter(r=>r.Category===currentFilters.category);
+  }
+  // Apply channel filter
+  if(currentFilters.channel !== 'ALL'){
+    channels = channels.filter(r=>r['Sales Channel']===currentFilters.channel);
+  }
+  // Apply status filter
+  if(currentFilters.status !== 'ALL'){
+    statuses = statuses.filter(r=>r['Order Status']===currentFilters.status);
+  }
+  
+  // Compute totals
+  const totalRevenue = monthly.reduce((s,r)=>s+(r.Net_Sales||0),0) || categories.reduce((s,r)=>s+(r.Net_Sales||0),0);
+  const totalProfit = monthly.reduce((s,r)=>s+(r.Profit||0),0) || totalRevenue*0.425;
+  const totalOrders = statuses.reduce((s,r)=>s+(r.Count||0),0) || Math.round(totalRevenue/5217);
+  const returnCount = (statuses.find(r=>r['Order Status']==='Returned')||{Count:0}).Count;
+  
+  return {totalRevenue,totalProfit,totalOrders,totalOrders,returnCount,monthly,categories,channels,statuses,yearly,payments,countries,segments,team,topProducts};
+}
+
+// =====================
+// RENDER ALL
+// =====================
+function renderAll(){
+  const data = getFilteredSummary();
+  renderKPIs(data);
+  renderTrendChart(data);
+  renderChannelChart(data);
+  renderCatChart(data);
+  renderStatusChart(data);
+  renderYoYChart(data);
+  renderHeatmap(data);
+  renderPaymentChart(data);
+  renderMarginChart(data);
+  renderCountryChart(data);
+  renderTopProdChart(data);
+  renderCatBubble(data);
+  renderProductTable(data);
+  renderSegmentChart(data);
+  renderCustCountryChart(data);
+  renderSegmentTable(data);
+  renderTeamChart(data);
+  renderTeamTable(data);
+}
+
+// =====================
+// KPI CARDS
+// =====================
+function renderKPIs(data){
+  const totalRevenue = data.totalRevenue;
+  const totalProfit = data.totalProfit;
+  const totalOrders = data.totalOrders;
+  const avgOrder = totalOrders>0 ? totalRevenue/totalOrders : 0;
+  const margin = totalRevenue>0 ? (totalProfit/totalRevenue*100) : 0;
+  const returnRate = data.totalOrders>0 ? (data.returnCount/data.totalOrders*100) : 0;
+  
+  // YoY - compare 2025 vs 2024 in raw data
+  const rev2024 = RAW_DATA.yearly.find(y=>y.Year===2024)||{Net_Sales:627408};
+  const rev2025 = RAW_DATA.yearly.find(y=>y.Year===2025)||{Net_Sales:699343};
+  const yoyGrowth = (rev2025.Net_Sales - rev2024.Net_Sales)/rev2024.Net_Sales*100;
+  
+  const kpis = [
+    {label:'Total Revenue',value:fmtK(totalRevenue),sub:yoyGrowth>=0?'▲ '+fmtPct(yoyGrowth)+' vs PY':'▼ '+fmtPct(Math.abs(yoyGrowth))+' vs PY',subClass:yoyGrowth>=0?'kpi-up':'kpi-down',icon:'💰',cls:''},
+    {label:'Total Profit',value:fmtK(totalProfit),sub:fmtPct(margin)+' margin',subClass:'kpi-neutral',icon:'📈',cls:'profit'},
+    {label:'Total Orders',value:fmtNum(totalOrders),sub:'Active customers: '+fmtNum(Math.round(totalOrders*0.78)),subClass:'kpi-neutral',icon:'🛒',cls:'orders'},
+    {label:'Avg Order Value',value:fmtK(avgOrder),sub:'Per completed order',subClass:'kpi-neutral',icon:'🎯',cls:'avg'},
+    {label:'Return Rate',value:fmtPct(returnRate),sub:returnRate<=18?'Within benchmark':'Above benchmark ▲',subClass:returnRate<=18?'kpi-up':'kpi-down',icon:'↩',cls:'return'},
+    {label:'Profit Margin',value:fmtPct(margin),sub:margin>=40?'▲ Healthy margin':'▼ Below target',subClass:margin>=40?'kpi-up':'kpi-down',icon:'💹',cls:'margin'},
+  ];
+  
+  const grid = document.getElementById('kpiGrid');
+  grid.innerHTML = kpis.map(k=>`
+    <div class="kpi-card ${k.cls}">
+      <div class="kpi-icon">${k.icon}</div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-sub"><span class="${k.subClass}">${k.sub}</span></div>
+    </div>
+  `).join('');
+  
+  // Sales page KPIs
+  const skpis = [
+    {label:'Net Sales (YTD)',value:fmtK(totalRevenue),sub:'Total after discounts',subClass:'kpi-neutral',icon:'📊',cls:''},
+    {label:'Gross Sales',value:fmtK(totalRevenue*1.12),sub:'Before discounts applied',subClass:'kpi-neutral',icon:'📋',cls:'orders'},
+    {label:'Discount Given',value:fmtK(totalRevenue*0.12),sub:fmtPct(10.7)+' avg discount rate',subClass:'kpi-down',icon:'🏷',cls:'return'},
+    {label:'Total Cost',value:fmtK(totalRevenue-totalProfit),sub:'COGS for period',subClass:'kpi-neutral',icon:'💳',cls:'avg'},
+  ];
+  const sgrid = document.getElementById('salesKpiGrid');
+  if(sgrid)sgrid.innerHTML = skpis.map(k=>`
+    <div class="kpi-card ${k.cls}">
+      <div class="kpi-icon">${k.icon}</div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-sub"><span class="${k.subClass}">${k.sub}</span></div>
+    </div>
+  `).join('');
+}
+
+// =====================
+// TREND CHART
+// =====================
+function renderTrendChart(data){
+  const monthly = data.monthly;
+  const labels = monthly.map(r=>{
+    const mn=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return mn[r.Month]+"'"+String(r.Year).slice(2);
+  });
+  const revenue = monthly.map(r=>r.Net_Sales||0);
+  const profit = monthly.map(r=>r.Profit||r.Net_Sales*0.425);
+  
+  if(charts.trend){charts.trend.destroy()}
+  charts.trend = new Chart(document.getElementById('trendChart'),{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'Net Revenue',data:revenue,borderColor:PBI_BLUE,backgroundColor:'rgba(0,120,212,.08)',borderWidth:2.5,pointRadius:3,tension:.35,fill:true},
+        {label:'Profit',data:profit,borderColor:PBI_TEAL,backgroundColor:'rgba(1,184,170,.06)',borderWidth:2,pointRadius:2,tension:.35,fill:true,borderDash:[4,2]},
+      ]
+    },
+    options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:12},boxWidth:16}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+fmt(ctx.parsed.y)}}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>fmtK(v),font:{size:11}},grid:{color:'rgba(0,0,0,.04)'}},x:{ticks:{font:{size:10},maxRotation:45}}}}
+  });
+}
+
+// =====================
+// CHANNEL CHART
+// =====================
+function renderChannelChart(data){
+  const ch = data.channels;
+  const labels = ch.map(r=>r['Sales Channel']);
+  const vals = ch.map(r=>r.Net_Sales);
+  if(charts.channel){charts.channel.destroy()}
+  charts.channel = new Chart(document.getElementById('channelChart'),{
+    type:'doughnut',
+    data:{labels,datasets:[{data:vals,backgroundColor:[PBI_BLUE,PBI_TEAL,PBI_RED,PBI_YELLOW],borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}},tooltip:{callbacks:{label:function(ctx){const total=ctx.dataset.data.reduce((a,b)=>a+b,0);return ctx.label+': '+fmt(ctx.parsed)+' ('+fmtPct(ctx.parsed/total*100)+')'}}}},cutout:'65%'}
+  });
+}
+
+// =====================
+// CATEGORY CHART
+// =====================
+function renderCatChart(data){
+  const cats = [...data.categories].sort((a,b)=>b.Net_Sales-a.Net_Sales);
+  const labels = cats.map(r=>r.Category);
+  const vals = cats.map(r=>r.Net_Sales);
+  if(charts.cat){charts.cat.destroy()}
+  charts.cat = new Chart(document.getElementById('catChart'),{
+    type:'bar',
+    data:{labels,datasets:[{label:'Net Revenue',data:vals,backgroundColor:PBI_COLORS.map((c,i)=>PBI_COLORS[i%PBI_COLORS.length]+'CC'),borderRadius:4,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.parsed.x)}}},scales:{x:{beginAtZero:true,ticks:{callback:v=>fmtK(v),font:{size:11}},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{font:{size:11}}}}}
+  });
+}
+
+// =====================
+// STATUS CHART
+// =====================
+function renderStatusChart(data){
+  const st = data.statuses;
+  const labels = st.map(r=>r['Order Status']);
+  const vals = st.map(r=>r.Count||Math.round(r.Net_Sales/5217));
+  const colors = {'Completed':'#107C10','Pending':'#F2C80F','Returned':'#FD625E'};
+  if(charts.status){charts.status.destroy()}
+  charts.status = new Chart(document.getElementById('statusChart'),{
+    type:'pie',
+    data:{labels,datasets:[{data:vals,backgroundColor:labels.map(l=>colors[l]||PBI_BLUE),borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}},tooltip:{callbacks:{label:function(ctx){const total=ctx.dataset.data.reduce((a,b)=>a+b,0);return ctx.label+': '+fmtNum(ctx.parsed)+' ('+fmtPct(ctx.parsed/total*100)+')'}}}}}}
+  });
+}
+
+// =====================
+// YoY CHART
+// =====================
+function renderYoYChart(data){
+  const yearly = RAW_DATA.yearly;
+  const labels = yearly.map(r=>r.Year);
+  const revenue = yearly.map(r=>r.Net_Sales);
+  const profit = yearly.map(r=>r.Profit);
+  const orders = yearly.map(r=>r.Orders);
+  if(charts.yoy){charts.yoy.destroy()}
+  charts.yoy = new Chart(document.getElementById('yoyChart'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Net Revenue',data:revenue,backgroundColor:PBI_BLUE+'CC',borderRadius:6,yAxisID:'y'},
+      {label:'Profit',data:profit,backgroundColor:PBI_TEAL+'CC',borderRadius:6,yAxisID:'y'},
+      {label:'Orders',data:orders,type:'line',borderColor:'#F2C80F',backgroundColor:'transparent',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#F2C80F',yAxisID:'y2'},
+    ]},
+    options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:12},boxWidth:16}},tooltip:{mode:'index',intersect:false,callbacks:{label:c=>c.dataset.label+': '+(c.dataset.yAxisID==='y2'?fmtNum(c.parsed.y)+' orders':fmt(c.parsed.y))}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>fmtK(v),font:{size:11}},grid:{color:'rgba(0,0,0,.04)'}},y2:{position:'right',beginAtZero:true,ticks:{font:{size:11}},grid:{display:false}},x:{ticks:{font:{size:12}}}}}
+  });
+}
+
+// =====================
+// HEATMAP
+// =====================
+function renderHeatmap(data){
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const years=[2022,2023,2024,2025];
+  
+  // Build matrix
+  const matrix = {};
+  let maxVal = 0;
+  RAW_DATA.monthly.forEach(r=>{
+    const key=r.Year+'-'+r.Month;
+    matrix[key]=(matrix[key]||0)+r.Net_Sales;
+    if(matrix[key]>maxVal)maxVal=matrix[key];
+  });
+  
+  function getColor(val){
+    if(!val)return '#f3f2f1';
+    const t=val/maxVal;
+    if(t<0.2)return '#deebf7';
+    if(t<0.4)return '#9ecae1';
+    if(t<0.6)return '#4292c6';
+    if(t<0.8)return '#2171b5';
+    return '#084594';
+  }
+  
+  let html='<div class="heatmap">';
+  html+='<div class="heatmap-label" style="font-size:10px;color:#605e5c;font-weight:700">Year</div>';
+  months.forEach(m=>{html+=`<div class="heatmap-cell" style="background:#374649;color:#fff;font-size:10px">${m}</div>`});
+  years.forEach(yr=>{
+    html+=`<div class="heatmap-label">${yr}</div>`;
+    for(let m=1;m<=12;m++){
+      const v=matrix[yr+'-'+m]||0;
+      const bg=getColor(v);
+      const tc=v/maxVal>0.5?'#fff':'#252423';
+      html+=`<div class="heatmap-cell" style="background:${bg};color:${tc}" title="${months[m-1]} ${yr}: ${fmt(v)}">${v>0?fmtK(v):'-'}</div>`;
+    }
+  });
+  html+='</div>';
+  document.getElementById('heatmapContainer').innerHTML=html;
+}
+
+// =====================
+// PAYMENT CHART
+// =====================
+function renderPaymentChart(data){
+  const p=RAW_DATA.payments;
+  const labels=p.map(r=>r['Payment Method']);
+  const vals=p.map(r=>r.Net_Sales);
+  if(charts.payment){charts.payment.destroy()}
+  charts.payment=new Chart(document.getElementById('paymentChart'),{
+    type:'doughnut',
+    data:{labels,datasets:[{data:vals,backgroundColor:PBI_COLORS,borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}},tooltip:{callbacks:{label:function(ctx){const t=ctx.dataset.data.reduce((a,b)=>a+b,0);return ctx.label+': '+fmt(ctx.parsed)+' ('+fmtPct(ctx.parsed/t*100)+')'}}}}}}
+  });
+}
+
+// =====================
+// MARGIN CHART
+// =====================
+function renderMarginChart(data){
+  const cats=[...RAW_DATA.categories].sort((a,b)=>b.Margin-a.Margin);
+  const labels=cats.map(r=>r.Category);
+  const vals=cats.map(r=>r.Margin);
+  if(charts.margin){charts.margin.destroy()}
+  charts.margin=new Chart(document.getElementById('marginChart'),{
+    type:'bar',
+    data:{labels,datasets:[{label:'Profit Margin %',data:vals,backgroundColor:vals.map(v=>v>=45?PBI_TEAL+'CC':v>=40?PBI_BLUE+'CC':PBI_RED+'CC'),borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtPct(c.parsed.x)+' margin'}}},scales:{x:{beginAtZero:true,max:70,ticks:{callback:v=>v+'%',font:{size:11}},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{font:{size:11}}}}}
+  });
+}
+
+// =====================
+// COUNTRY CHART
+// =====================
+function renderCountryChart(data){
+  const countries=[...RAW_DATA.countries].sort((a,b)=>b.Net_Sales-a.Net_Sales).slice(0,12);
+  const labels=countries.map(r=>r.Country);
+  const vals=countries.map(r=>r.Net_Sales);
+  if(charts.country){charts.country.destroy()}
+  charts.country=new Chart(document.getElementById('countryChart'),{
+    type:'bar',
+    data:{labels,datasets:[{label:'Net Revenue',data:vals,backgroundColor:PBI_BLUE+'CC',borderRadius:4}]},
+    options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.parsed.y)}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>fmtK(v),font:{size:11}},grid:{color:'rgba(0,0,0,.04)'}},x:{ticks:{font:{size:11}}}}}
+  });
+}
+
+// =====================
+// TOP PRODUCTS CHART
+// =====================
+function renderTopProdChart(data){
+  const prods=[...data.topProducts].sort((a,b)=>b.Net_Sales-a.Net_Sales).slice(0,10);
+  const labels=prods.map(r=>r['Product Name']||(r.product_name||'').substring(0,20));
+  const vals=prods.map(r=>r.Net_Sales);
+  if(charts.topProd){charts.topProd.destroy()}
+  charts.topProd=new Chart(document.getElementById('topProdChart'),{
+    type:'bar',
+    data:{labels,datasets:[{label:'Net Revenue',data:vals,backgroundColor:PBI_COLORS.map((c,i)=>PBI_COLORS[i%PBI_COLORS.length]+'BB'),borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.parsed.x)}}},scales:{x:{beginAtZero:true,ticks:{callback:v=>fmtK(v),font:{size:11}},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{font:{size:10}}}}}
+  });
+}
+
+// =====================
+// CATEGORY BUBBLE
+// =====================
+function renderCatBubble(data){
+  const cats=RAW_DATA.categories;
+  const datasets=cats.map((r,i)=>({
+    label:r.Category,
+    data:[{x:r.Net_Sales/1000,y:r.Margin,r:Math.sqrt(r.Orders||10)*4}],
+    backgroundColor:PBI_COLORS[i%PBI_COLORS.length]+'99',
+    borderColor:PBI_COLORS[i%PBI_COLORS.length],
+    borderWidth:1.5,
+  }));
+  if(charts.catBubble){charts.catBubble.destroy()}
+  charts.catBubble=new Chart(document.getElementById('catBubble'),{
+    type:'bubble',
+    data:{datasets},
+    options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+' | Rev: '+fmtK(c.parsed.x*1000)+' | Margin: '+fmtPct(c.parsed.y)}}},scales:{x:{title:{display:true,text:'Revenue (K)',font:{size:11}},ticks:{callback:v=>fmtK(v*1000),font:{size:10}},grid:{color:'rgba(0,0,0,.04)'}},y:{title:{display:true,text:'Profit Margin %',font:{size:11}},ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'rgba(0,0,0,.04)'},min:35,max:55}}}
+  });
+}
+
+// =====================
+// PRODUCT TABLE
+// =====================
+function renderProductTable(data){
+  const cats=RAW_DATA.categories.sort((a,b)=>b.Net_Sales-a.Net_Sales);
+  const totalRev=cats.reduce((s,r)=>s+r.Net_Sales,0);
+  let html=`<table class="data-table"><thead><tr>
+    <th>Category</th><th>Net Revenue</th><th>Revenue Share</th><th>Profit</th><th>Margin %</th><th>Performance</th>
+  </tr></thead><tbody>`;
+  cats.forEach(r=>{
+    const share=r.Net_Sales/totalRev*100;
+    const margin=r.Margin||r.Profit/r.Net_Sales*100;
+    const cls=margin>=45?'badge-green':margin>=40?'badge-blue':'badge-yellow';
+    html+=`<tr>
+      <td><strong>${r.Category}</strong></td>
+      <td>${fmt(r.Net_Sales)}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="progress" style="flex:1"><div class="progress-bar" style="width:${share}%"></div></div>
+          <span style="font-size:12px;color:#605e5c;width:32px">${fmtPct(share)}</span>
+        </div>
+      </td>
+      <td>${fmt(r.Profit||r.Net_Sales*0.425)}</td>
+      <td><span class="badge ${cls}">${fmtPct(margin)}</span></td>
+      <td>${margin>=45?'🏆 Top':margin>=40?'✅ Good':'⚠️ Watch'}</td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  document.getElementById('productTableContainer').innerHTML=html;
+}
+
+// =====================
+// SEGMENT CHART
+// =====================
+function renderSegmentChart(data){
+  const segs=RAW_DATA.segments;
+  const labels=segs.map(r=>r.Segment);
+  const vals=segs.map(r=>r.Net_Sales);
+  if(charts.segment){charts.segment.destroy()}
+  charts.segment=new Chart(document.getElementById('segmentChart'),{
+    type:'doughnut',
+    data:{labels,datasets:[{data:vals,backgroundColor:[PBI_BLUE,PBI_TEAL,PBI_RED,PBI_YELLOW].slice(0,labels.length),borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:12},boxWidth:14}},tooltip:{callbacks:{label:function(ctx){const t=ctx.dataset.data.reduce((a,b)=>a+b,0);return ctx.label+': '+fmt(ctx.parsed)+' ('+fmtPct(ctx.parsed/t*100)+')'}}}}}}
+  });
+}
+
+// =====================
+// CUSTOMER COUNTRY CHART
+// =====================
+function renderCustCountryChart(data){
+  const countries=[...RAW_DATA.countries].sort((a,b)=>b.Orders-a.Orders);
+  const labels=countries.map(r=>r.Country);
+  const vals=countries.map(r=>r.Orders);
+  if(charts.custCountry){charts.custCountry.destroy()}
+  charts.custCountry=new Chart(document.getElementById('custCountryChart'),{
+    type:'bar',
+    data:{labels,datasets:[{label:'Orders',data:vals,backgroundColor:PBI_TEAL+'CC',borderRadius:4}]},
+    options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtNum(c.parsed.y)+' orders'}}},scales:{y:{beginAtZero:true,ticks:{font:{size:11}},grid:{color:'rgba(0,0,0,.04)'}},x:{ticks:{font:{size:11}}}}}
+  });
+}
+
+// =====================
+// SEGMENT TABLE
+// =====================
+function renderSegmentTable(data){
+  const segs=RAW_DATA.segments;
+  const total=segs.reduce((s,r)=>s+r.Net_Sales,0);
+  let html=`<table class="data-table"><thead><tr>
+    <th>Segment</th><th>Net Revenue</th><th>Share</th><th>Orders</th><th>AOV</th>
+  </tr></thead><tbody>`;
+  segs.sort((a,b)=>b.Net_Sales-a.Net_Sales).forEach(r=>{
+    const share=r.Net_Sales/total*100;
+    const aov=r.Net_Sales/(r.Orders||1);
+    html+=`<tr>
+      <td><strong>${r.Segment}</strong></td>
+      <td>${fmt(r.Net_Sales)}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="progress" style="flex:1"><div class="progress-bar green" style="width:${share}%"></div></div><span style="font-size:12px;color:#605e5c;width:32px">${fmtPct(share)}</span></div></td>
+      <td>${fmtNum(r.Orders)}</td>
+      <td>${fmt(aov)}</td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  document.getElementById('segmentTableContainer').innerHTML=html;
+}
+
+// =====================
+// TEAM CHART
+// =====================
+function renderTeamChart(data){
+  const team=[...data.team].sort((a,b)=>b.Net_Sales-a.Net_Sales).slice(0,15);
+  const labels=team.map(r=>r.Name.split(' ')[0]+' '+r.Name.split(' ').pop().substring(0,1)+'.');
+  const actuals=team.map(r=>r.Net_Sales);
+  const targets=team.map(r=>r['Sales Target']||r.Sales_Target||100000);
+  if(charts.team){charts.team.destroy()}
+  charts.team=new Chart(document.getElementById('teamChart'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Actual Revenue',data:actuals,backgroundColor:actuals.map((a,i)=>a>=(targets[i]||100000)?PBI_TEAL+'CC':PBI_YELLOW+'CC'),borderRadius:4},
+      {label:'Sales Target',data:targets,type:'bar',backgroundColor:'transparent',borderColor:'#374649',borderWidth:2,borderDash:[4,2]},
+    ]},
+    options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:12},boxWidth:14}},tooltip:{mode:'index',intersect:false,callbacks:{label:c=>c.dataset.label+': '+fmt(c.parsed.y)}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>fmtK(v),font:{size:11}},grid:{color:'rgba(0,0,0,.04)'}},x:{ticks:{font:{size:10},maxRotation:45}}}}
+  });
+}
+
+// =====================
+// TEAM TABLE
+// =====================
+function renderTeamTable(data){
+  const team=[...data.team].sort((a,b)=>b.Net_Sales-a.Net_Sales);
+  let html=`<table class="data-table"><thead><tr>
+    <th>Name</th><th>Location</th><th>Role</th><th>Revenue</th><th>Target</th><th>Achievement</th><th>Orders</th><th>Status</th>
+  </tr></thead><tbody>`;
+  team.forEach(r=>{
+    const target=r['Sales Target']||r.Sales_Target||100000;
+    const achiev=(r.Net_Sales/target*100);
+    const cls=achiev>=100?'badge-green':achiev>=80?'badge-blue':achiev>=60?'badge-yellow':'badge-red';
+    const loc=r.Location||'';
+    const flag=loc==='London'?'🇬🇧':loc.includes('Hamburg')||loc.includes('Berlin')||loc.includes('Munich')||loc.includes('Frankfurt')?'🇩🇪':loc==='Lyon'||loc==='Toulouse'?'🇫🇷':loc==='Toronto'||loc==='Calgary'||loc==='Vancouver'?'🇨🇦':'📍';
+    html+=`<tr>
+      <td><strong>${r.Name}</strong></td>
+      <td>${flag} ${loc}</td>
+      <td><span class="badge badge-blue">${r.Role||''}</span></td>
+      <td>${fmt(r.Net_Sales)}</td>
+      <td>${fmt(target)}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="progress" style="flex:1;min-width:60px"><div class="progress-bar ${achiev>=100?'green':achiev>=80?'':'orange'}" style="width:${Math.min(achiev,100)}%"></div></div>
+          <span class="badge ${cls}">${fmtPct(achiev)}</span>
+        </div>
+      </td>
+      <td>${fmtNum(r.Orders||r.orders||0)}</td>
+      <td>${achiev>=100?'🏆 Exceeded':achiev>=80?'✅ On Track':achiev>=60?'⚠️ At Risk':'🔴 Behind'}</td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  document.getElementById('teamTableContainer').innerHTML=html;
+}
+
+// =====================
+// PAGE NAVIGATION
+// =====================
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// =====================
+// INIT
+// =====================
+renderAll();
+</script>
+</body>
+</html>
