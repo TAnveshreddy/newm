@@ -42,9 +42,15 @@ def q(v):
     return '"'+str(v).replace('\\','\\\\').replace('"','\\"')+'"'
 
 def m_table(records, cols):
-    type_decls=", ".join(f'#"{c}"={t}' for c,t in cols)
-    rows=",\n".join("    {"+", ".join(q(r.get(c)) for c,_ in cols)+"}" for r in records)
-    return ["let",f'  Source=#table(type table [{type_decls}],{{',rows,"  })","in","  Source"]
+    """Each row is a separate string element — no embedded newlines (required by TMSL parser)."""
+    type_decls = ", ".join(f'#"{c}" = {t}' for c, t in cols)
+    lines = ["let", f'  Source = #table(type table [{type_decls}], {{']
+    for i, rec in enumerate(records):
+        vals = ", ".join(q(rec.get(c)) for c, _ in cols)
+        comma = "," if i < len(records) - 1 else ""
+        lines.append(f"    {{{vals}}}{comma}")
+    lines += ["  })", "in", "  Source"]
+    return lines
 
 def clean(r,cols):
     out={}
