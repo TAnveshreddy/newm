@@ -15,7 +15,6 @@ from openpyxl import load_workbook
 
 # ── Config ──────────────────────────────────────────────────────────────────────
 EXCEL_PATH  = "/root/.claude/uploads/88b2c6f2-1275-4033-b7c3-bfdbe632692c/6b04f467-PowerBI_Data.xlsx"
-BASE_PBIX   = "/home/user/newm/make1_complete.pbix"
 OUTPUT_DIR  = "/home/user/newm"
 OUTPUT_PBIT = os.path.join(OUTPUT_DIR, "SalesAnalytics.pbit")
 OUTPUT_PBIX = os.path.join(OUTPUT_DIR, "SalesAnalytics.pbix")
@@ -703,20 +702,6 @@ CONTENT_TYPES_PBIT = """<?xml version="1.0" encoding="utf-8"?>
   <Override PartName="/Version"            ContentType="application/json" />
 </Types>"""
 
-CONTENT_TYPES_PBIX = """<?xml version="1.0" encoding="utf-8"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-  <Default Extension="json" ContentType="application/json" />
-  <Default Extension="xml"  ContentType="application/xml"  />
-  <Override PartName="/DataModel"          ContentType="application/octet-stream" />
-  <Override PartName="/DataModelSchema"    ContentType="application/json" />
-  <Override PartName="/DiagramLayout"      ContentType="application/json" />
-  <Override PartName="/Report/Layout"      ContentType="application/json" />
-  <Override PartName="/Settings"           ContentType="application/json" />
-  <Override PartName="/Metadata"           ContentType="application/json" />
-  <Override PartName="/SecurityBindings"   ContentType="application/octet-stream" />
-  <Override PartName="/Version"            ContentType="application/json" />
-</Types>"""
-
 VERSION   = "3.0"
 METADATA  = json.dumps({"Version": 5, "AutoCreatedRelationships": [],
                          "CreatedFrom": "Cloud", "CreatedFromRelease": "2024.04"})
@@ -747,28 +732,26 @@ def write_pbit(schema, diagram, pages):
     print(f"[OK] Written: {OUTPUT_PBIT}")
 
 def write_pbix(schema, diagram, pages):
-    """Build PBIX by injecting new schema + layout into the existing DataModel binary."""
+    """Build PBIX using only DATATABLE calculated tables — no legacy DataModel binary.
+    The file is structurally identical to the .pbit; Power BI Desktop evaluates
+    the DATATABLE DAX on first open and lets the user save a fully populated .pbix."""
     layout = {"id": 0, "resourcePackages": [
         {"resourcePackage": {"name": "SharedResources", "type": 2,
                              "items": [{"type": 202, "path": "BaseThemes/CY23SU11.json",
                                         "name": "CY23SU11"}], "disabled": False}}
     ], "sections": pages, "config": REPORT_CONFIG, "layoutOptimization": 0}
 
-    with zipfile.ZipFile(BASE_PBIX, "r") as src, \
-         zipfile.ZipFile(OUTPUT_PBIX, "w", zipfile.ZIP_DEFLATED) as dst:
-        # Copy DataModel binary as-is
-        dst.writestr("DataModel",     src.read("DataModel"))
-        # Overwrite everything else
-        dst.writestr("Version",                VERSION.encode("utf-8"))
-        dst.writestr("[Content_Types].xml",    CONTENT_TYPES_PBIX.encode("utf-8"))
-        dst.writestr("DataModelSchema",        json.dumps(schema, ensure_ascii=False).encode("utf-8"))
-        dst.writestr("DiagramLayout",          json.dumps(diagram, ensure_ascii=False).encode("utf-16-le"))
-        dst.writestr("Report/Layout",          json.dumps(layout,  ensure_ascii=False).encode("utf-16-le"))
-        dst.writestr("Settings",               SETTINGS.encode("utf-16-le"))
-        dst.writestr("Metadata",               METADATA.encode("utf-16-le"))
-        dst.writestr("SecurityBindings",       b"")
-        dst.writestr("Report/StaticResources/SharedResources/BaseThemes/CY23SU11.json",
-                     THEME_JSON.encode("utf-8"))
+    with zipfile.ZipFile(OUTPUT_PBIX, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("Version",                VERSION.encode("utf-8"))
+        z.writestr("[Content_Types].xml",    CONTENT_TYPES_PBIT.encode("utf-8"))
+        z.writestr("DataModelSchema",        json.dumps(schema, ensure_ascii=False).encode("utf-8"))
+        z.writestr("DiagramLayout",          json.dumps(diagram, ensure_ascii=False).encode("utf-16-le"))
+        z.writestr("Report/Layout",          json.dumps(layout,  ensure_ascii=False).encode("utf-16-le"))
+        z.writestr("Settings",               SETTINGS.encode("utf-16-le"))
+        z.writestr("Metadata",               METADATA.encode("utf-16-le"))
+        z.writestr("SecurityBindings",       b"")
+        z.writestr("Report/StaticResources/SharedResources/BaseThemes/CY23SU11.json",
+                   THEME_JSON.encode("utf-8"))
     print(f"[OK] Written: {OUTPUT_PBIX}")
 
 # ── Main ──────────────────────────────────────────────────────────────────────────
