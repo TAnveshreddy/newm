@@ -300,6 +300,15 @@ p5 = page_header("Team Performance",0) + kpi_row(102,100) + [
 ]
 
 # ── Section / Layout builders ─────────────────────────────────────────────────
+THEME = {
+    "name":"SalesAnalyticsTheme",
+    "dataColors":[TEAL,DGRAY,RED,YELLOW,BLUE,PURPLE,ORANGE,GREEN,SLATE,"#E91E63"],
+    "good":GREEN,"neutral":YELLOW,"bad":RED,
+    "background":WHITE,"foreground":DARK,"tableAccent":TEAL,
+}
+THEME_PATH="Report/StaticResources/RegisteredResources/SalesAnalyticsTheme.json"
+theme_bytes=json.dumps(THEME,ensure_ascii=False).encode("utf-8")
+
 def section(sid,name,display,ordinal,visuals):
     cfg={"page":{"background":{"color":{"solid":{"color":LTGRAY}},"transparency":0}}}
     return {"id":sid,"name":name,"displayName":display,"ordinal":ordinal,
@@ -308,10 +317,13 @@ def section(sid,name,display,ordinal,visuals):
 
 report_layout={
     "id":0,
-    "resourcePackages":[{"resourcePackage":{
-        "name":"SharedResources","type":2,
-        "items":[{"type":202,"path":"BaseThemes/CY23SU11.json","name":"CY23SU11"}],
-        "disabled":False}}],
+    # Must include BOTH SharedResources AND RegisteredResources — required by Power BI
+    "resourcePackages":[
+        {"resourcePackage":{"name":"SharedResources","type":2,
+            "items":[{"type":202,"path":"BaseThemes/CY23SU11.json","name":"CY23SU11"}],"disabled":False}},
+        {"resourcePackage":{"name":"RegisteredResources","type":1,
+            "items":[{"type":202,"path":"SalesAnalyticsTheme.json","name":"SalesAnalyticsTheme"}],"disabled":False}}
+    ],
     "sections":[
         section(0,"S1","Executive Summary",0,p1),
         section(1,"S2","Sales Performance", 1,p2),
@@ -319,19 +331,29 @@ report_layout={
         section(3,"S4","Customer Insights", 3,p4),
         section(4,"S5","Team Performance",  4,p5),
     ],
-    # Match source PBIX config exactly (version 5.55, no custom theme)
+    # version 5.49 + customTheme ref — matches structure of working PBIX
     "config":json.dumps({
-        "version":"5.55",
-        "themeCollection":{"baseTheme":{"name":"CY23SU11","version":"5.55","type":2}},
+        "version":"5.49",
+        "themeCollection":{
+            "baseTheme":{"name":"CY23SU11","version":"5.49","type":2},
+            "customTheme":{"name":"SalesAnalyticsTheme","type":1,"resourcePackage":"RegisteredResources"}
+        },
         "activeSectionIndex":0,
         "defaultDrillFilterOtherVisuals":True,
-        "settings":{"filterPaneEnabled":True,"navContentPaneEnabled":True,
-                    "useNewFilterPaneExperience":True}
+        "settings":{"useNewFilterPaneExperience":True,"allowChangeFilterTypes":True,
+                    "useStylableVisualContainerHeader":True}
     }),
     "layoutOptimization":0
 }
 
 layout_bytes=json.dumps(report_layout,ensure_ascii=False).encode("utf-16-le")
+
+def patch_content_types(xml_bytes):
+    xml=xml_bytes.decode("utf-8")
+    if "SalesAnalyticsTheme" not in xml:
+        xml=xml.replace("</Types>",
+            '<Override PartName="/Report/StaticResources/RegisteredResources/SalesAnalyticsTheme.json" ContentType="application/json"/></Types>')
+    return xml.encode("utf-8")
 
 # ── Write PBIX ────────────────────────────────────────────────────────────────
 with zipfile.ZipFile(SRC) as z:
@@ -341,8 +363,11 @@ with zipfile.ZipFile(OUT,"w",zipfile.ZIP_DEFLATED) as z:
     for name,data in orig.items():
         if name=="Report/Layout":
             z.writestr(name,layout_bytes)
+        elif name=="[Content_Types].xml":
+            z.writestr(name,patch_content_types(data))
         else:
             z.writestr(name,data)
+    z.writestr(THEME_PATH,theme_bytes)
 
 size=os.path.getsize(OUT)
 print(f"Written: {OUT}  ({size:,} bytes)")
