@@ -916,7 +916,7 @@ def write_pbit(path):
         zf.writestr("Settings",            SETTINGS_JSON.encode("utf-8"))
         zf.writestr("Metadata",            METADATA_JSON.encode("utf-8"))
         zf.writestr("SecurityBindings",    SECURITY_BINDINGS)
-        zf.writestr("DiagramLayout",       json.dumps(DIAGRAM_LAYOUT, ensure_ascii=False).encode("utf-16-le"))
+        zf.writestr("DiagramLayout",       json.dumps(DIAGRAM_LAYOUT, ensure_ascii=False).encode("utf-8"))
         zf.writestr("DataModelSchema",     json.dumps(DATA_MODEL_SCHEMA, ensure_ascii=False).encode("utf-8"))
         zf.writestr("Report/Layout",       json.dumps(REPORT_LAYOUT, ensure_ascii=False).encode("utf-16-le"))
         zf.writestr("Report/StaticResources/SharedResources/BaseThemes/CY23SU11.json",
