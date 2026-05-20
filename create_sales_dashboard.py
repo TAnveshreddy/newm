@@ -90,14 +90,17 @@ PROD_COLS = [
     ("Rating","number"),
 ]
 
-# Build M expressions
-M_SALES     = build_m_table(SALES, SALES_COLS)
-M_CUSTOMERS = build_m_table(CUSTOMERS, CUST_COLS)
-M_USERS     = build_m_table(USERS, USER_COLS)
-M_PRODUCTS  = build_m_table(PRODUCTS, PROD_COLS)
+# Build M expressions as LIST OF STRINGS (TMSL requires this format)
+def m_as_lines(m_str):
+    return m_str.split("\n")
 
-print(f"M Sales: {len(M_SALES):,} chars | M Customers: {len(M_CUSTOMERS):,} | "
-      f"M Users: {len(M_USERS):,} | M Products: {len(M_PRODUCTS):,}")
+M_SALES     = m_as_lines(build_m_table(SALES, SALES_COLS))
+M_CUSTOMERS = m_as_lines(build_m_table(CUSTOMERS, CUST_COLS))
+M_USERS     = m_as_lines(build_m_table(USERS, USER_COLS))
+M_PRODUCTS  = m_as_lines(build_m_table(PRODUCTS, PROD_COLS))
+
+print(f"M Sales: {len(M_SALES)} lines | M Customers: {len(M_CUSTOMERS)} lines | "
+      f"M Users: {len(M_USERS)} lines | M Products: {len(M_PRODUCTS)} lines")
 
 # ─── Layout helpers ───────────────────────────────────────────────────────────
 def vn(): return uuid.uuid4().hex[:20]
@@ -727,18 +730,17 @@ REPORT_LAYOUT = {
 }
 
 # ─── DataModel Schema (TMSL) ──────────────────────────────────────────────────
-def col_def(name, dtype, partition_col=True):
+def col_def(name, dtype):
     type_map = {
         "text": "string", "number": "double", "Int64.Type": "int64",
         "date": "dateTime", "boolean": "boolean",
     }
-    d = {
-        "name": name, "dataType": type_map.get(dtype, "string"),
-        "isHidden": False, "sourceColumn": name,
+    return {
+        "name": name,
+        "dataType": type_map.get(dtype, "string"),
+        "sourceColumn": name,
+        "summarizeBy": "none",
     }
-    if dtype == "date":
-        d["formatString"] = "Short Date"
-    return d
 
 def measure_def(name, expr, fmt=None):
     m = {"name": name, "expression": expr, "isHidden": False}
@@ -746,15 +748,19 @@ def measure_def(name, expr, fmt=None):
         m["formatString"] = fmt
     return m
 
+# DataModelSchema must have ONLY "model" at top level (name goes inside model)
+# Expression MUST be a list of strings (TMSL requirement)
 DATA_MODEL_SCHEMA = {
-    "name": "SalesAnalyticsDashboard",
-    "compatibilityLevel": 1550,
     "model": {
+        "name": "SalesAnalyticsDashboard",
+        "compatibilityLevel": 1567,
         "defaultPowerBIDataSourceVersion": "powerBI_V3",
         "sourceQueryCulture": "en-US",
+        "annotations": [{"name": "PBIDesktopVersion", "value": "2.130"}],
         "tables": [
             {
                 "name": "Sales",
+                "isHidden": False,
                 "columns": [col_def(c, t) for c, t in SALES_COLS],
                 "measures": [
                     measure_def("Total Revenue",       "SUM(Sales[Net Sales])",           "#,0.00"),
@@ -781,6 +787,7 @@ DATA_MODEL_SCHEMA = {
             },
             {
                 "name": "Customers",
+                "isHidden": False,
                 "columns": [col_def(c, t) for c, t in CUST_COLS],
                 "measures": [
                     measure_def("Avg Credit Limit", "AVERAGE(Customers[Credit Limit])", "#,0.00"),
@@ -790,6 +797,7 @@ DATA_MODEL_SCHEMA = {
             },
             {
                 "name": "Users",
+                "isHidden": False,
                 "columns": [col_def(c, t) for c, t in USER_COLS],
                 "measures": [
                     measure_def("Total Target", "SUM(Users[Sales Target])", "#,0.00"),
@@ -799,6 +807,7 @@ DATA_MODEL_SCHEMA = {
             },
             {
                 "name": "Products",
+                "isHidden": False,
                 "columns": [col_def(c, t) for c, t in PROD_COLS],
                 "partitions": [{"name": "Products-Partition", "mode": "import",
                                 "source": {"type": "m", "expression": M_PRODUCTS}}],
@@ -812,16 +821,10 @@ DATA_MODEL_SCHEMA = {
             {"name": str(uuid.uuid4()), "fromTable": "Sales", "fromColumn": "Product ID",
              "toTable": "Products",   "toColumn": "Product ID",  "crossFilteringBehavior": "bothDirections"},
         ],
-        "cultures": [{"name": "en-US", "linguisticMetadata": {
-            "Version": "1.0.0", "Language": "en-US"
-        }}],
         "roles": [{
             "name": "Sales Rep",
             "modelPermission": "read",
-            "tablePermissions": [{
-                "name": "Sales",
-                "filterExpression": "TRUE()"
-            }]
+            "tablePermissions": [{"name": "Sales", "filterExpression": "TRUE()"}]
         }],
     }
 }
