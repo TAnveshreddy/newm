@@ -1,0 +1,101 @@
+Customer ID,First Name,Last Name,Email,Phone,Address,City,Country,Postal Code,Segment,Registration Date,Credit Limit
+CUST-0001,Richard,Harris,richard.harris1@email.com,+1-543-340-5963,187 Main St,Berlin,Germany,72505,Small Business,2023-07-17,24434
+CUST-0002,David,Garcia,david.garcia2@email.com,+1-647-232-1390,614 Park Blvd,Lyon,France,45330,Corporate,2022-03-22,35867
+CUST-0003,Emily,Wilson,emily.wilson3@email.com,+1-942-760-6471,393 Lake Rd,Manchester,UK,38394,Small Business,2021-12-09,34988
+CUST-0004,John,Brown,john.brown4@email.com,+1-730-406-3969,532 Lake Rd,Montreal,Canada,88836,Consumer,2023-01-20,45906
+CUST-0005,William,Davis,william.davis5@email.com,+1-263-739-7915,708 Oak Ave,Munich,Germany,77934,Corporate,2021-02-16,29569
+CUST-0006,Hannah,Anderson,hannah.anderson6@email.com,+1-403-911-9454,9 Main St,Mumbai,India,45063,Consumer,2021-09-19,4416
+CUST-0007,Karen,Davis,karen.davis7@email.com,+1-828-835-7506,850 Lake Rd,Brisbane,Australia,39604,Enterprise,2022-06-17,48161
+CUST-0008,Jennifer,Jones,jennifer.jones8@email.com,+1-975-754-5405,396 Park Blvd,Los Angeles,USA,18206,Small Business,2020-10-18,47219
+CUST-0009,Olivia,White,olivia.white9@email.com,+1-829-354-3159,64 Park Blvd,Munich,Germany,27879,Enterprise,2020-12-27,26414
+CUST-0010,Jessica,Thomas,jessica.thomas10@email.com,+1-640-444-6971,996 Oak Ave,Marseille,France,55326,Enterprise,2021-08-23,37183
+CUST-0011,Patricia,Smith,patricia.smith11@email.com,+1-294-741-4129,315 Lake Rd,Bangalore,India,71635,Consumer,2020-08-10,7177
+CUST-0012,Susan,Wilson,susan.wilson12@email.com,+1-426-233-7696,704 Oak Ave,Munich,Germany,57488,Consumer,2022-06-01,25828
+CUST-0013,Robert,Smith,robert.smith13@email.com,+1-237-202-3174,837 Maple Dr,Bangalore,India,51281,Enterprise,2020-06-16,16183
+CUST-0014,Linda,Davis,linda.davis14@email.com,+1-805-762-3298,232 Lake Rd,Toronto,Canada,15042,Consumer,2021-04-07,6224
+CUST-0015,Ava,Moore,ava.moore15@email.com,+1-424-132-1426,520 Lake Rd,Lyon,France,52065,Consumer,2023-10-20,43549
+CUST-0016,Robert,Davis,robert.davis16@email.com,+1-957-995-1461,483 Maple Dr,Nagoya,Japan,77010,Enterprise,2020-12-27,6100
+CUST-0017,James,Wilson,james.wilson17@email.com,+1-221-480-6032,960 Main St,Frankfurt,Germany,92864,Consumer,2020-10-07,24636
+CUST-0018,Ava,Taylor,ava.taylor18@email.com,+1-220-282-2640,925 Maple Dr,Chicago,USA,29672,Corporate,2022-12-25,30256
+CUST-0019,Ryan,Smith,ryan.smith19@email.com,+1-797-201-9894,97 Lake Rd,Melbourne,Australia,12252,Small Business,2021-08-07,43472
+CUST-0020,Liam,Harris,liam.harris20@email.com,+1-855-613-1012,599 Oak Ave,Manchester,UK,50253,Corporate,2022-02-20,41764
+CUST-0021,Jennifer,Wilson,jennifer.wilson21@email.com,+1-799-499-3948,897 Park Blvd,Los Angeles,USA,44452,Consumer,2020-11-05,17586
+CUST-0022,Karen,Young,karen.young22@email.com,+1-569-301-5755,388 Park Blvd,Los Angeles,USA,25151,Consumer,2021-07-18,31249
+CUST-0023,Sophia,White,sophia.white23@email.com,+1-680-993-4903,907 Maple Dr,Lyon,France,32363,Consumer,2022-09-02,5289
+CUST-0024,Sophia,Miller,sophia.miller24@email.com,+1-578-617-2327,558 Park Blvd,Berlin,Germany,44791,Corporate,2021-12-08,49487
+CUST-0025,Richard,Martin,richard.martin25@email.com,+1-259-687-9374,879 Main St,Houston,USA,78492,Consumer,2022-10-25,17653
+CUST-0026,Sarah,Jones,sarah.jones26@email.com,+1-800-483-2764,487 Lake Rd,Brisbane,Australia,89611,Consumer,2023-02-26,28732
+CUST-0027,Sarah,Thomas,sarah.thomas27@email.com,+1-591-185-9494,673 Lake Rd,Los Angeles,USA,56404,Enterprise,2021-02-12,30324
+CUST-0028,David,Brown,david.brown28@email.com,+1-543-191-1145,679 Maple Dr,Hamburg,Germany,77808,Corporate,2021-05-01,42027
+CUST-0029,Ethan,Thompson,ethan.thompson29@email.com,+1-222-221-8489,663 Park Blvd,Ajman,UAE,19987,Consumer,2023-05-17,46695
+CUST-0030,Thomas,Thomas,thomas.thomas30@email.com,+1-657-845-5234,535 Main St,Marseille,France,65638,Enterprise,2021-10-07,42233
+CUST-0031,John,Moore,john.moore31@email.com,+1-401-533-6833,706 Lake Rd,Ajman,UAE,71089,Corporate,2023-09-05,17999
+CUST-0032,Jessica,Martin,jessica.martin32@email.com,+1-361-970-5413,814 Lake Rd,Hamburg,Germany,32647,Small Business,2023-05-05,8521
+CUST-0033,Noah,Martin,noah.martin33@email.com,+1-297-141-1872,38 Park Blvd,Toronto,Canada,62917,Enterprise,2022-07-15,37085
+CUST-0034,Ethan,Anderson,ethan.anderson34@email.com,+1-422-874-6871,730 Park Blvd,Brisbane,Australia,16172,Consumer,2022-02-15,26785
+CUST-0035,Sophia,Harris,sophia.harris35@email.com,+1-232-886-6397,411 Park Blvd,Bangalore,India,22206,Small Business,2022-09-13,28209
+CUST-0036,Ryan,Harris,ryan.harris36@email.com,+1-341-588-7403,750 Lake Rd,Vancouver,Canada,68855,Small Business,2020-11-19,49166
+CUST-0037,Susan,Jackson,susan.jackson37@email.com,+1-800-210-4554,973 Oak Ave,Brisbane,Australia,48960,Corporate,2023-10-23,42474
+CUST-0038,Ryan,Smith,ryan.smith38@email.com,+1-754-631-8568,21 Maple Dr,Perth,Australia,90263,Corporate,2022-03-01,28530
+CUST-0039,Karen,Williams,karen.williams39@email.com,+1-629-509-5744,50 Lake Rd,Chicago,USA,26407,Corporate,2020-04-02,15870
+CUST-0040,Joseph,Garcia,joseph.garcia40@email.com,+1-750-584-4979,462 Lake Rd,Los Angeles,USA,39220,Enterprise,2023-11-19,19688
+CUST-0041,Olivia,Martin,olivia.martin41@email.com,+1-220-624-8178,985 Park Blvd,Brisbane,Australia,94893,Enterprise,2022-06-26,46748
+CUST-0042,Sarah,Young,sarah.young42@email.com,+1-333-969-9898,213 Lake Rd,Lyon,France,60659,Corporate,2021-02-09,45319
+CUST-0043,Sophia,Martin,sophia.martin43@email.com,+1-419-919-2290,823 Oak Ave,Nagoya,Japan,76691,Small Business,2020-06-01,7885
+CUST-0044,Barbara,Johnson,barbara.johnson44@email.com,+1-713-247-8955,671 Oak Ave,New York,USA,96410,Small Business,2021-07-26,20861
+CUST-0045,Olivia,Martin,olivia.martin45@email.com,+1-255-477-3316,373 Lake Rd,Marseille,France,47614,Consumer,2021-10-26,16256
+CUST-0046,Emily,Garcia,emily.garcia46@email.com,+1-811-894-7976,585 Oak Ave,Lyon,France,48378,Consumer,2020-03-22,8590
+CUST-0047,Hannah,Miller,hannah.miller47@email.com,+1-467-401-1433,99 Oak Ave,Montreal,Canada,91775,Small Business,2021-09-10,40931
+CUST-0048,Noah,Moore,noah.moore48@email.com,+1-508-877-8135,649 Lake Rd,Berlin,Germany,35202,Consumer,2022-04-24,4367
+CUST-0049,Hannah,White,hannah.white49@email.com,+1-816-613-7416,649 Maple Dr,New York,USA,35564,Corporate,2023-02-28,40517
+CUST-0050,Richard,Young,richard.young50@email.com,+1-682-772-3085,913 Maple Dr,Marseille,France,84370,Small Business,2023-11-27,14699
+CUST-0051,Liam,Brown,liam.brown51@email.com,+1-496-704-7374,28 Lake Rd,Dubai,UAE,15448,Small Business,2020-05-25,9622
+CUST-0052,Daniel,Harris,daniel.harris52@email.com,+1-249-966-6712,925 Main St,Toulouse,France,14079,Corporate,2020-02-18,42114
+CUST-0053,Patricia,Thompson,patricia.thompson53@email.com,+1-567-679-5029,787 Park Blvd,Calgary,Canada,59915,Small Business,2021-07-07,29377
+CUST-0054,Sarah,Garcia,sarah.garcia54@email.com,+1-275-764-4405,875 Maple Dr,Dubai,UAE,53238,Enterprise,2022-12-02,33802
+CUST-0055,Daniel,Brown,daniel.brown55@email.com,+1-504-621-6962,738 Maple Dr,Sapporo,Japan,62786,Enterprise,2020-09-04,26858
+CUST-0056,Lisa,White,lisa.white56@email.com,+1-600-182-7960,952 Park Blvd,Manchester,UK,69174,Consumer,2022-04-13,29348
+CUST-0057,James,Martin,james.martin57@email.com,+1-653-173-9277,338 Main St,Toronto,Canada,16560,Corporate,2023-10-22,35658
+CUST-0058,Olivia,Miller,olivia.miller58@email.com,+1-225-372-8377,655 Lake Rd,Tokyo,Japan,72163,Enterprise,2021-10-23,17754
+CUST-0059,Karen,Walker,karen.walker59@email.com,+1-372-281-9546,328 Lake Rd,Vancouver,Canada,57380,Consumer,2020-11-28,18030
+CUST-0060,Thomas,Walker,thomas.walker60@email.com,+1-761-631-1223,274 Lake Rd,Dubai,UAE,36291,Small Business,2020-02-28,13445
+CUST-0061,Patricia,Young,patricia.young61@email.com,+1-392-701-7614,286 Maple Dr,Los Angeles,USA,45657,Small Business,2023-06-18,27278
+CUST-0062,Lisa,Davis,lisa.davis62@email.com,+1-407-865-8193,194 Maple Dr,Munich,Germany,21314,Corporate,2021-03-24,37086
+CUST-0063,James,White,james.white63@email.com,+1-518-342-8386,412 Oak Ave,Perth,Australia,26171,Consumer,2022-03-22,37759
+CUST-0064,Sophia,Thompson,sophia.thompson64@email.com,+1-617-699-8827,919 Maple Dr,Brisbane,Australia,42516,Enterprise,2021-05-11,44149
+CUST-0065,John,Thomas,john.thomas65@email.com,+1-985-202-3230,440 Lake Rd,Montreal,Canada,93948,Consumer,2023-06-13,45357
+CUST-0066,Emily,Wilson,emily.wilson66@email.com,+1-677-197-9053,416 Park Blvd,Houston,USA,78365,Small Business,2022-12-15,41222
+CUST-0067,Liam,Young,liam.young67@email.com,+1-411-219-7455,844 Main St,Toulouse,France,20775,Consumer,2020-03-15,29072
+CUST-0068,John,Young,john.young68@email.com,+1-577-494-1369,505 Park Blvd,Bangalore,India,25185,Small Business,2020-02-28,41071
+CUST-0069,Thomas,Davis,thomas.davis69@email.com,+1-786-775-3658,824 Park Blvd,Los Angeles,USA,87557,Enterprise,2020-07-21,32716
+CUST-0070,Joseph,Moore,joseph.moore70@email.com,+1-251-941-1298,458 Lake Rd,Perth,Australia,10957,Enterprise,2023-07-08,4579
+CUST-0071,Olivia,Anderson,olivia.anderson71@email.com,+1-215-354-5373,785 Main St,Los Angeles,USA,10433,Small Business,2023-07-11,9135
+CUST-0072,Robert,Brown,robert.brown72@email.com,+1-961-673-2961,976 Main St,Sapporo,Japan,20904,Small Business,2020-11-05,17055
+CUST-0073,James,Walker,james.walker73@email.com,+1-997-780-3606,938 Oak Ave,Birmingham,UK,84771,Small Business,2021-04-16,27280
+CUST-0074,Susan,Garcia,susan.garcia74@email.com,+1-317-720-4224,590 Park Blvd,Tokyo,Japan,43810,Consumer,2021-06-09,17482
+CUST-0075,Jessica,White,jessica.white75@email.com,+1-725-946-2335,806 Maple Dr,Montreal,Canada,54214,Corporate,2022-05-10,29638
+CUST-0076,Emily,Thompson,emily.thompson76@email.com,+1-839-257-9017,717 Maple Dr,Birmingham,UK,26734,Consumer,2023-05-18,40480
+CUST-0077,David,Taylor,david.taylor77@email.com,+1-632-707-2600,8 Park Blvd,Abu Dhabi,UAE,66181,Enterprise,2020-09-08,22048
+CUST-0078,Hannah,Young,hannah.young78@email.com,+1-778-776-3799,239 Park Blvd,Munich,Germany,46369,Consumer,2020-05-01,19968
+CUST-0079,Robert,Williams,robert.williams79@email.com,+1-264-451-6709,724 Park Blvd,Ajman,UAE,30721,Small Business,2020-06-13,43166
+CUST-0080,Jennifer,Young,jennifer.young80@email.com,+1-819-765-5686,612 Maple Dr,Hamburg,Germany,98967,Corporate,2022-10-03,26393
+CUST-0081,Hannah,Jones,hannah.jones81@email.com,+1-362-291-4578,589 Lake Rd,Salvador,Brazil,38164,Enterprise,2022-05-11,13917
+CUST-0082,Patricia,Walker,patricia.walker82@email.com,+1-208-167-6364,185 Lake Rd,São Paulo,Brazil,96918,Small Business,2022-04-08,9513
+CUST-0083,Ryan,Martin,ryan.martin83@email.com,+1-511-970-7333,145 Main St,Mumbai,India,12157,Corporate,2020-12-08,49723
+CUST-0084,Sarah,Thompson,sarah.thompson84@email.com,+1-525-102-6650,539 Park Blvd,Vancouver,Canada,80023,Corporate,2020-12-07,12728
+CUST-0085,Thomas,Miller,thomas.miller85@email.com,+1-321-417-4416,621 Oak Ave,Frankfurt,Germany,28947,Small Business,2023-09-20,22770
+CUST-0086,Jennifer,Wilson,jennifer.wilson86@email.com,+1-711-298-1355,985 Maple Dr,Chicago,USA,51911,Small Business,2023-09-20,5747
+CUST-0087,Karen,Miller,karen.miller87@email.com,+1-287-216-7994,954 Main St,Marseille,France,25167,Consumer,2020-06-06,18476
+CUST-0088,Liam,Garcia,liam.garcia88@email.com,+1-811-196-1636,322 Lake Rd,Montreal,Canada,24692,Small Business,2022-03-19,11427
+CUST-0089,Karen,Williams,karen.williams89@email.com,+1-354-265-5539,585 Main St,Calgary,Canada,89917,Consumer,2022-11-02,30453
+CUST-0090,Noah,Williams,noah.williams90@email.com,+1-795-382-3956,481 Park Blvd,Rio de Janeiro,Brazil,43968,Consumer,2021-06-20,12740
+CUST-0091,James,Anderson,james.anderson91@email.com,+1-441-762-9167,747 Maple Dr,Abu Dhabi,UAE,10931,Enterprise,2022-03-27,1419
+CUST-0092,Ava,Moore,ava.moore92@email.com,+1-301-124-2189,164 Lake Rd,Brisbane,Australia,97208,Enterprise,2020-02-11,21144
+CUST-0093,Jessica,Wilson,jessica.wilson93@email.com,+1-934-102-1165,462 Park Blvd,Tokyo,Japan,98802,Small Business,2020-04-10,28044
+CUST-0094,Susan,Johnson,susan.johnson94@email.com,+1-985-608-2164,58 Park Blvd,Rio de Janeiro,Brazil,72939,Small Business,2022-12-08,38521
+CUST-0095,Ava,Harris,ava.harris95@email.com,+1-398-663-8320,460 Park Blvd,Tokyo,Japan,42565,Consumer,2022-06-20,18396
+CUST-0096,John,Davis,john.davis96@email.com,+1-931-457-8342,132 Oak Ave,Hamburg,Germany,12610,Consumer,2023-12-25,21669
+CUST-0097,Lisa,Brown,lisa.brown97@email.com,+1-308-561-8981,949 Park Blvd,Houston,USA,93020,Corporate,2023-06-07,48460
+CUST-0098,Susan,Jones,susan.jones98@email.com,+1-243-136-1922,105 Main St,Bangalore,India,15231,Small Business,2021-01-18,10649
+CUST-0099,John,White,john.white99@email.com,+1-909-464-4744,476 Maple Dr,Abu Dhabi,UAE,16495,Enterprise,2021-06-26,31108
+CUST-0100,Ryan,Jones,ryan.jones100@email.com,+1-541-411-7126,308 Main St,Munich,Germany,11313,Corporate,2022-07-25,9036
