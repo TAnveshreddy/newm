@@ -121,7 +121,7 @@ TMSL = {
                 "name": EXCEL_PARAM,
                 "description": "Path to the Excel data file",
                 "kind": "m",
-                "expression": "\"C:\\\\Users\\\\YourName\\\\Downloads\\\\PowerBI_Data_Model.xlsx\" meta [IsParameterQuery=true, Type=\"Text\", IsParameterQueryRequired=true]",
+                "expression": "\"C:\\\\Users\\\\anvesh.t\\\\Downloads\\\\PowerBI_Data_Model.xlsx\" meta [IsParameterQuery=true, Type=\"Text\", IsParameterQueryRequired=true]",
                 "annotations": [{"name": "PBI_NavigationStepName", "value": "Navigation"}]
             }
         ],
