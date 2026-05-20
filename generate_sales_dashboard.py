@@ -25,18 +25,6 @@ W, H = 1280, 720   # report page dimensions
 def uid():  return uuid.uuid4().hex
 def js(obj): return json.dumps(obj, separators=(',', ':'))
 
-EXCEL_EPOCH = date(1899, 12, 30)
-
-def to_excel_serial(d):
-    if d is None:                          return 0
-    if isinstance(d, datetime):            d = d.date()
-    if isinstance(d, str):
-        try:  d = date.fromisoformat(d[:10])
-        except: return 0
-    if isinstance(d, date):
-        return (d - EXCEL_EPOCH).days
-    return 0
-
 def dax_str(v):
     if v is None: return '""'
     return '"' + str(v).replace('"', '""') + '"'
@@ -52,7 +40,15 @@ def dax_int(v):
     except: return "0"
 
 def dax_date(v):
-    return str(to_excel_serial(v))
+    """Convert a date to DAX DATE(y,m,d) syntax used by Power BI DATATABLE."""
+    if v is None: return "BLANK()"
+    if isinstance(v, datetime): v = v.date()
+    if isinstance(v, str):
+        try:    v = date.fromisoformat(v[:10])
+        except: return "BLANK()"
+    if isinstance(v, date):
+        return f"DATE({v.year},{v.month},{v.day})"
+    return "BLANK()"
 
 # ── Excel reader ───────────────────────────────────────────────────────────────
 def read_sheet(wb, name):
@@ -63,9 +59,15 @@ def read_sheet(wb, name):
 
 # ── DATATABLE builders ──────────────────────────────────────────────────────────
 def _dt(header, data_rows):
-    """Build a DATATABLE DAX expression (rows comma-separated, one row per line)."""
-    body = ",\n".join(data_rows)
-    return [f"DATATABLE({header},{{\n{body}\n}})"]
+    """Build a DATATABLE DAX expression split into one array element per row.
+    This matches the format Power BI Desktop uses in .pbit files."""
+    lines = ["DATATABLE(", f"    {header},", "    {"]
+    for i, row in enumerate(data_rows):
+        sep = "," if i < len(data_rows) - 1 else ""
+        lines.append(f"        {row}{sep}")
+    lines.append("    }")
+    lines.append(")")
+    return lines
 
 def build_datatable_sales(rows):
     header = (
