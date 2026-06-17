@@ -277,14 +277,36 @@ TMSL_CLEAN = strip_unsupported(TMSL)
 tmsl_bytes = json.dumps(TMSL_CLEAN, ensure_ascii=False, separators=(",",":")).encode("utf-16-le")
 diag_bytes = json.dumps(DIAGRAM,    ensure_ascii=False, separators=(",",":")).encode("utf-16-le")
 
+# ── Trim Report/Layout to a single blank page ─────────────────────────────────
+layout_bytes = raw["Report/Layout"]
+try:
+    layout_text = layout_bytes.decode("utf-16-le")
+    layout_enc  = "utf-16-le"
+except Exception:
+    layout_text = layout_bytes.decode("utf-8")
+    layout_enc  = "utf-8"
+
+layout_json = json.loads(layout_text)
+
+# Keep only the first page, clear its visuals, rename it
+single_page = layout_json["sections"][0]
+single_page["displayName"]      = "Financial Dashboard"
+single_page["name"]             = "financialdashboard"
+single_page["visualContainers"] = []   # no visuals — user builds them in PBI Desktop
+single_page["width"]            = 1280
+single_page["height"]           = 720
+layout_json["sections"] = [single_page]
+
+layout_single_bytes = json.dumps(layout_json, ensure_ascii=False, separators=(",",":")).encode(layout_enc)
+
 with zipfile.ZipFile(DST, "w", compression=zipfile.ZIP_DEFLATED) as zout:
-    zout.writestr("Version",             raw["Version"])          # original version file
+    zout.writestr("Version",             raw["Version"])
     zout.writestr("[Content_Types].xml", CT.encode("utf-8"))
     zout.writestr("DataModelSchema",     tmsl_bytes)
     zout.writestr("DiagramLayout",       diag_bytes)
-    zout.writestr("Report/Layout",       raw["Report/Layout"])    # reuse working layout
-    zout.writestr("Settings",            raw["Settings"])         # reuse working settings
-    zout.writestr("Metadata",            raw["Metadata"])         # reuse working metadata
+    zout.writestr("Report/Layout",       layout_single_bytes)   # single blank page
+    zout.writestr("Settings",            raw["Settings"])
+    zout.writestr("Metadata",            raw["Metadata"])
     zout.writestr("SecurityBindings",    raw["SecurityBindings"])
     theme = "Report/StaticResources/SharedResources/BaseThemes/CY23SU11.json"
     if theme in raw:
