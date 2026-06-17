@@ -3,1037 +3,1361 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Financial Dashboard — Nexus Corp</title>
+<title>CFO Dashboard — Nexus Corp FY2024</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-  /* ── Reset & Base ── */
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg:        #1e2433;
-    --surface:   #252d42;
-    --surface2:  #2d3654;
-    --border:    #323d5a;
-    --blue:      #0078d4;
-    --blue-lt:   #1a8fe0;
-    --green:     #00b050;
-    --red:       #ff4444;
-    --orange:    #ff8c00;
-    --purple:    #7c5cbf;
-    --text:      #e8ecf4;
-    --text-muted:#8b95b0;
-    --text-dim:  #5c6785;
-    --radius:    10px;
-    --sidebar-w: 230px;
-    --header-h:  60px;
-  }
-
-  html, body {
-    height: 100%;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    font-size: 14px;
-  }
-
-  /* ── Layout Shell ── */
-  .shell {
-    display: flex;
-    height: 100vh;
-    overflow: hidden;
-  }
-
-  /* ── Sidebar ── */
-  .sidebar {
-    width: var(--sidebar-w);
-    background: #161c2e;
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    border-right: 1px solid var(--border);
-  }
-
-  .logo-area {
-    height: var(--header-h);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 0 18px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .logo-icon {
-    width: 34px;
-    height: 34px;
-    background: linear-gradient(135deg, var(--blue), #0050a0);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: 800;
-    color: #fff;
-    letter-spacing: -1px;
-    flex-shrink: 0;
-  }
-
-  .logo-text {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .logo-name {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text);
-    line-height: 1.2;
-  }
-
-  .logo-sub {
-    font-size: 10px;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .nav-section {
-    padding: 20px 0 8px;
-  }
-
-  .nav-label {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    padding: 0 18px 8px;
-  }
-
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 18px;
-    cursor: pointer;
-    color: var(--text-muted);
-    font-size: 13px;
-    font-weight: 500;
-    transition: all 0.15s;
-    position: relative;
-  }
-
-  .nav-item:hover {
-    background: var(--surface2);
-    color: var(--text);
-  }
-
-  .nav-item.active {
-    color: var(--blue);
-    background: rgba(0,120,212,0.12);
-  }
-
-  .nav-item.active::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 4px; bottom: 4px;
-    width: 3px;
-    background: var(--blue);
-    border-radius: 0 3px 3px 0;
-  }
-
-  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
-
-  .sidebar-footer {
-    margin-top: auto;
-    padding: 16px;
-    border-top: 1px solid var(--border);
-  }
-
-  .user-card {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .avatar {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--blue), var(--purple));
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 700; color: #fff;
-    flex-shrink: 0;
-  }
-
-  .user-info { overflow: hidden; }
-  .user-name { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .user-role { font-size: 10px; color: var(--text-muted); }
-
-  /* ── Main Area ── */
-  .main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  /* ── Top Bar ── */
-  .topbar {
-    height: var(--header-h);
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 0 24px;
-    flex-shrink: 0;
-  }
-
-  .topbar-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text);
-    margin-right: 8px;
-  }
-
-  .topbar-breadcrumb {
-    font-size: 12px;
-    color: var(--text-dim);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .topbar-breadcrumb span { color: var(--text-muted); }
-
-  .topbar-spacer { flex: 1; }
-
-  .filter-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .filter-label {
-    font-size: 11px;
-    color: var(--text-muted);
-    font-weight: 500;
-  }
-
-  .filter-select {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 5px 10px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-family: inherit;
-    cursor: pointer;
-    outline: none;
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238b95b0'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 8px center;
-    padding-right: 24px;
-    transition: border-color 0.15s;
-  }
-
-  .filter-select:hover, .filter-select:focus {
-    border-color: var(--blue);
-  }
-
-  .filter-divider {
-    width: 1px; height: 24px;
-    background: var(--border);
-    margin: 0 4px;
-  }
-
-  .btn-refresh {
-    background: var(--blue);
-    border: none;
-    color: #fff;
-    padding: 6px 14px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex; align-items: center; gap: 6px;
-    transition: background 0.15s;
-    font-family: inherit;
-  }
-
-  .btn-refresh:hover { background: var(--blue-lt); }
-
-  /* ── Content Scroll Area ── */
-  .content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-  }
-
-  .content::-webkit-scrollbar { width: 6px; }
-  .content::-webkit-scrollbar-track { background: transparent; }
-  .content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-  /* ── Section Header ── */
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
-  }
-
-  .section-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text);
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .section-title::before {
-    content: '';
-    display: inline-block;
-    width: 3px; height: 14px;
-    background: var(--blue);
-    border-radius: 2px;
-  }
-
-  .section-meta {
-    font-size: 11px;
-    color: var(--text-dim);
-  }
-
-  /* ── KPI Cards ── */
-  .kpi-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-  }
-
-  .kpi-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px 22px;
-    position: relative;
-    overflow: hidden;
-    cursor: default;
-    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-  }
-
-  .kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
-    border-color: var(--blue);
-  }
-
-  .kpi-card::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    border-radius: var(--radius) var(--radius) 0 0;
-  }
-
-  .kpi-card.blue::after   { background: var(--blue); }
-  .kpi-card.green::after  { background: var(--green); }
-  .kpi-card.red::after    { background: var(--red); }
-  .kpi-card.orange::after { background: var(--orange); }
-
-  .kpi-icon {
-    width: 40px; height: 40px;
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-    margin-bottom: 14px;
-  }
-
-  .kpi-card.blue   .kpi-icon { background: rgba(0,120,212,0.18); }
-  .kpi-card.green  .kpi-icon { background: rgba(0,176,80,0.18); }
-  .kpi-card.red    .kpi-icon { background: rgba(255,68,68,0.18); }
-  .kpi-card.orange .kpi-icon { background: rgba(255,140,0,0.18); }
-
-  .kpi-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 6px;
-  }
-
-  .kpi-value {
-    font-size: 26px;
-    font-weight: 800;
-    color: var(--text);
-    line-height: 1;
-    margin-bottom: 10px;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .kpi-delta {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: 20px;
-  }
-
-  .kpi-delta.up   { background: rgba(0,176,80,0.15); color: var(--green); }
-  .kpi-delta.down { background: rgba(255,68,68,0.15); color: var(--red); }
-
-  .kpi-delta-label {
-    font-size: 11px;
-    color: var(--text-dim);
-    margin-left: 8px;
-  }
-
-  .kpi-footer {
-    display: flex;
-    align-items: center;
-    margin-top: 8px;
-  }
-
-  /* ── Chart Cards ── */
-  .chart-row {
-    display: grid;
-    gap: 16px;
-  }
-
-  .chart-row.two-col { grid-template-columns: 2fr 1fr; }
-  .chart-row.equal   { grid-template-columns: 1fr 1fr; }
-
-  .chart-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px 22px;
-    transition: border-color 0.2s;
-  }
-
-  .chart-card:hover { border-color: var(--border); }
-
-  .chart-wrap {
-    position: relative;
-    width: 100%;
-  }
-
-  /* ── Tables ── */
-  .table-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    transition: border-color 0.2s;
-  }
-
-  .table-card-header {
-    padding: 16px 22px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .data-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .data-table thead th {
-    background: #1a2035;
-    color: var(--text-muted);
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 10px 16px;
-    text-align: left;
-    white-space: nowrap;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .data-table thead th.num { text-align: right; }
-
-  .data-table tbody tr {
-    border-bottom: 1px solid rgba(50,61,90,0.5);
-    transition: background 0.15s;
-  }
-
-  .data-table tbody tr:last-child { border-bottom: none; }
-
-  .data-table tbody tr:hover { background: rgba(0,120,212,0.07); }
-
-  .data-table tbody td {
-    padding: 11px 16px;
-    font-size: 13px;
-    color: var(--text);
-  }
-
-  .data-table tbody td.num {
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-    font-weight: 600;
-  }
-
-  .data-table tbody td.pos { color: var(--green); }
-  .data-table tbody td.neg { color: var(--red); }
-  .data-table tbody td.muted { color: var(--text-muted); }
-
-  .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-  }
-
-  .badge-q1 { background: rgba(0,120,212,0.2); color: #4da6ff; }
-  .badge-q2 { background: rgba(0,176,80,0.2);  color: #33cc77; }
-  .badge-q3 { background: rgba(255,140,0,0.2); color: #ffa030; }
-  .badge-q4 { background: rgba(124,92,191,0.2);color: #a080e0; }
-
-  /* rank badge */
-  .rank {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 22px; height: 22px;
-    border-radius: 50%;
-    background: var(--surface2);
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--text-muted);
-  }
-
-  .rank.top { background: rgba(255,140,0,0.2); color: var(--orange); }
-
-  /* progress bar in table */
-  .prog-wrap {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .prog-bar-bg {
-    flex: 1;
-    height: 5px;
-    background: var(--surface2);
-    border-radius: 3px;
-    overflow: hidden;
-  }
-
-  .prog-bar-fill {
-    height: 100%;
-    border-radius: 3px;
-    background: linear-gradient(90deg, var(--blue), var(--blue-lt));
-    transition: width 1s ease;
-  }
-
-  /* ── Sparkline mini stat ── */
-  .mini-stats {
-    display: flex;
-    gap: 24px;
-    padding: 12px 22px;
-    background: #1a2035;
-    border-top: 1px solid var(--border);
-  }
-
-  .mini-stat { display: flex; flex-direction: column; gap: 2px; }
-  .mini-stat-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
-  .mini-stat-val   { font-size: 13px; font-weight: 700; color: var(--text); }
-
-  /* ── Divider ── */
-  .divider {
-    height: 1px;
-    background: var(--border);
-  }
-
-  /* ── Tooltip override ── */
-  .chartjs-tooltip {
-    background: #0d1220 !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 8px !important;
-    padding: 8px 12px !important;
-    font-family: 'Segoe UI', sans-serif !important;
-    font-size: 12px !important;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.5) !important;
-  }
-
-  /* ── Responsive ── */
-  @media (max-width: 1200px) {
-    .kpi-row { grid-template-columns: repeat(2, 1fr); }
-    .chart-row.two-col { grid-template-columns: 1fr; }
-  }
-
-  @media (max-width: 768px) {
-    .sidebar { display: none; }
-    .kpi-row { grid-template-columns: 1fr 1fr; }
-    .chart-row.equal { grid-template-columns: 1fr; }
-    .filter-group { display: none; }
-  }
-
-  /* ── Update pulse ── */
-  @keyframes pulse-dot {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.3; }
-  }
-
-  .live-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--green);
-    animation: pulse-dot 2s ease infinite;
-    display: inline-block;
-  }
-
-  /* ── Number counter animation ── */
-  .kpi-value { transition: opacity 0.3s; }
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #1e2433;
+  --surface:   #252d42;
+  --surface2:  #2d3654;
+  --border:    #323d5a;
+  --blue:      #0078d4;
+  --blue-lt:   #1a8fe0;
+  --green:     #00b050;
+  --green-dim: #00703520;
+  --red:       #e84040;
+  --red-dim:   #e8404020;
+  --orange:    #f59e0b;
+  --orange-dim:#f59e0b20;
+  --purple:    #7c5cbf;
+  --teal:      #00b8d4;
+  --text:      #e8ecf4;
+  --text-muted:#8b95b0;
+  --text-dim:  #5c6785;
+  --radius:    10px;
+  --header-h:  64px;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── Header ── */
+.header {
+  height: var(--header-h);
+  background: #161c2e;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--blue-lt);
+  letter-spacing: -0.5px;
+}
+.header-logo span { color: var(--text); }
+.header-divider { width: 1px; height: 28px; background: var(--border); }
+.header-title { font-size: 14px; color: var(--text-muted); }
+.header-badge {
+  background: var(--blue);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.header-spacer { flex: 1; }
+.header-meta { font-size: 11px; color: var(--text-dim); text-align: right; }
+.header-meta strong { color: var(--text-muted); display: block; font-size: 12px; }
+.header-actions { display: flex; gap: 8px; }
+.btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all .15s;
+}
+.btn:hover { background: var(--border); color: var(--text); }
+.btn-primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+.btn-primary:hover { background: var(--blue-lt); }
+
+/* ── Main Content ── */
+.layout {
+  display: flex;
+  height: calc(100vh - var(--header-h));
+  overflow: hidden;
+}
+.main { flex: 1; overflow-y: auto; padding: 20px 24px; }
+.sidebar-right {
+  width: 280px;
+  background: #161c2e;
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 20px 16px;
+  flex-shrink: 0;
+}
+
+/* ── Section titles ── */
+.section-header { margin-bottom: 14px; }
+.section-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.section-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+/* ── Insight Banners ── */
+.banners { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  border-left: 3px solid;
+}
+.banner-green  { background: var(--green-dim);  border-color: var(--green);  color: #7edd9e; }
+.banner-yellow { background: var(--orange-dim); border-color: var(--orange); color: #fcd475; }
+.banner-red    { background: var(--red-dim);    border-color: var(--red);    color: #f0888880; }
+.banner-red    { color: #f08888; }
+.banner-dot { font-size: 16px; line-height: 1; flex-shrink: 0; margin-top: 1px; }
+.banner-text strong { display: block; font-weight: 600; margin-bottom: 1px; }
+
+/* ── KPI Grid ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.kpi-card.blue::before   { background: var(--blue); }
+.kpi-card.green::before  { background: var(--green); }
+.kpi-card.orange::before { background: var(--orange); }
+.kpi-card.purple::before { background: var(--purple); }
+.kpi-card.teal::before   { background: var(--teal); }
+.kpi-card.red::before    { background: var(--red); }
+
+.kpi-label { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+.kpi-value { font-size: 24px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; line-height: 1; }
+.kpi-value.big { font-size: 26px; }
+.kpi-row { display: flex; align-items: flex-end; gap: 10px; margin-top: 6px; }
+.kpi-meta { flex: 1; }
+.kpi-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+.kpi-change.up   { background: #00b05020; color: var(--green); }
+.kpi-change.down { background: #e8404020; color: var(--red); }
+.kpi-change.down-good { background: #00b05020; color: var(--green); }
+.kpi-bench { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+.kpi-bench span { color: var(--text-muted); }
+.sparkline-wrap { display: flex; align-items: flex-end; }
+canvas.spark { display: block; }
+
+/* ── Charts Grid ── */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+.chart-card.wide { grid-column: span 2; }
+.chart-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+.chart-legend { display: flex; gap: 12px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text-muted); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.legend-sq { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.chart-canvas-wrap { position: relative; }
+
+/* ── Tables ── */
+.table-section { margin-bottom: 20px; }
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.table-title-bar {
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th {
+  background: #1a2135;
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 9px 14px;
+  text-align: right;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 1px solid var(--border);
+}
+thead th:first-child { text-align: left; }
+tbody tr:nth-child(even) { background: #1f2840; }
+tbody tr:hover { background: var(--surface2); }
+tbody td {
+  padding: 9px 14px;
+  text-align: right;
+  border-bottom: 1px solid #2a334c;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+tbody td:first-child { text-align: left; color: var(--text); font-weight: 500; }
+tbody tr.total-row td {
+  font-weight: 700;
+  color: var(--text);
+  background: #2a3450;
+  border-top: 1px solid var(--border);
+}
+tbody tr.highlight-row td {
+  color: var(--text);
+  font-weight: 600;
+  background: #222d46;
+}
+tbody tr.section-sep td { border-bottom: 2px solid var(--border); }
+
+/* ── Health Bar ── */
+.health-bar-wrap { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.health-bar-bg {
+  width: 60px;
+  height: 6px;
+  background: var(--surface2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.health-bar-fill { height: 100%; border-radius: 3px; }
+.health-val { font-size: 11px; font-weight: 600; width: 24px; text-align: right; }
+
+/* ── Risk Badge ── */
+.risk-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.risk-low    { background: #00b05022; color: var(--green); }
+.risk-medium { background: #f59e0b22; color: var(--orange); }
+.risk-high   { background: #e8404022; color: var(--red); }
+
+/* ── NRR color ── */
+.nrr-green  { color: var(--green); font-weight: 600; }
+.nrr-yellow { color: var(--orange); font-weight: 600; }
+.nrr-red    { color: var(--red); font-weight: 600; }
+
+/* ── YoY ── */
+.yoy-pos { color: var(--green); font-weight: 600; }
+.yoy-neg { color: var(--red); font-weight: 600; }
+
+/* ── Bold data rows ── */
+.data-bold td { color: var(--text) !important; font-weight: 700 !important; }
+.data-label td:first-child { color: var(--text-dim) !important; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; }
+
+/* ── Sidebar right ── */
+.sidebar-section { margin-bottom: 24px; }
+.sidebar-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.insight-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #1e2640;
+}
+.insight-item:last-child { border-bottom: none; }
+.insight-num {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  background: var(--blue);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  margin-top: 1px;
+}
+.insight-text {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.insight-text strong { color: var(--text); display: block; font-size: 12px; margin-bottom: 2px; }
+
+.metric-mini { padding: 10px 0; border-bottom: 1px solid #1e2640; }
+.metric-mini:last-child { border-bottom: none; }
+.metric-mini-label { font-size: 10px; color: var(--text-dim); margin-bottom: 4px; }
+.metric-mini-val { font-size: 16px; font-weight: 700; color: var(--text); }
+.metric-mini-sub { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+.progress-bar-bg { height: 4px; background: var(--surface2); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.progress-bar-fill { height: 100%; border-radius: 2px; }
+
+.waterfall-legend {
+  display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px;
+}
+.wf-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text-muted); }
+.wf-dot { width: 10px; height: 10px; border-radius: 2px; }
 </style>
 </head>
 <body>
 
-<div class="shell">
+<!-- ══════════════════════════════ HEADER ══════════════════════════════ -->
+<header class="header">
+  <div class="header-logo">Nexus<span>Corp</span></div>
+  <div class="header-divider"></div>
+  <div class="header-title">CFO Financial Dashboard</div>
+  <div class="header-badge">FY2024 Actuals</div>
+  <div class="header-spacer"></div>
+  <div class="header-meta">
+    <strong>Last updated: Jun 17, 2026</strong>
+    FY2024 | SaaS + Consulting | $76.78M Revenue
+  </div>
+  <div class="header-actions">
+    <button class="btn">Export PDF</button>
+    <button class="btn btn-primary">Share</button>
+  </div>
+</header>
 
-  <!-- ═══════════════════════════════════════════ SIDEBAR ═══ -->
-  <nav class="sidebar">
-    <div class="logo-area">
-      <div class="logo-icon">NC</div>
-      <div class="logo-text">
-        <div class="logo-name">Nexus Corp</div>
-        <div class="logo-sub">Finance Suite</div>
-      </div>
+<div class="layout">
+<!-- ══════════════════════════════ MAIN ══════════════════════════════ -->
+<main class="main">
+
+  <!-- KPI Cards -->
+  <div style="margin-bottom:14px">
+    <div class="section-header">
+      <div class="section-title">Key Performance Indicators</div>
+      <div class="section-sub">FY2024 actuals vs. prior year and industry benchmarks</div>
     </div>
+  </div>
 
-    <div class="nav-section">
-      <div class="nav-label">Overview</div>
-      <div class="nav-item active"><span class="nav-icon">&#9741;</span> Dashboard</div>
-      <div class="nav-item"><span class="nav-icon">&#128202;</span> Analytics</div>
-      <div class="nav-item"><span class="nav-icon">&#128176;</span> Revenue</div>
-    </div>
+  <div class="kpi-grid">
 
-    <div class="nav-section">
-      <div class="nav-label">Finance</div>
-      <div class="nav-item"><span class="nav-icon">&#128200;</span> P&amp;L Statement</div>
-      <div class="nav-item"><span class="nav-icon">&#127970;</span> Balance Sheet</div>
-      <div class="nav-item"><span class="nav-icon">&#128181;</span> Cash Flow</div>
-      <div class="nav-item"><span class="nav-icon">&#128451;</span> Budget vs Actual</div>
-    </div>
-
-    <div class="nav-section">
-      <div class="nav-label">Reports</div>
-      <div class="nav-item"><span class="nav-icon">&#128196;</span> Monthly Reports</div>
-      <div class="nav-item"><span class="nav-icon">&#128201;</span> Forecasting</div>
-      <div class="nav-item"><span class="nav-icon">&#9881;</span> Settings</div>
-    </div>
-
-    <div class="sidebar-footer">
-      <div class="user-card">
-        <div class="avatar">AN</div>
-        <div class="user-info">
-          <div class="user-name">Anvesh N.</div>
-          <div class="user-role">CFO · Admin</div>
+    <!-- ARR -->
+    <div class="kpi-card blue">
+      <div class="kpi-label">Annual Recurring Revenue</div>
+      <div class="kpi-row">
+        <div class="kpi-meta">
+          <div class="kpi-value big">$42.3M</div>
+          <div class="kpi-change up">&#9650; +18.4% YoY</div>
+          <div class="kpi-bench">FY2023: <span>$35.7M</span></div>
+        </div>
+        <div class="sparkline-wrap">
+          <canvas class="spark" id="spk-arr" width="72" height="36"></canvas>
         </div>
       </div>
     </div>
-  </nav>
 
-  <!-- ═══════════════════════════════════════════ MAIN ═══ -->
-  <div class="main">
-
-    <!-- Top Bar -->
-    <div class="topbar">
-      <div class="topbar-title">Financial Overview</div>
-      <div class="topbar-breadcrumb">
-        <span>Home</span> › <span style="color:var(--text-muted)">Dashboard</span>
-      </div>
-      <div class="topbar-spacer"></div>
-
-      <div class="filter-group">
-        <span class="live-dot"></span>
-        <span class="filter-label">Live</span>
-        <div class="filter-divider"></div>
-        <span class="filter-label">Year</span>
-        <select class="filter-select">
-          <option>FY 2025</option>
-          <option>FY 2024</option>
-          <option>FY 2023</option>
-        </select>
-        <span class="filter-label">Quarter</span>
-        <select class="filter-select">
-          <option>All Quarters</option>
-          <option>Q1</option>
-          <option>Q2</option>
-          <option>Q3</option>
-          <option>Q4</option>
-        </select>
-        <span class="filter-label">Region</span>
-        <select class="filter-select">
-          <option>Global</option>
-          <option>North America</option>
-          <option>Europe</option>
-          <option>APAC</option>
-        </select>
-        <div class="filter-divider"></div>
-        <button class="btn-refresh">&#8635; Refresh</button>
+    <!-- NRR -->
+    <div class="kpi-card green">
+      <div class="kpi-label">Net Revenue Retention</div>
+      <div class="kpi-row">
+        <div class="kpi-meta">
+          <div class="kpi-value big" style="color:var(--green)">118%</div>
+          <div class="kpi-change up">&#9650; +4pp YoY</div>
+          <div class="kpi-bench">Benchmark: <span>100%</span> | Best-in-class: 120%</div>
+        </div>
+        <div class="sparkline-wrap">
+          <canvas class="spark" id="spk-nrr" width="72" height="36"></canvas>
+        </div>
       </div>
     </div>
 
-    <!-- Content -->
-    <div class="content">
-
-      <!-- ── KPI Cards ── -->
-      <section>
-        <div class="section-header">
-          <div class="section-title">Key Performance Indicators</div>
-          <div class="section-meta">As of June 2025 &nbsp;·&nbsp; FY 2025</div>
+    <!-- CAC -->
+    <div class="kpi-card green">
+      <div class="kpi-label">Customer Acquisition Cost</div>
+      <div class="kpi-row">
+        <div class="kpi-meta">
+          <div class="kpi-value">$4,820</div>
+          <div class="kpi-change down-good">&#9660; -12% vs LY</div>
+          <div class="kpi-bench">FY2023: <span>$5,477</span> | Improving</div>
         </div>
+        <div class="sparkline-wrap">
+          <canvas class="spark" id="spk-cac" width="72" height="36"></canvas>
+        </div>
+      </div>
+    </div>
 
-        <div class="kpi-row">
-          <div class="kpi-card blue">
-            <div class="kpi-icon">&#128178;</div>
-            <div class="kpi-label">Total Revenue</div>
-            <div class="kpi-value" id="kpi-revenue">$0</div>
-            <div class="kpi-footer">
-              <span class="kpi-delta up">&#9650; 14.2%</span>
-              <span class="kpi-delta-label">vs prior year</span>
-            </div>
-          </div>
+    <!-- LTV:CAC -->
+    <div class="kpi-card purple">
+      <div class="kpi-label">LTV : CAC Ratio</div>
+      <div class="kpi-row">
+        <div class="kpi-meta">
+          <div class="kpi-value big" style="color:var(--purple)">6.8x</div>
+          <div class="kpi-change up">&#9650; +0.9x YoY</div>
+          <div class="kpi-bench">Target: <span>&gt;3x</span> | Healthy</div>
+        </div>
+        <div class="sparkline-wrap">
+          <canvas class="spark" id="spk-ltvcac" width="72" height="36"></canvas>
+        </div>
+      </div>
+    </div>
 
-          <div class="kpi-card green">
-            <div class="kpi-icon">&#128200;</div>
-            <div class="kpi-label">Net Profit</div>
-            <div class="kpi-value" id="kpi-profit">$0</div>
-            <div class="kpi-footer">
-              <span class="kpi-delta up">&#9650; 9.7%</span>
-              <span class="kpi-delta-label">vs prior year</span>
-            </div>
-          </div>
+    <!-- Gross Margin -->
+    <div class="kpi-card teal">
+      <div class="kpi-label">Gross Margin</div>
+      <div class="kpi-row">
+        <div class="kpi-meta">
+          <div class="kpi-value big">68.4%</div>
+          <div class="kpi-change up">&#9650; +2.1pp YoY</div>
+          <div class="kpi-bench">FY2023: <span>66.3%</span> | SaaS Avg: 72%</div>
+        </div>
+        <div class="sparkline-wrap">
+          <canvas class="spark" id="spk-gm" width="72" height="36"></canvas>
+        </div>
+      </div>
+    </div>
 
-          <div class="kpi-card red">
-            <div class="kpi-icon">&#128197;</div>
-            <div class="kpi-label">Operating Expenses</div>
-            <div class="kpi-value" id="kpi-opex">$0</div>
-            <div class="kpi-footer">
-              <span class="kpi-delta down">&#9650; 6.3%</span>
-              <span class="kpi-delta-label">vs prior year</span>
-            </div>
-          </div>
+    <!-- Burn Multiple -->
+    <div class="kpi-card green">
+      <div class="kpi-label">Burn Multiple</div>
+      <div class="kpi-row">
+        <div class="kpi-meta">
+          <div class="kpi-value big" style="color:var(--green)">0.42</div>
+          <div class="kpi-change down-good">&#9660; -0.11 YoY</div>
+          <div class="kpi-bench">Target: <span>&lt;1.0</span> | Efficient growth</div>
+        </div>
+        <div class="sparkline-wrap">
+          <canvas class="spark" id="spk-burn" width="72" height="36"></canvas>
+        </div>
+      </div>
+    </div>
 
-          <div class="kpi-card orange">
-            <div class="kpi-icon">&#9741;</div>
-            <div class="kpi-label">Profit Margin</div>
-            <div class="kpi-value" id="kpi-margin">0%</div>
-            <div class="kpi-footer">
-              <span class="kpi-delta up">&#9650; 1.8pp</span>
-              <span class="kpi-delta-label">vs prior year</span>
-            </div>
+    <!-- DSO -->
+    <div class="kpi-card orange">
+      <div class="kpi-label">Days Sales Outstanding</div>
+      <div class="kpi-row">
+        <div class="kpi-meta">
+          <div class="kpi-value big">38<span style="font-size:14px;font-weight:400;color:var(--text-muted)"> days</span></div>
+          <div class="kpi-change down-good">&#9660; -9 days YoY</div>
+          <div class="kpi-bench">FY2023: <span>47 days</span> | Peer median: 30</div>
+        </div>
+        <div class="sparkline-wrap">
+          <canvas class="spark" id="spk-dso" width="72" height="36"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- EBITDA -->
+    <div class="kpi-card blue">
+      <div class="kpi-label">EBITDA</div>
+      <div class="kpi-row">
+        <div class="kpi-meta">
+          <div class="kpi-value big">$19.2M</div>
+          <div class="kpi-change up">&#9650; +28.0% YoY</div>
+          <div class="kpi-bench">Margin: <span>25.0%</span> | FY2023: $15.0M</div>
+        </div>
+        <div class="sparkline-wrap">
+          <canvas class="spark" id="spk-ebitda" width="72" height="36"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /kpi-grid -->
+
+  <!-- Insight Banners -->
+  <div class="banners">
+    <div class="banner banner-green">
+      <div class="banner-dot">●</div>
+      <div class="banner-text">
+        <strong>Expansion milestone achieved</strong>
+        NRR hit 118% in Q4 — expansion revenue exceeded new logo revenue for first time, signaling strong product-led growth flywheel.
+      </div>
+    </div>
+    <div class="banner banner-yellow">
+      <div class="banner-dot">●</div>
+      <div class="banner-text">
+        <strong>DSO still above peer median</strong>
+        DSO improved 9 days YoY but remains 8 days above SaaS peer median of 30 days — accelerate AR collections through early-pay discounts or automated dunning.
+      </div>
+    </div>
+    <div class="banner banner-red">
+      <div class="banner-dot">●</div>
+      <div class="banner-text">
+        <strong>Enterprise CAC pressure</strong>
+        CAC increased 22% in Enterprise segment — review paid channel efficiency and sales cycle length; consider account-based marketing reallocation.
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1 -->
+  <div class="charts-grid">
+
+    <!-- ARR Waterfall -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="section-title" style="font-size:13px">ARR Bridge — FY2024</div>
+          <div class="section-sub">Starting ARR to Ending ARR movement</div>
+        </div>
+      </div>
+      <div class="chart-canvas-wrap">
+        <canvas id="chart-waterfall" height="200"></canvas>
+      </div>
+      <div class="waterfall-legend">
+        <div class="wf-item"><div class="wf-dot" style="background:#4a90d9"></div>Starting / Ending</div>
+        <div class="wf-item"><div class="wf-dot" style="background:#00b050"></div>New Logos / Expansion</div>
+        <div class="wf-item"><div class="wf-dot" style="background:#e84040"></div>Contraction / Churn</div>
+        <div class="wf-item"><div class="wf-dot" style="background:transparent;border:1px solid #5c6785"></div>Connector</div>
+      </div>
+    </div>
+
+    <!-- Revenue Bridge Monthly -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="section-title" style="font-size:13px">Monthly Revenue Mix — FY2024</div>
+          <div class="section-sub">New Business | Expansion | Renewals | Professional Services</div>
+        </div>
+      </div>
+      <div class="chart-canvas-wrap">
+        <canvas id="chart-revbridge" height="200"></canvas>
+      </div>
+      <div class="chart-legend" style="margin-top:10px">
+        <div class="legend-item"><div class="legend-sq" style="background:#0078d4"></div>New Business</div>
+        <div class="legend-item"><div class="legend-sq" style="background:#00b050"></div>Expansion</div>
+        <div class="legend-item"><div class="legend-sq" style="background:#7c5cbf"></div>Renewals</div>
+        <div class="legend-item"><div class="legend-sq" style="background:#f59e0b"></div>Prof. Services</div>
+      </div>
+    </div>
+
+    <!-- Unit Economics Donut -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="section-title" style="font-size:13px">LTV Unit Economics</div>
+          <div class="section-sub">Lifetime value composition and cost breakdown</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:20px">
+        <div style="flex:1;max-width:200px">
+          <canvas id="chart-donut" height="180"></canvas>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px">$57.8K</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-bottom:14px">Blended Average LTV</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div class="legend-item"><div class="legend-sq" style="background:#00b050"></div><span style="flex:1">Gross Profit (Customer Value)</span><strong style="color:var(--text)">45%</strong></div>
+            <div class="legend-item"><div class="legend-sq" style="background:#3b82f6"></div><span style="flex:1">R&D Allocation</span><strong style="color:var(--text)">18%</strong></div>
+            <div class="legend-item"><div class="legend-sq" style="background:#7c5cbf"></div><span style="flex:1">Sales & Marketing</span><strong style="color:var(--text)">15%</strong></div>
+            <div class="legend-item"><div class="legend-sq" style="background:#f59e0b"></div><span style="flex:1">COGS</span><strong style="color:var(--text)">14%</strong></div>
+            <div class="legend-item"><div class="legend-sq" style="background:#e84040"></div><span style="flex:1">Support Cost</span><strong style="color:var(--text)">8%</strong></div>
           </div>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- ── Revenue vs Expenses & Donut ── -->
-      <section>
-        <div class="chart-row two-col">
-
-          <div class="chart-card">
-            <div class="section-header">
-              <div class="section-title">Monthly Revenue vs Expenses</div>
-              <div class="section-meta">Jan – Dec 2025</div>
-            </div>
-            <div class="chart-wrap" style="height:280px">
-              <canvas id="barChart"></canvas>
-            </div>
-          </div>
-
-          <div class="chart-card">
-            <div class="section-header">
-              <div class="section-title">Revenue by Category</div>
-              <div class="section-meta">FY 2025</div>
-            </div>
-            <div class="chart-wrap" style="height:220px;display:flex;align-items:center;justify-content:center;">
-              <canvas id="donutChart"></canvas>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;">
-              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)"><span style="width:10px;height:10px;background:#0078d4;border-radius:50%;display:inline-block"></span>Products</div>
-              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)"><span style="width:10px;height:10px;background:#00b050;border-radius:50%;display:inline-block"></span>Services</div>
-              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)"><span style="width:10px;height:10px;background:#ff8c00;border-radius:50%;display:inline-block"></span>Subscriptions</div>
-              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)"><span style="width:10px;height:10px;background:#7c5cbf;border-radius:50%;display:inline-block"></span>Consulting</div>
-            </div>
-          </div>
-
+    <!-- Cash Flow Runway -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="section-title" style="font-size:13px">Cash Flow &amp; Runway — 18-Month Projection</div>
+          <div class="section-sub">Operating cash flow and cumulative cash position</div>
         </div>
-      </section>
+      </div>
+      <div class="chart-canvas-wrap">
+        <canvas id="chart-cashflow" height="200"></canvas>
+      </div>
+      <div class="chart-legend" style="margin-top:10px">
+        <div class="legend-item"><div class="legend-sq" style="background:#00b050"></div>Operating Cash Flow (mo)</div>
+        <div class="legend-item"><div class="legend-sq" style="background:#0078d4"></div>Cumulative Cash Position</div>
+      </div>
+    </div>
 
-      <!-- ── Quarterly P&L Table ── -->
-      <section>
-        <div class="table-card">
-          <div class="table-card-header">
-            <div class="section-header" style="margin-bottom:0">
-              <div class="section-title">Quarterly P&amp;L Statement</div>
-              <div class="section-meta">FY 2025 · USD thousands</div>
-            </div>
-          </div>
-          <table class="data-table" id="plTable"></table>
-          <div class="mini-stats" id="plFooter"></div>
-        </div>
-      </section>
+  </div><!-- /charts-grid -->
 
-      <!-- ── Cash Flow & Top Products ── -->
-      <section>
-        <div class="chart-row equal">
+  <!-- Table 1: Segment P&L -->
+  <div class="table-section">
+    <div class="table-card">
+      <div class="table-title-bar">
+        <div class="section-title">Segment Performance</div>
+        <div class="section-sub">Unit economics by customer tier — ARR, margins, retention, and LTV:CAC</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Segment</th>
+              <th>ARR</th>
+              <th>Customers</th>
+              <th>ARPU</th>
+              <th>Gross Margin</th>
+              <th>NRR</th>
+              <th>CAC</th>
+              <th>LTV</th>
+              <th>LTV:CAC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>SMB</td>
+              <td>$12.4M</td>
+              <td>1,847</td>
+              <td>$6,713</td>
+              <td>72%</td>
+              <td class="nrr-yellow">104%</td>
+              <td>$1,240</td>
+              <td>$19.8K</td>
+              <td>16.0x</td>
+            </tr>
+            <tr>
+              <td>Mid-Market</td>
+              <td>$18.6M</td>
+              <td>312</td>
+              <td>$59,615</td>
+              <td>71%</td>
+              <td class="nrr-green">118%</td>
+              <td>$8,400</td>
+              <td>$176K</td>
+              <td>20.9x</td>
+            </tr>
+            <tr>
+              <td>Enterprise</td>
+              <td>$11.3M</td>
+              <td>28</td>
+              <td>$403,571</td>
+              <td>66%</td>
+              <td class="nrr-green">134%</td>
+              <td>$62,000</td>
+              <td>$1.07M</td>
+              <td>17.2x</td>
+            </tr>
+            <tr class="total-row">
+              <td>Total SaaS</td>
+              <td>$42.3M</td>
+              <td>2,187</td>
+              <td>$19,343</td>
+              <td>70%</td>
+              <td class="nrr-green">118%</td>
+              <td>$4,820</td>
+              <td>$57.8K</td>
+              <td>12.0x</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-          <div class="chart-card">
-            <div class="section-header">
-              <div class="section-title">Cash Flow Analysis</div>
-              <div class="section-meta">Monthly · FY 2025</div>
-            </div>
-            <div class="chart-wrap" style="height:260px">
-              <canvas id="cashFlowChart"></canvas>
-            </div>
-          </div>
+  <!-- Table 2: Monthly Cash Flow -->
+  <div class="table-section">
+    <div class="table-card">
+      <div class="table-title-bar">
+        <div class="section-title">Monthly Cash Flow Statement</div>
+        <div class="section-sub">Operating, investing, and financing activities with cash runway — H1 2024</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Operating CF</th>
+              <th>Investing CF</th>
+              <th>Financing CF</th>
+              <th>Net CF</th>
+              <th>Cash Balance</th>
+              <th>Runway</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Jan 2024</td>
+              <td style="color:var(--green)">$1.84M</td>
+              <td style="color:var(--red)">-$0.42M</td>
+              <td style="color:var(--text-dim)">$0</td>
+              <td style="color:var(--green)">$1.42M</td>
+              <td>$28.4M</td>
+              <td><span class="risk-badge risk-low">20 mo</span></td>
+            </tr>
+            <tr>
+              <td>Feb 2024</td>
+              <td style="color:var(--green)">$1.92M</td>
+              <td style="color:var(--red)">-$0.38M</td>
+              <td style="color:var(--text-dim)">$0</td>
+              <td style="color:var(--green)">$1.54M</td>
+              <td>$29.9M</td>
+              <td><span class="risk-badge risk-low">21 mo</span></td>
+            </tr>
+            <tr>
+              <td>Mar 2024</td>
+              <td style="color:var(--green)">$2.11M</td>
+              <td style="color:var(--red)">-$1.20M</td>
+              <td style="color:var(--text-dim)">$0</td>
+              <td style="color:var(--green)">$0.91M</td>
+              <td>$30.8M</td>
+              <td><span class="risk-badge risk-low">22 mo</span></td>
+            </tr>
+            <tr>
+              <td>Apr 2024</td>
+              <td style="color:var(--green)">$1.78M</td>
+              <td style="color:var(--red)">-$0.44M</td>
+              <td style="color:var(--text-dim)">$0</td>
+              <td style="color:var(--green)">$1.34M</td>
+              <td>$32.2M</td>
+              <td><span class="risk-badge risk-low">23 mo</span></td>
+            </tr>
+            <tr>
+              <td>May 2024</td>
+              <td style="color:var(--green)">$2.34M</td>
+              <td style="color:var(--red)">-$0.51M</td>
+              <td style="color:var(--text-dim)">$0</td>
+              <td style="color:var(--green)">$1.83M</td>
+              <td>$34.0M</td>
+              <td><span class="risk-badge risk-low">24 mo</span></td>
+            </tr>
+            <tr>
+              <td>Jun 2024</td>
+              <td style="color:var(--green)">$2.56M</td>
+              <td style="color:var(--red)">-$0.62M</td>
+              <td style="color:var(--text-dim)">$0</td>
+              <td style="color:var(--green)">$1.94M</td>
+              <td>$35.9M</td>
+              <td><span class="risk-badge risk-low">25 mo</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-          <div class="table-card" style="display:flex;flex-direction:column;">
-            <div class="table-card-header">
-              <div class="section-header" style="margin-bottom:0">
-                <div class="section-title">Top 5 Products</div>
-                <div class="section-meta">By Revenue · FY 2025</div>
-              </div>
-            </div>
-            <table class="data-table" id="topProducts"></table>
-          </div>
+  <!-- Table 3: Top 10 Customers -->
+  <div class="table-section">
+    <div class="table-card">
+      <div class="table-title-bar">
+        <div class="section-title">Top 10 Customers by ARR</div>
+        <div class="section-sub">Health scores, NRR, and at-risk signals for largest accounts</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th style="text-align:left">Customer</th>
+              <th>Segment</th>
+              <th>ARR</th>
+              <th>Customer Since</th>
+              <th>NRR</th>
+              <th>Products</th>
+              <th>Health Score</th>
+              <th>Risk</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td style="text-align:left">Meridian Financial</td>
+              <td>Enterprise</td>
+              <td>$1.84M</td>
+              <td>2019</td>
+              <td class="nrr-green">148%</td>
+              <td>4</td>
+              <td>
+                <div class="health-bar-wrap">
+                  <div class="health-bar-bg"><div class="health-bar-fill" style="width:92%;background:var(--green)"></div></div>
+                  <div class="health-val" style="color:var(--green)">92</div>
+                </div>
+              </td>
+              <td><span class="risk-badge risk-low">Low</span></td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td style="text-align:left">TechNova Inc</td>
+              <td>Enterprise</td>
+              <td>$1.62M</td>
+              <td>2020</td>
+              <td class="nrr-green">131%</td>
+              <td>3</td>
+              <td>
+                <div class="health-bar-wrap">
+                  <div class="health-bar-bg"><div class="health-bar-fill" style="width:88%;background:var(--green)"></div></div>
+                  <div class="health-val" style="color:var(--green)">88</div>
+                </div>
+              </td>
+              <td><span class="risk-badge risk-low">Low</span></td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td style="text-align:left">GlobalTrade Co</td>
+              <td>Enterprise</td>
+              <td>$1.47M</td>
+              <td>2021</td>
+              <td class="nrr-green">119%</td>
+              <td>3</td>
+              <td>
+                <div class="health-bar-wrap">
+                  <div class="health-bar-bg"><div class="health-bar-fill" style="width:74%;background:var(--orange)"></div></div>
+                  <div class="health-val" style="color:var(--orange)">74</div>
+                </div>
+              </td>
+              <td><span class="risk-badge risk-medium">Medium</span></td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td style="text-align:left">Alpine Healthcare</td>
+              <td>Enterprise</td>
+              <td>$1.31M</td>
+              <td>2018</td>
+              <td class="nrr-green">162%</td>
+              <td>5</td>
+              <td>
+                <div class="health-bar-wrap">
+                  <div class="health-bar-bg"><div class="health-bar-fill" style="width:95%;background:var(--green)"></div></div>
+                  <div class="health-val" style="color:var(--green)">95</div>
+                </div>
+              </td>
+              <td><span class="risk-badge risk-low">Low</span></td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td style="text-align:left">Cascade Logistics</td>
+              <td>Enterprise</td>
+              <td>$1.18M</td>
+              <td>2022</td>
+              <td class="nrr-yellow">108%</td>
+              <td>2</td>
+              <td>
+                <div class="health-bar-wrap">
+                  <div class="health-bar-bg"><div class="health-bar-fill" style="width:61%;background:var(--orange)"></div></div>
+                  <div class="health-val" style="color:var(--orange)">61</div>
+                </div>
+              </td>
+              <td><span class="risk-badge risk-high">High</span></td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td style="text-align:left">Vertex Analytics</td>
+              <td>Mid-Market</td>
+              <td>$0.94M</td>
+              <td>2020</td>
+              <td class="nrr-green">127%</td>
+              <td>3</td>
+              <td>
+                <div class="health-bar-wrap">
+                  <div class="health-bar-bg"><div class="health-bar-fill" style="width:85%;background:var(--green)"></div></div>
+                  <div class="health-val" style="color:var(--green)">85</div>
+                </div>
+              </td>
+              <td><span class="risk-badge risk-low">Low</span></td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td style="text-align:left">Sterling Retail</td>
+              <td>Mid-Market</td>
+              <td>$0.87M</td>
+              <td>2021</td>
+              <td class="nrr-green">113%</td>
+              <td>2</td>
+              <td>
+                <div class="health-bar-wrap">
+                  <div class="health-bar-bg"><div class="health-bar-fill" style="width:79%;background:var(--orange)"></div></div>
+                  <div class="health-val" style="color:var(--orange)">79</div>
+                </div>
+              </td>
+              <td><span class="risk-badge risk-low">Low</span></td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td style="text-align:left">Pinnacle Law</td>
+              <td>Mid-Market</td>
+              <td>$0.76M</td>
+              <td>2023</td>
+              <td class="nrr-yellow">101%</td>
+              <td>2</td>
+              <td>
+                <div class="health-bar-wrap">
+                  <div class="health-bar-bg"><div class="health-bar-fill" style="width:67%;background:var(--orange)"></div></div>
+                  <div class="health-val" style="color:var(--orange)">67</div>
+                </div>
+              </td>
+              <td><span class="risk-badge risk-medium">Medium</span></td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td style="text-align:left">Horizon Energy</td>
+              <td>Mid-Market</td>
+              <td>$0.71M</td>
+              <td>2022</td>
+              <td class="nrr-red">94%</td>
+              <td>1</td>
+              <td>
+                <div class="health-bar-wrap">
+                  <div class="health-bar-bg"><div class="health-bar-fill" style="width:52%;background:var(--red)"></div></div>
+                  <div class="health-val" style="color:var(--red)">52</div>
+                </div>
+              </td>
+              <td><span class="risk-badge risk-high">High</span></td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td style="text-align:left">BlueSky Media</td>
+              <td>Mid-Market</td>
+              <td>$0.68M</td>
+              <td>2021</td>
+              <td class="nrr-green">122%</td>
+              <td>2</td>
+              <td>
+                <div class="health-bar-wrap">
+                  <div class="health-bar-bg"><div class="health-bar-fill" style="width:81%;background:var(--green)"></div></div>
+                  <div class="health-val" style="color:var(--green)">81</div>
+                </div>
+              </td>
+              <td><span class="risk-badge risk-low">Low</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-        </div>
-      </section>
+  <!-- Table 4: Quarterly Income Statement -->
+  <div class="table-section">
+    <div class="table-card">
+      <div class="table-title-bar">
+        <div class="section-title">Quarterly Income Statement</div>
+        <div class="section-sub">Revenue, margins, and profitability by quarter — FY2024 actuals</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align:left">Line Item</th>
+              <th>Q1 2024</th>
+              <th>Q2 2024</th>
+              <th>Q3 2024</th>
+              <th>Q4 2024</th>
+              <th>FY 2024</th>
+              <th>YoY %</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Revenue Section -->
+            <tr>
+              <td>SaaS Revenue</td>
+              <td>$9.8M</td><td>$10.4M</td><td>$10.9M</td><td>$11.2M</td><td>$42.3M</td>
+              <td class="yoy-pos">+18.4%</td>
+            </tr>
+            <tr>
+              <td>Professional Services</td>
+              <td>$4.1M</td><td>$4.6M</td><td>$5.0M</td><td>$5.3M</td><td>$19.0M</td>
+              <td class="yoy-pos">+24.2%</td>
+            </tr>
+            <tr class="section-sep">
+              <td>Maintenance &amp; Support</td>
+              <td>$3.7M</td><td>$3.8M</td><td>$3.9M</td><td>$4.0M</td><td>$15.4M</td>
+              <td class="yoy-pos">+8.1%</td>
+            </tr>
+            <tr class="highlight-row data-bold">
+              <td>Total Revenue</td>
+              <td>$17.6M</td><td>$18.8M</td><td>$19.8M</td><td>$20.5M</td><td>$76.8M</td>
+              <td class="yoy-pos">+17.2%</td>
+            </tr>
+            <!-- COGS -->
+            <tr class="section-sep">
+              <td>COGS</td>
+              <td>$5.8M</td><td>$6.1M</td><td>$6.4M</td><td>$6.5M</td><td>$24.8M</td>
+              <td class="yoy-neg">+11.2%</td>
+            </tr>
+            <tr class="highlight-row data-bold">
+              <td>Gross Profit</td>
+              <td>$11.8M</td><td>$12.7M</td><td>$13.4M</td><td>$14.0M</td><td>$52.0M</td>
+              <td class="yoy-pos">+20.4%</td>
+            </tr>
+            <tr class="section-sep data-label">
+              <td>Gross Margin</td>
+              <td>67.0%</td><td>67.6%</td><td>67.7%</td><td>68.3%</td><td>67.7%</td>
+              <td class="yoy-pos">+2.1pp</td>
+            </tr>
+            <!-- OpEx -->
+            <tr>
+              <td>Sales &amp; Marketing</td>
+              <td>$4.2M</td><td>$4.5M</td><td>$4.7M</td><td>$4.8M</td><td>$18.2M</td>
+              <td class="yoy-neg">+14.5%</td>
+            </tr>
+            <tr>
+              <td>Research &amp; Development</td>
+              <td>$2.9M</td><td>$3.1M</td><td>$3.2M</td><td>$3.3M</td><td>$12.5M</td>
+              <td class="yoy-neg">+19.0%</td>
+            </tr>
+            <tr>
+              <td>General &amp; Administrative</td>
+              <td>$1.8M</td><td>$1.8M</td><td>$1.9M</td><td>$1.9M</td><td>$7.4M</td>
+              <td class="yoy-neg">+5.7%</td>
+            </tr>
+            <tr class="section-sep">
+              <td>Total OpEx</td>
+              <td>$8.9M</td><td>$9.4M</td><td>$9.8M</td><td>$10.0M</td><td>$38.1M</td>
+              <td class="yoy-neg">+14.7%</td>
+            </tr>
+            <!-- Profit rows -->
+            <tr class="highlight-row data-bold">
+              <td>Operating Income</td>
+              <td>$2.9M</td><td>$3.3M</td><td>$3.6M</td><td>$4.0M</td><td>$13.9M</td>
+              <td class="yoy-pos">+41.8%</td>
+            </tr>
+            <tr class="highlight-row data-bold">
+              <td>EBITDA</td>
+              <td>$4.2M</td><td>$4.7M</td><td>$5.1M</td><td>$5.2M</td><td>$19.2M</td>
+              <td class="yoy-pos">+28.0%</td>
+            </tr>
+            <tr class="data-label">
+              <td>EBITDA Margin</td>
+              <td>23.9%</td><td>25.0%</td><td>25.8%</td><td>25.4%</td><td>25.0%</td>
+              <td class="yoy-pos">+2.2pp</td>
+            </tr>
+            <tr class="total-row data-bold">
+              <td>Net Income</td>
+              <td>$2.3M</td><td>$2.7M</td><td>$3.0M</td><td>$3.4M</td><td>$11.4M</td>
+              <td class="yoy-pos">+38.6%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-    </div><!-- /content -->
-  </div><!-- /main -->
-</div><!-- /shell -->
+</main>
+
+<!-- ══════════════════════════════ RIGHT SIDEBAR ══════════════════════════════ -->
+<aside class="sidebar-right">
+
+  <!-- Key Takeaways -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Key Takeaways</div>
+
+    <div class="insight-item">
+      <div class="insight-num">1</div>
+      <div class="insight-text">
+        <strong>Expansion > Acquisition</strong>
+        At NRR 118%, the existing base now funds growth more efficiently than new logo spend. Prioritize customer success investment over top-of-funnel.
+      </div>
+    </div>
+
+    <div class="insight-item">
+      <div class="insight-num">2</div>
+      <div class="insight-text">
+        <strong>Mid-Market is the engine</strong>
+        Mid-Market delivers 44% of ARR with 20.9x LTV:CAC — the strongest unit economics of any tier. FY2025 budget should skew acquisition spend here.
+      </div>
+    </div>
+
+    <div class="insight-item">
+      <div class="insight-num">3</div>
+      <div class="insight-text">
+        <strong>Cascade Logistics is a churn risk</strong>
+        $1.18M ARR account with health score 61 and single-product usage. Requires immediate executive sponsor engagement before Q2 renewal.
+      </div>
+    </div>
+
+    <div class="insight-item">
+      <div class="insight-num">4</div>
+      <div class="insight-text">
+        <strong>Margin expansion on track</strong>
+        Gross margin improved 2.1pp YoY while S&amp;M grew below revenue (+14.5% vs +17.2%). Operating leverage is materializing — EBITDA up $4.2M vs prior year.
+      </div>
+    </div>
+
+    <div class="insight-item">
+      <div class="insight-num">5</div>
+      <div class="insight-text">
+        <strong>25 months runway &amp; growing</strong>
+        Cash position grew from $28.4M to $35.9M in H1 with runway extending from 20 to 25 months — no capital raise needed through 2026 at current burn rate.
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Metrics -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Quick Metrics</div>
+
+    <div class="metric-mini">
+      <div class="metric-mini-label">Total Customers</div>
+      <div class="metric-mini-val">2,187</div>
+      <div class="metric-mini-sub">+247 net new in FY2024</div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:72%;background:var(--blue)"></div></div>
+    </div>
+
+    <div class="metric-mini">
+      <div class="metric-mini-label">Churn Rate (Annual)</div>
+      <div class="metric-mini-val" style="color:var(--orange)">8.2%</div>
+      <div class="metric-mini-sub">Down from 11.4% in FY2023</div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:82%;background:var(--green)"></div></div>
+    </div>
+
+    <div class="metric-mini">
+      <div class="metric-mini-label">Magic Number</div>
+      <div class="metric-mini-val" style="color:var(--green)">1.21</div>
+      <div class="metric-mini-sub">Target: &gt;0.75 | Efficient S&amp;M spend</div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:88%;background:var(--green)"></div></div>
+    </div>
+
+    <div class="metric-mini">
+      <div class="metric-mini-label">ARR per Employee</div>
+      <div class="metric-mini-val">$195K</div>
+      <div class="metric-mini-sub">217 employees | Up from $162K</div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:65%;background:var(--purple)"></div></div>
+    </div>
+
+    <div class="metric-mini">
+      <div class="metric-mini-label">Professional Svcs Mix</div>
+      <div class="metric-mini-val">24.8%</div>
+      <div class="metric-mini-sub">of total revenue — monitor for dilution</div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:48%;background:var(--orange)"></div></div>
+    </div>
+  </div>
+
+  <!-- ARR Composition -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">ARR Composition</div>
+    <canvas id="chart-arr-pie" height="160"></canvas>
+    <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">
+      <div class="legend-item"><div class="legend-sq" style="background:#0078d4"></div><span style="flex:1">SMB</span><strong style="color:var(--text)">29.3%</strong></div>
+      <div class="legend-item"><div class="legend-sq" style="background:#7c5cbf"></div><span style="flex:1">Mid-Market</span><strong style="color:var(--text)">44.0%</strong></div>
+      <div class="legend-item"><div class="legend-sq" style="background:#00b050"></div><span style="flex:1">Enterprise</span><strong style="color:var(--text)">26.7%</strong></div>
+    </div>
+  </div>
+
+</aside>
+</div><!-- /layout -->
 
 <script>
-/* ════════════════════════════════════
-   SAMPLE FINANCIAL DATA
-   ════════════════════════════════════ */
+// ── Chart.js Global Defaults ──
+Chart.defaults.color = '#8b95b0';
+Chart.defaults.borderColor = '#323d5a';
+Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+Chart.defaults.font.size = 11;
 
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-// Monthly revenue & expenses (thousands)
-const monthlyRevenue  = [4820, 5130, 5640, 5280, 5990, 6240, 6180, 6550, 6820, 7110, 7340, 7680];
-const monthlyExpenses = [3210, 3490, 3780, 3590, 3980, 4110, 4070, 4250, 4390, 4550, 4680, 4890];
-
-// Revenue by category (thousands)
-const categoryData = {
-  labels: ['Products', 'Services', 'Subscriptions', 'Consulting'],
-  values: [28640, 19380, 14720, 7460]
+const gridOpts = {
+  color: '#2a334c',
+  drawBorder: false
 };
+const tickOpts = { color: '#5c6785' };
 
-// Quarterly P&L (thousands)
-const quarterlyPL = [
-  { q: 'Q1 2025', badge: 'badge-q1', revenue: 15590, cogs: 7012, opex: 10480, netIncome: null },
-  { q: 'Q2 2025', badge: 'badge-q2', revenue: 17510, cogs: 7880, opex: 11680, netIncome: null },
-  { q: 'Q3 2025', badge: 'badge-q3', revenue: 19550, cogs: 8798, opex: 12710, netIncome: null },
-  { q: 'Q4 2025', badge: 'badge-q4', revenue: 22130, cogs: 9959, opex: 14120, netIncome: null },
-];
-
-quarterlyPL.forEach(r => {
-  r.grossProfit = r.revenue - r.cogs;
-  r.netIncome   = r.grossProfit - r.opex;
-  r.margin      = ((r.netIncome / r.revenue) * 100).toFixed(1);
-});
-
-// Cash flow (thousands)
-const cashOperating  = [1820, 2130, 2340, 2180, 2490, 2610, 2540, 2720, 2890, 3010, 3140, 3290];
-const cashInvesting  = [-820, -640, -910, -730, -880, -1020, -750, -690, -840, -1120, -960, -1080];
-const cashFinancing  = [-240, -310, -180, -290, -340, -380, -260, -310, -290, -420, -380, -450];
-
-// Top 5 products
-const topProducts = [
-  { rank: 1, name: 'Enterprise Suite Pro',  category: 'Software',  revenue: 14820, units: 312,  growth: 22.4 },
-  { rank: 2, name: 'CloudSync Platform',    category: 'SaaS',      revenue: 12340, units: 1840, growth: 18.7 },
-  { rank: 3, name: 'DataVault Analytics',   category: 'Software',  revenue:  9610, units: 204,  growth: 14.2 },
-  { rank: 4, name: 'SecureConnect VPN',     category: 'Subscript.',revenue:  8290, units: 6720, growth:  9.8 },
-  { rank: 5, name: 'AI Insights Engine',    category: 'Services',  revenue:  7480, units: 98,   growth: 31.6 },
-];
-
-/* ════════════════════════════════════
-   HELPERS
-   ════════════════════════════════════ */
-const fmt = (v, decimals=0) =>
-  '$' + (v/1000).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + 'M';
-
-const fmtK = v => '$' + v.toLocaleString('en-US') + 'K';
-
-const sum = arr => arr.reduce((a,b) => a+b, 0);
-
-/* ════════════════════════════════════
-   KPI COUNTER ANIMATION
-   ════════════════════════════════════ */
-function animateCounter(el, target, prefix='$', suffix='', decimals=0, isMillion=true) {
-  const start = 0;
-  const duration = 1400;
-  const startTime = performance.now();
-  const easeOut = t => 1 - Math.pow(1 - t, 3);
-
-  function tick(now) {
-    const elapsed = now - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    const value = start + (target - start) * easeOut(progress);
-
-    if (isMillion) {
-      el.textContent = prefix + (value / 1000).toFixed(decimals) + 'M' + suffix;
-    } else {
-      el.textContent = prefix + value.toFixed(decimals) + suffix;
+// ── Sparklines ──
+function drawSparkline(id, data, color, fillColor) {
+  const ctx = document.getElementById(id).getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.map((_,i) => i),
+      datasets: [{
+        data: data,
+        borderColor: color,
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: true,
+        backgroundColor: fillColor || (color + '20'),
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: false,
+      animation: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: {
+        x: { display: false },
+        y: { display: false }
+      }
     }
-
-    if (progress < 1) requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
+  });
 }
 
-// Totals
-const totalRevenue = sum(monthlyRevenue);
-const totalExpenses = sum(monthlyExpenses);
-const totalNetProfit = totalRevenue - totalExpenses;
-const profitMargin = (totalNetProfit / totalRevenue) * 100;
+drawSparkline('spk-arr',    [28.2, 30.1, 31.5, 33.0, 34.7, 36.1, 37.5, 38.9, 40.1, 41.0, 41.8, 42.3], '#0078d4');
+drawSparkline('spk-nrr',    [108, 110, 111, 112, 113, 114, 114, 115, 116, 116, 117, 118], '#00b050');
+drawSparkline('spk-cac',    [5477, 5300, 5200, 5100, 4980, 4900, 4870, 4840, 4820, 4820, 4820, 4820], '#00b050');
+drawSparkline('spk-ltvcac', [4.8, 5.0, 5.3, 5.5, 5.8, 6.0, 6.1, 6.3, 6.5, 6.6, 6.7, 6.8], '#7c5cbf');
+drawSparkline('spk-gm',     [64.2, 64.8, 65.1, 65.5, 66.0, 66.3, 66.8, 67.0, 67.4, 67.7, 68.0, 68.4], '#00b8d4');
+drawSparkline('spk-burn',   [0.62, 0.58, 0.55, 0.52, 0.50, 0.48, 0.47, 0.46, 0.45, 0.44, 0.43, 0.42], '#00b050');
+drawSparkline('spk-dso',    [47, 46, 44, 43, 42, 41, 41, 40, 39, 39, 38, 38], '#f59e0b');
+drawSparkline('spk-ebitda', [12.0, 13.0, 13.5, 14.0, 14.5, 15.0, 15.5, 16.0, 17.0, 17.8, 18.5, 19.2], '#0078d4');
 
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    animateCounter(document.getElementById('kpi-revenue'), totalRevenue, '$', '', 2, true);
-    animateCounter(document.getElementById('kpi-profit'),  totalNetProfit, '$', '', 2, true);
-    animateCounter(document.getElementById('kpi-opex'),    totalExpenses, '$', '', 2, true);
-    animateCounter(document.getElementById('kpi-margin'),  profitMargin, '', '%', 1, false);
-  }, 200);
-});
-
-/* ════════════════════════════════════
-   CHART DEFAULTS
-   ════════════════════════════════════ */
-Chart.defaults.color = '#8b95b0';
-Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
-Chart.defaults.font.size = 12;
-
-const gridColor  = 'rgba(50,61,90,0.6)';
-const tooltipBg  = '#0d1220';
-const tooltipBdr = '#323d5a';
-
-const tooltipDefaults = {
-  backgroundColor: tooltipBg,
-  borderColor: tooltipBdr,
-  borderWidth: 1,
-  titleColor: '#e8ecf4',
-  bodyColor: '#8b95b0',
-  padding: 10,
-  cornerRadius: 8,
-  displayColors: true,
-  boxWidth: 10,
-  boxHeight: 10,
-};
-
-/* ════════════════════════════════════
-   BAR CHART — Revenue vs Expenses
-   ════════════════════════════════════ */
+// ── ARR Waterfall ──
 (function() {
-  const ctx = document.getElementById('barChart').getContext('2d');
+  // Waterfall: Starting, New Logos, Expansion, Contraction, Churn, Ending
+  // We simulate waterfall with floating bars
+  // [base, value] pairs — negative values float from top
+  const labels = ['Starting ARR', 'New Logos', 'Expansion', 'Contraction', 'Churn', 'Ending ARR'];
 
-  const gradRev = ctx.createLinearGradient(0,0,0,300);
-  gradRev.addColorStop(0, 'rgba(0,120,212,0.85)');
-  gradRev.addColorStop(1, 'rgba(0,120,212,0.4)');
+  // Transparent base bars (to float the visible bar)
+  const bases =   [0,    35.7,        43.9,         50.3,        48.2,      0];
+  const values =  [35.7,  8.2,         6.4,         -2.1,        -5.9,     42.3];
+  const colors =  ['#4a90d9','#00b050','#2dc67a','#e84040','#c02020','#4a90d9'];
+  const displayValues = [35.7, 8.2, 6.4, 2.1, 5.9, 42.3];
+  const absValues = displayValues;
 
-  const gradExp = ctx.createLinearGradient(0,0,0,300);
-  gradExp.addColorStop(0, 'rgba(255,68,68,0.75)');
-  gradExp.addColorStop(1, 'rgba(255,68,68,0.3)');
+  // For contraction/churn, base = top of bar, value = size going down
+  const floatBases = [0, 35.7, 43.9, 46.1, 42.3, 0];
+  const floatVals  = [35.7, 8.2, 6.4, 2.1, 5.9, 42.3];
 
+  const ctx = document.getElementById('chart-waterfall').getContext('2d');
   new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: MONTHS,
+      labels: labels,
       datasets: [
         {
-          label: 'Revenue',
-          data: monthlyRevenue,
-          backgroundColor: gradRev,
-          borderRadius: 5,
-          borderSkipped: false,
+          label: 'Base (transparent)',
+          data: floatBases,
+          backgroundColor: 'transparent',
+          borderColor: 'transparent',
+          stack: 'wf'
         },
         {
-          label: 'Expenses',
-          data: monthlyExpenses,
-          backgroundColor: gradExp,
-          borderRadius: 5,
-          borderSkipped: false,
+          label: 'Value',
+          data: floatVals,
+          backgroundColor: colors,
+          borderColor: colors.map(c => c),
+          borderWidth: 0,
+          borderRadius: 3,
+          stack: 'wf'
         }
       ]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
+      animation: { duration: 600 },
       plugins: {
-        legend: {
-          position: 'top',
-          align: 'end',
-          labels: { usePointStyle: true, pointStyle: 'circle', padding: 16, font: { size: 11 } }
-        },
+        legend: { display: false },
         tooltip: {
-          ...tooltipDefaults,
           callbacks: {
-            label: ctx => ` ${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString()}K`
+            label: function(ctx) {
+              if (ctx.datasetIndex === 0) return null;
+              const vals = ['+$35.7M', '+$8.2M', '+$6.4M', '-$2.1M', '-$5.9M', '$42.3M'];
+              return vals[ctx.dataIndex];
+            }
           }
-        }
+        },
+        datalabels: { display: false }
       },
       scales: {
-        x: {
-          grid: { color: gridColor, drawBorder: false },
-          ticks: { font: { size: 11 } }
-        },
+        x: { stacked: true, grid: gridOpts, ticks: tickOpts },
         y: {
-          grid: { color: gridColor, drawBorder: false },
+          stacked: true,
+          grid: gridOpts,
           ticks: {
-            font: { size: 11 },
-            callback: v => '$' + (v/1000).toFixed(0) + 'M'
-          }
+            tickOpts,
+            callback: v => '$' + v.toFixed(0) + 'M'
+          },
+          min: 0,
+          max: 56
         }
       }
     }
   });
 })();
 
-/* ════════════════════════════════════
-   DONUT CHART — Revenue by Category
-   ════════════════════════════════════ */
+// ── Revenue Bridge Monthly ──
 (function() {
-  const ctx = document.getElementById('donutChart').getContext('2d');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const newBiz  = [1.1,0.9,1.3,1.0,1.2,1.4,1.1,1.3,1.5,1.4,1.6,1.8];
+  const expand  = [0.4,0.5,0.5,0.6,0.6,0.7,0.6,0.7,0.7,0.8,0.8,0.9];
+  const renewal = [2.8,3.0,3.1,2.9,3.2,3.3,3.1,3.2,3.4,3.3,3.5,3.6];
+  const profSvc = [1.2,1.3,1.4,1.4,1.5,1.5,1.5,1.6,1.7,1.7,1.8,1.9];
+
+  const ctx = document.getElementById('chart-revbridge').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [
+        { label: 'New Business',       data: newBiz,  backgroundColor: '#0078d4', stack: 'rev', borderRadius: 0 },
+        { label: 'Expansion',          data: expand,  backgroundColor: '#00b050', stack: 'rev', borderRadius: 0 },
+        { label: 'Renewals',           data: renewal, backgroundColor: '#7c5cbf', stack: 'rev', borderRadius: 0 },
+        { label: 'Professional Svcs',  data: profSvc, backgroundColor: '#f59e0b', stack: 'rev', borderRadius: { topLeft: 3, topRight: 3 } }
+      ]
+    },
+    options: {
+      responsive: true,
+      animation: { duration: 600 },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { stacked: true, grid: gridOpts, ticks: tickOpts },
+        y: {
+          stacked: true,
+          grid: gridOpts,
+          ticks: { callback: v => '$' + v.toFixed(1) + 'M' }
+        }
+      }
+    }
+  });
+})();
+
+// ── Unit Economics Donut ──
+(function() {
+  const ctx = document.getElementById('chart-donut').getContext('2d');
   new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: categoryData.labels,
+      labels: ['Gross Profit', 'R&D', 'Sales & Marketing', 'COGS', 'Support Cost'],
       datasets: [{
-        data: categoryData.values,
-        backgroundColor: ['#0078d4','#00b050','#ff8c00','#7c5cbf'],
-        hoverBackgroundColor: ['#1a8fe0','#00c860','#ffa030','#9070cf'],
-        borderWidth: 3,
+        data: [45, 18, 15, 14, 8],
+        backgroundColor: ['#00b050', '#3b82f6', '#7c5cbf', '#f59e0b', '#e84040'],
         borderColor: '#252d42',
-        hoverBorderColor: '#252d42',
+        borderWidth: 3,
+        hoverOffset: 6
       }]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
-      cutout: '70%',
+      cutout: '68%',
       plugins: {
         legend: { display: false },
         tooltip: {
-          ...tooltipDefaults,
           callbacks: {
-            label: ctx => {
-              const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
-              const pct = ((ctx.parsed / total)*100).toFixed(1);
-              return ` ${ctx.label}: $${(ctx.parsed/1000).toFixed(2)}M (${pct}%)`;
-            }
+            label: ctx => ` ${ctx.label}: ${ctx.parsed}%`
           }
         }
       }
@@ -1041,213 +1365,98 @@ const tooltipDefaults = {
   });
 })();
 
-/* ════════════════════════════════════
-   CASH FLOW LINE CHART
-   ════════════════════════════════════ */
+// ── Cash Flow Runway ──
 (function() {
-  const ctx = document.getElementById('cashFlowChart').getContext('2d');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec',
+                  'Jan\'25','Feb','Mar','Apr','May','Jun'];
+  const opCF   = [1.84,1.92,2.11,1.78,2.34,2.56,2.40,2.61,2.75,2.50,2.80,2.95,
+                  2.90,3.05,3.10,2.95,3.20,3.35];
+  const cumCash = [28.4,29.9,30.8,32.2,34.0,35.9,38.0,40.2,42.6,44.8,47.2,49.7,
+                   52.2,54.8,57.5,60.0,62.8,65.7];
 
-  const makeGrad = (ctx, color1, color2) => {
-    const g = ctx.createLinearGradient(0,0,0,260);
-    g.addColorStop(0, color1);
-    g.addColorStop(1, color2);
-    return g;
-  };
-
+  const ctx = document.getElementById('chart-cashflow').getContext('2d');
   new Chart(ctx, {
-    type: 'line',
+    type: 'bar',
     data: {
-      labels: MONTHS,
+      labels: months,
       datasets: [
         {
-          label: 'Operating',
-          data: cashOperating,
+          type: 'bar',
+          label: 'Operating Cash Flow',
+          data: opCF,
+          backgroundColor: '#00b05066',
+          borderColor: '#00b050',
+          borderWidth: 1,
+          borderRadius: 3,
+          yAxisID: 'y'
+        },
+        {
+          type: 'line',
+          label: 'Cumulative Cash',
+          data: cumCash,
           borderColor: '#0078d4',
-          backgroundColor: makeGrad(ctx,'rgba(0,120,212,0.25)','rgba(0,120,212,0.02)'),
-          borderWidth: 2.5,
-          pointRadius: 3,
-          pointHoverRadius: 6,
-          pointBackgroundColor: '#0078d4',
-          fill: true,
-          tension: 0.4,
-        },
-        {
-          label: 'Investing',
-          data: cashInvesting,
-          borderColor: '#ff4444',
-          backgroundColor: makeGrad(ctx,'rgba(255,68,68,0.18)','rgba(255,68,68,0.02)'),
+          backgroundColor: '#0078d420',
           borderWidth: 2,
-          pointRadius: 3,
-          pointHoverRadius: 6,
-          pointBackgroundColor: '#ff4444',
+          pointRadius: 2,
+          pointHoverRadius: 5,
           fill: true,
-          tension: 0.4,
-        },
-        {
-          label: 'Financing',
-          data: cashFinancing,
-          borderColor: '#ff8c00',
-          backgroundColor: makeGrad(ctx,'rgba(255,140,0,0.15)','rgba(255,140,0,0.02)'),
-          borderWidth: 2,
-          pointRadius: 3,
-          pointHoverRadius: 6,
-          pointBackgroundColor: '#ff8c00',
-          fill: true,
-          tension: 0.4,
+          tension: 0.3,
+          yAxisID: 'y2'
         }
       ]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
+      animation: { duration: 600 },
       interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: {
-          position: 'top',
-          align: 'end',
-          labels: { usePointStyle: true, pointStyle: 'circle', padding: 14, font: { size: 11 } }
-        },
-        tooltip: {
-          ...tooltipDefaults,
-          callbacks: {
-            label: ctx => {
-              const val = ctx.parsed.y;
-              const sign = val >= 0 ? '+' : '';
-              return ` ${ctx.dataset.label}: ${sign}$${val.toLocaleString()}K`;
-            }
-          }
-        }
-      },
+      plugins: { legend: { display: false } },
       scales: {
-        x: {
-          grid: { color: gridColor, drawBorder: false },
-          ticks: { font: { size: 11 } }
-        },
+        x: { grid: gridOpts, ticks: { ...tickOpts, maxRotation: 45 } },
         y: {
-          grid: { color: gridColor, drawBorder: false },
-          ticks: {
-            font: { size: 11 },
-            callback: v => (v >= 0 ? '+' : '') + '$' + (v/1000).toFixed(1) + 'M'
-          }
+          grid: gridOpts,
+          ticks: { callback: v => '$' + v.toFixed(1) + 'M' },
+          position: 'left',
+          title: { display: true, text: 'Monthly Op. CF', color: '#5c6785', font: { size: 10 } }
+        },
+        y2: {
+          grid: { display: false },
+          ticks: { callback: v => '$' + v.toFixed(0) + 'M', color: '#4a90d9' },
+          position: 'right',
+          title: { display: true, text: 'Cash Balance', color: '#4a90d9', font: { size: 10 } }
         }
       }
     }
   });
 })();
 
-/* ════════════════════════════════════
-   QUARTERLY P&L TABLE
-   ════════════════════════════════════ */
+// ── ARR Pie (sidebar) ──
 (function() {
-  const table = document.getElementById('plTable');
-
-  const totalRev = quarterlyPL.reduce((a,r) => a + r.revenue, 0);
-  const totalNI  = quarterlyPL.reduce((a,r) => a + r.netIncome, 0);
-  const totalGP  = quarterlyPL.reduce((a,r) => a + r.grossProfit, 0);
-  const totalOE  = quarterlyPL.reduce((a,r) => a + r.opex, 0);
-
-  table.innerHTML = `
-    <thead>
-      <tr>
-        <th>Quarter</th>
-        <th class="num">Revenue</th>
-        <th class="num">COGS</th>
-        <th class="num">Gross Profit</th>
-        <th class="num">Operating Exp.</th>
-        <th class="num">Net Income</th>
-        <th class="num">Margin %</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${quarterlyPL.map(r => `
-        <tr>
-          <td><span class="badge ${r.badge}">${r.q}</span></td>
-          <td class="num">$${r.revenue.toLocaleString()}K</td>
-          <td class="num muted">$${r.cogs.toLocaleString()}K</td>
-          <td class="num pos">$${r.grossProfit.toLocaleString()}K</td>
-          <td class="num neg">$${r.opex.toLocaleString()}K</td>
-          <td class="num" style="color:${r.netIncome >= 0 ? 'var(--green)' : 'var(--red)'}">
-            ${r.netIncome >= 0 ? '+' : ''}$${r.netIncome.toLocaleString()}K
-          </td>
-          <td class="num" style="color:${parseFloat(r.margin) > 15 ? 'var(--green)' : parseFloat(r.margin) > 5 ? 'var(--orange)' : 'var(--red)'}">
-            ${r.margin}%
-          </td>
-        </tr>
-      `).join('')}
-      <tr style="background:#1a2035;font-weight:700;">
-        <td style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px">FY Total</td>
-        <td class="num" style="color:var(--blue)">$${totalRev.toLocaleString()}K</td>
-        <td class="num muted">—</td>
-        <td class="num pos">$${totalGP.toLocaleString()}K</td>
-        <td class="num neg">$${totalOE.toLocaleString()}K</td>
-        <td class="num" style="color:var(--green)">+$${totalNI.toLocaleString()}K</td>
-        <td class="num" style="color:var(--green)">${((totalNI/totalRev)*100).toFixed(1)}%</td>
-      </tr>
-    </tbody>
-  `;
-
-  // Footer mini stats
-  document.getElementById('plFooter').innerHTML = `
-    <div class="mini-stat">
-      <div class="mini-stat-label">YoY Rev Growth</div>
-      <div class="mini-stat-val" style="color:var(--green)">+14.2%</div>
-    </div>
-    <div class="mini-stat">
-      <div class="mini-stat-label">Gross Margin</div>
-      <div class="mini-stat-val" style="color:var(--blue)">${((totalGP/totalRev)*100).toFixed(1)}%</div>
-    </div>
-    <div class="mini-stat">
-      <div class="mini-stat-label">Net Margin</div>
-      <div class="mini-stat-val" style="color:var(--orange)">${((totalNI/totalRev)*100).toFixed(1)}%</div>
-    </div>
-    <div class="mini-stat">
-      <div class="mini-stat-label">EBITDA (est.)</div>
-      <div class="mini-stat-val">$${(totalNI * 1.18 / 1000).toFixed(2)}M</div>
-    </div>
-    <div class="mini-stat">
-      <div class="mini-stat-label">Best Quarter</div>
-      <div class="mini-stat-val" style="color:var(--purple)">Q4 2025</div>
-    </div>
-  `;
-})();
-
-/* ════════════════════════════════════
-   TOP 5 PRODUCTS TABLE
-   ════════════════════════════════════ */
-(function() {
-  const table = document.getElementById('topProducts');
-  const maxRev = Math.max(...topProducts.map(p => p.revenue));
-
-  table.innerHTML = `
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Product</th>
-        <th class="num">Revenue</th>
-        <th class="num">Growth</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${topProducts.map(p => `
-        <tr>
-          <td><span class="rank ${p.rank === 1 ? 'top' : ''}">${p.rank}</span></td>
-          <td>
-            <div style="font-weight:600;font-size:12px;margin-bottom:2px">${p.name}</div>
-            <div style="font-size:10px;color:var(--text-dim)">${p.category} · ${p.units.toLocaleString()} units</div>
-            <div class="prog-wrap" style="margin-top:5px">
-              <div class="prog-bar-bg">
-                <div class="prog-bar-fill" style="width:${(p.revenue/maxRev*100).toFixed(1)}%"></div>
-              </div>
-            </div>
-          </td>
-          <td class="num" style="white-space:nowrap">$${(p.revenue/1000).toFixed(2)}M</td>
-          <td class="num ${p.growth > 0 ? 'pos' : 'neg'}" style="white-space:nowrap">
-            ${p.growth > 0 ? '&#9650;' : '&#9660;'} ${Math.abs(p.growth).toFixed(1)}%
-          </td>
-        </tr>
-      `).join('')}
-    </tbody>
-  `;
+  const ctx = document.getElementById('chart-arr-pie').getContext('2d');
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['SMB', 'Mid-Market', 'Enterprise'],
+      datasets: [{
+        data: [12.4, 18.6, 11.3],
+        backgroundColor: ['#0078d4', '#7c5cbf', '#00b050'],
+        borderColor: '#161c2e',
+        borderWidth: 3,
+        hoverOffset: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '60%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.label}: $${ctx.parsed.toFixed(1)}M`
+          }
+        }
+      }
+    }
+  });
 })();
 </script>
 </body>
