@@ -14,21 +14,21 @@ expenses = [650000,610000,720000,690000,740000,790000,
             770000,820000,760000,850000,840000,920000]
 profit   = [r-e for r,e in zip(revenue,expenses)]
 
-# ── Embedded M Query ────────────────────────────────────────────
-rows = ",\n            ".join(
-    [f'{{"{m}",{r},{e},{p}}}' for m,r,e,p in zip(months,revenue,expenses,profit)]
+# ── M expression as a SINGLE STRING (not a list) ────────────────
+rows = ",\r\n        ".join(
+    [f'{{"{m}", {r}, {e}, {p}}}' for m,r,e,p in zip(months,revenue,expenses,profit)]
 )
-m_expr = [
-    "let",
-    '    Source = #table(',
-    '        type table [Month = text, Revenue = number, Expenses = number, Profit = number],',
-    '        {',
-    f'            {rows}',
-    '        }',
-    '    )',
-    'in',
-    '    Source'
-]
+m_expr = (
+    "let\r\n"
+    "    Source = #table(\r\n"
+    "        type table [Month = text, Revenue = number, Expenses = number, Profit = number],\r\n"
+    "        {\r\n"
+    f"        {rows}\r\n"
+    "        }\r\n"
+    "    )\r\n"
+    "in\r\n"
+    "    Source"
+)
 
 # ── DataModelSchema ─────────────────────────────────────────────
 dms = {
@@ -39,7 +39,7 @@ dms = {
             "name": "FinancialData",
             "lineageTag": guid(),
             "partitions": [{
-                "name": "FinancialData-part1",
+                "name": "FinancialData",
                 "mode": "import",
                 "lineageTag": guid(),
                 "source": {
@@ -62,7 +62,7 @@ dms = {
                     "lineageTag": guid(),
                     "summarizeBy": "sum",
                     "sourceColumn": "Revenue",
-                    "formatString": "\\$#,##0",
+                    "formatString": "$#,##0",
                     "annotations": [{"name": "SummarizationSetBy", "value": "Automatic"}]
                 },
                 {
@@ -71,7 +71,7 @@ dms = {
                     "lineageTag": guid(),
                     "summarizeBy": "sum",
                     "sourceColumn": "Expenses",
-                    "formatString": "\\$#,##0",
+                    "formatString": "$#,##0",
                     "annotations": [{"name": "SummarizationSetBy", "value": "Automatic"}]
                 },
                 {
@@ -80,7 +80,7 @@ dms = {
                     "lineageTag": guid(),
                     "summarizeBy": "sum",
                     "sourceColumn": "Profit",
-                    "formatString": "\\$#,##0",
+                    "formatString": "$#,##0",
                     "annotations": [{"name": "SummarizationSetBy", "value": "Automatic"}]
                 }
             ],
@@ -88,19 +88,19 @@ dms = {
                 {
                     "name": "Total Revenue",
                     "expression": "SUM(FinancialData[Revenue])",
-                    "formatString": "\\$#,##0",
+                    "formatString": "$#,##0",
                     "lineageTag": guid()
                 },
                 {
                     "name": "Total Expenses",
                     "expression": "SUM(FinancialData[Expenses])",
-                    "formatString": "\\$#,##0",
+                    "formatString": "$#,##0",
                     "lineageTag": guid()
                 },
                 {
                     "name": "Total Profit",
                     "expression": "SUM(FinancialData[Profit])",
-                    "formatString": "\\$#,##0",
+                    "formatString": "$#,##0",
                     "lineageTag": guid()
                 },
                 {
@@ -113,49 +113,43 @@ dms = {
         }
     ],
     "annotations": [
-        {"name": "PBI_QueryOrder", "value": json.dumps(["FinancialData"])},
+        {"name": "PBI_QueryOrder",               "value": "[\"FinancialData\"]"},
         {"name": "__PBI_TimeIntelligenceEnabled", "value": "0"},
-        {"name": "PBIDesktopVersion", "value": "2.128.702.0"}
+        {"name": "PBIDesktopVersion",             "value": "2.128.702.0"}
     ]
 }
 
-# ── Visual builder helpers ───────────────────────────────────────
+# ── Visual builder ───────────────────────────────────────────────
 def vc(x, y, w, h, config_dict, query_dict=None, transforms_dict=None):
-    vc = {
+    item = {
         "x": x, "y": y, "z": 0,
         "width": w, "height": h,
-        "config": json.dumps(config_dict, separators=(',',':')),
+        "config": json.dumps(config_dict, separators=(',', ':')),
         "filters": "[]"
     }
     if query_dict:
-        vc["query"] = json.dumps(query_dict, separators=(',',':'))
+        item["query"] = json.dumps(query_dict, separators=(',', ':'))
     if transforms_dict:
-        vc["dataTransforms"] = json.dumps(transforms_dict, separators=(',',':'))
-    return vc
+        item["dataTransforms"] = json.dumps(transforms_dict, separators=(',', ':'))
+    return item
 
 def from_clause():
     return [{"Name": "f", "Entity": "FinancialData", "Type": 0}]
 
-def col_ref(prop):
+def col_expr(prop):
     return {"Column": {"Expression": {"SourceRef": {"Source": "f"}}, "Property": prop}}
 
-def agg_ref(prop, func=0):
-    return {"Aggregation": {"Expression": col_ref(prop)["Column"], "Function": func}}
+def agg_expr(prop):
+    return {"Aggregation": {"Expression": {"Column": {"Expression": {"SourceRef": {"Source": "f"}}, "Property": prop}}, "Function": 0}}
 
-def measure_ref(prop):
+def meas_expr(prop):
     return {"Measure": {"Expression": {"SourceRef": {"Source": "f"}}, "Property": prop}}
 
 # Card visual
-def card_visual(x, y, w, h, vis_id, measure_name, display_name, use_measure=False):
-    if use_measure:
-        sel = {**measure_ref(measure_name), "Name": f"FinancialData.{measure_name}"}
-        qname = f"FinancialData.{measure_name}"
-    else:
-        sel = {**agg_ref(measure_name), "Name": f"Sum(FinancialData.{measure_name})"}
-        qname = f"Sum(FinancialData.{measure_name})"
-
+def card_visual(x, y, w, h, vis_id, col, display, is_measure=False):
+    qname = f"FinancialData.{col}" if is_measure else f"Sum(FinancialData.{col})"
+    sel   = {**(meas_expr(col) if is_measure else agg_expr(col)), "Name": qname}
     query = {"Version": 2, "From": from_clause(), "Select": [sel]}
-
     config = {
         "name": vis_id,
         "layouts": [{"id": 0, "position": {"x": x, "y": y, "z": 0, "width": w, "height": h}}],
@@ -167,19 +161,15 @@ def card_visual(x, y, w, h, vis_id, measure_name, display_name, use_measure=Fals
             "vcObjects": {}
         }
     }
-    transforms = {
-        "selects": [{"displayName": display_name, "queryName": qname, "roles": {"Values": 0}, "type": 1}]
-    }
+    transforms = {"selects": [{"displayName": display, "queryName": qname, "roles": {"Values": 0}, "type": 1}]}
     return vc(x, y, w, h, config, query, transforms)
 
-# Clustered column chart (Revenue + Expenses by Month)
+# Clustered column chart
 def column_chart(x, y, w, h, vis_id):
-    sel_month = {**col_ref("Month"), "Name": "FinancialData.Month"}
-    sel_rev   = {**agg_ref("Revenue"),  "Name": "Sum(FinancialData.Revenue)"}
-    sel_exp   = {**agg_ref("Expenses"), "Name": "Sum(FinancialData.Expenses)"}
-
-    query = {"Version": 2, "From": from_clause(), "Select": [sel_month, sel_rev, sel_exp]}
-
+    s_month = {**col_expr("Month"),    "Name": "FinancialData.Month"}
+    s_rev   = {**agg_expr("Revenue"),  "Name": "Sum(FinancialData.Revenue)"}
+    s_exp   = {**agg_expr("Expenses"), "Name": "Sum(FinancialData.Expenses)"}
+    query = {"Version": 2, "From": from_clause(), "Select": [s_month, s_rev, s_exp]}
     config = {
         "name": vis_id,
         "layouts": [{"id": 0, "position": {"x": x, "y": y, "z": 0, "width": w, "height": h}}],
@@ -188,7 +178,7 @@ def column_chart(x, y, w, h, vis_id):
             "projections": {
                 "Category": [{"queryRef": "FinancialData.Month"}],
                 "Y": [
-                    {"queryRef": "Sum(FinancialData.Revenue)", "active": True},
+                    {"queryRef": "Sum(FinancialData.Revenue)",  "active": True},
                     {"queryRef": "Sum(FinancialData.Expenses)"}
                 ]
             },
@@ -197,22 +187,18 @@ def column_chart(x, y, w, h, vis_id):
             "vcObjects": {}
         }
     }
-    transforms = {
-        "selects": [
-            {"displayName": "Month",    "queryName": "FinancialData.Month",          "roles": {"Category": 0}, "type": 2},
-            {"displayName": "Revenue",  "queryName": "Sum(FinancialData.Revenue)",   "roles": {"Y": 0},        "type": 1},
-            {"displayName": "Expenses", "queryName": "Sum(FinancialData.Expenses)",  "roles": {"Y": 1},        "type": 1}
-        ]
-    }
+    transforms = {"selects": [
+        {"displayName": "Month",    "queryName": "FinancialData.Month",         "roles": {"Category": 0}, "type": 2},
+        {"displayName": "Revenue",  "queryName": "Sum(FinancialData.Revenue)",  "roles": {"Y": 0},        "type": 1},
+        {"displayName": "Expenses", "queryName": "Sum(FinancialData.Expenses)","roles": {"Y": 1},        "type": 1}
+    ]}
     return vc(x, y, w, h, config, query, transforms)
 
-# Line chart (Profit by Month)
+# Line chart
 def line_chart(x, y, w, h, vis_id):
-    sel_month  = {**col_ref("Month"),  "Name": "FinancialData.Month"}
-    sel_profit = {**agg_ref("Profit"), "Name": "Sum(FinancialData.Profit)"}
-
-    query = {"Version": 2, "From": from_clause(), "Select": [sel_month, sel_profit]}
-
+    s_month  = {**col_expr("Month"),  "Name": "FinancialData.Month"}
+    s_profit = {**agg_expr("Profit"), "Name": "Sum(FinancialData.Profit)"}
+    query = {"Version": 2, "From": from_clause(), "Select": [s_month, s_profit]}
     config = {
         "name": vis_id,
         "layouts": [{"id": 0, "position": {"x": x, "y": y, "z": 0, "width": w, "height": h}}],
@@ -227,49 +213,41 @@ def line_chart(x, y, w, h, vis_id):
             "vcObjects": {}
         }
     }
-    transforms = {
-        "selects": [
-            {"displayName": "Month",  "queryName": "FinancialData.Month",         "roles": {"Category": 0}, "type": 2},
-            {"displayName": "Profit", "queryName": "Sum(FinancialData.Profit)",   "roles": {"Y": 0},        "type": 1}
-        ]
-    }
+    transforms = {"selects": [
+        {"displayName": "Month",  "queryName": "FinancialData.Month",        "roles": {"Category": 0}, "type": 2},
+        {"displayName": "Profit", "queryName": "Sum(FinancialData.Profit)",  "roles": {"Y": 0},        "type": 1}
+    ]}
     return vc(x, y, w, h, config, query, transforms)
 
-# Table visual (all columns)
+# Table visual
 def table_visual(x, y, w, h, vis_id):
-    sel_month  = {**col_ref("Month"),    "Name": "FinancialData.Month"}
-    sel_rev    = {**agg_ref("Revenue"),  "Name": "Sum(FinancialData.Revenue)"}
-    sel_exp    = {**agg_ref("Expenses"), "Name": "Sum(FinancialData.Expenses)"}
-    sel_profit = {**agg_ref("Profit"),   "Name": "Sum(FinancialData.Profit)"}
-
-    query = {"Version": 2, "From": from_clause(), "Select": [sel_month, sel_rev, sel_exp, sel_profit]}
-
+    s_month  = {**col_expr("Month"),    "Name": "FinancialData.Month"}
+    s_rev    = {**agg_expr("Revenue"),  "Name": "Sum(FinancialData.Revenue)"}
+    s_exp    = {**agg_expr("Expenses"), "Name": "Sum(FinancialData.Expenses)"}
+    s_profit = {**agg_expr("Profit"),   "Name": "Sum(FinancialData.Profit)"}
+    query = {"Version": 2, "From": from_clause(), "Select": [s_month, s_rev, s_exp, s_profit]}
     config = {
         "name": vis_id,
         "layouts": [{"id": 0, "position": {"x": x, "y": y, "z": 0, "width": w, "height": h}}],
         "singleVisual": {
             "visualType": "tableEx",
-            "projections": {
-                "Values": [
-                    {"queryRef": "FinancialData.Month"},
-                    {"queryRef": "Sum(FinancialData.Revenue)"},
-                    {"queryRef": "Sum(FinancialData.Expenses)"},
-                    {"queryRef": "Sum(FinancialData.Profit)"}
-                ]
-            },
+            "projections": {"Values": [
+                {"queryRef": "FinancialData.Month"},
+                {"queryRef": "Sum(FinancialData.Revenue)"},
+                {"queryRef": "Sum(FinancialData.Expenses)"},
+                {"queryRef": "Sum(FinancialData.Profit)"}
+            ]},
             "prototypeQuery": query,
             "columnProperties": {},
             "vcObjects": {}
         }
     }
-    transforms = {
-        "selects": [
-            {"displayName": "Month",    "queryName": "FinancialData.Month",         "roles": {"Values": 0}, "type": 2},
-            {"displayName": "Revenue",  "queryName": "Sum(FinancialData.Revenue)",  "roles": {"Values": 1}, "type": 1},
-            {"displayName": "Expenses", "queryName": "Sum(FinancialData.Expenses)","roles": {"Values": 2}, "type": 1},
-            {"displayName": "Profit",   "queryName": "Sum(FinancialData.Profit)",  "roles": {"Values": 3}, "type": 1}
-        ]
-    }
+    transforms = {"selects": [
+        {"displayName": "Month",    "queryName": "FinancialData.Month",         "roles": {"Values": 0}, "type": 2},
+        {"displayName": "Revenue",  "queryName": "Sum(FinancialData.Revenue)",  "roles": {"Values": 1}, "type": 1},
+        {"displayName": "Expenses", "queryName": "Sum(FinancialData.Expenses)","roles": {"Values": 2}, "type": 1},
+        {"displayName": "Profit",   "queryName": "Sum(FinancialData.Profit)",  "roles": {"Values": 3}, "type": 1}
+    ]}
     return vc(x, y, w, h, config, query, transforms)
 
 # ── Assemble visuals ────────────────────────────────────────────
@@ -277,10 +255,10 @@ visuals = [
     card_visual(  20,  20, 270, 110, "card_rev",    "Revenue",       "Total Revenue"),
     card_visual( 310,  20, 270, 110, "card_exp",    "Expenses",      "Total Expenses"),
     card_visual( 600,  20, 270, 110, "card_profit", "Profit",        "Total Profit"),
-    card_visual( 890,  20, 270, 110, "card_margin", "Profit Margin", "Profit Margin", use_measure=True),
+    card_visual( 890,  20, 270, 110, "card_margin", "Profit Margin", "Profit Margin", is_measure=True),
     column_chart( 20, 150, 770, 300, "col_chart"),
     line_chart(  810, 150, 450, 300, "line_chart"),
-    table_visual( 20, 470,1240, 230, "tbl_visual"),
+    table_visual( 20, 470, 1240, 230, "tbl_visual"),
 ]
 
 # ── Report Layout ───────────────────────────────────────────────
@@ -296,7 +274,7 @@ layout = {
         "visualContainers": visuals,
         "width": 1280,
         "height": 720,
-        "config": json.dumps({"relationships": [], "queryCanCrossFilterVisual": True}, separators=(',',':')),
+        "config": json.dumps({"relationships": [], "queryCanCrossFilterVisual": True}, separators=(',', ':')),
         "displayOption": 0
     }],
     "config": json.dumps({
@@ -304,7 +282,7 @@ layout = {
         "themeCollection": {
             "baseTheme": {"name": "CY24SU08", "reportVersionAtImport": "5.47", "type": 2}
         }
-    }, separators=(',',':')),
+    }, separators=(',', ':')),
     "layoutOptimization": 0
 }
 
@@ -317,34 +295,38 @@ content_types = (
     '</Types>'
 )
 
-metadata     = {"version": 4, "upgradedFrom": 3, "createdFromTemplate": False}
-settings     = {"QnaAutoSuggestions": True, "AutoRecoverSaves": False, "Version": 4}
+metadata       = {"version": 4, "upgradedFrom": 3, "createdFromTemplate": False}
+settings       = {"QnaAutoSuggestions": True, "AutoRecoverSaves": False, "Version": 4}
 diagram_layout = {
     "version": 1,
-    "diagrams": [{
-        "ordinal": 0,
-        "scrollPosition": {"x": 0, "y": 0},
-        "zoom": 1,
-        "nodes": []
-    }]
+    "diagrams": [{"ordinal": 0, "scrollPosition": {"x": 0, "y": 0}, "zoom": 1, "nodes": []}]
 }
 
-# ── Write PBIT ──────────────────────────────────────────────────
+# ── Write PBIT using ZIP_STORED (no compression) ────────────────
 out_path = "/home/user/newm/financial_dashboard.pbit"
-with zipfile.ZipFile(out_path, "w", zipfile.ZIP_DEFLATED) as zf:
-    zf.writestr("Version",              "2.0")
-    zf.writestr("[Content_Types].xml",  content_types)
-    zf.writestr("DataModelSchema",      json.dumps(dms,            ensure_ascii=False))
-    zf.writestr("Report/Layout",        json.dumps(layout,         ensure_ascii=False))
-    zf.writestr("Metadata",             json.dumps(metadata,       ensure_ascii=False))
-    zf.writestr("Settings",             json.dumps(settings,       ensure_ascii=False))
-    zf.writestr("DiagramLayout",        json.dumps(diagram_layout, ensure_ascii=False))
 
-print(f"Created: {out_path}")
+def write_utf8(zf, name, content):
+    data = content.encode("utf-8-sig")   # UTF-8 with BOM — Power BI expects this
+    zf.writestr(
+        zipfile.ZipInfo(name),
+        data
+    )
 
-# Verify it's a valid ZIP
+with zipfile.ZipFile(out_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+    # Version must be plain ASCII, no BOM
+    zf.writestr(zipfile.ZipInfo("Version"), b"2.0")
+    write_utf8(zf, "[Content_Types].xml", content_types)
+    write_utf8(zf, "DataModelSchema",     json.dumps(dms,            ensure_ascii=False, indent=2))
+    write_utf8(zf, "Report/Layout",       json.dumps(layout,         ensure_ascii=False))
+    write_utf8(zf, "Metadata",            json.dumps(metadata,       ensure_ascii=False))
+    write_utf8(zf, "Settings",            json.dumps(settings,       ensure_ascii=False))
+    write_utf8(zf, "DiagramLayout",       json.dumps(diagram_layout, ensure_ascii=False))
+
+import os
+print(f"Created: {out_path}  ({os.path.getsize(out_path):,} bytes)")
+
 with zipfile.ZipFile(out_path, "r") as zf:
-    print("Contents:", zf.namelist())
-    print("File size:", __import__('os').path.getsize(out_path), "bytes")
+    for info in zf.infolist():
+        print(f"  {info.filename:30s}  {info.file_size:6d} bytes")
 
 print("Done!")
