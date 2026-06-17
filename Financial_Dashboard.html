@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Financial Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #f0f2f5;
+    --card:      #ffffff;
+    --navy:      #1a2f4e;
+    --blue:      #0078d4;
+    --blue-lt:   #e8f4fd;
+    --green:     #107c10;
+    --green-lt:  #dff6dd;
+    --red:       #c50f1f;
+    --red-lt:    #fde7e9;
+    --amber:     #ca5010;
+    --amber-lt:  #fde8d8;
+    --text:      #323130;
+    --subtext:   #605e5c;
+    --border:    #e1dfdd;
+    --shadow:    0 2px 8px rgba(0,0,0,.08);
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg, #1a2f4e 0%, #0f4c8a 100%);
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(0,0,0,.25);
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-icon {
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,.15);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .header h1 { font-size: 20px; font-weight: 600; letter-spacing: .3px; }
+  .header p  { font-size: 12px; color: rgba(255,255,255,.72); margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 20px; }
+  .header-date {
+    font-size: 12px; color: rgba(255,255,255,.72);
+    background: rgba(255,255,255,.1);
+    border-radius: 8px; padding: 6px 14px; text-align: right;
+  }
+  .header-date strong { display: block; font-size: 14px; color: #fff; }
+
+  /* ── Layout ── */
+  .main { padding: 24px 28px; max-width: 1440px; margin: 0 auto; }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.2px;
+    color: var(--subtext); margin-bottom: 12px; margin-top: 24px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* ── KPI grid ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .kpi-card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 18px 20px 16px;
+    box-shadow: var(--shadow);
+    border-top: 3px solid transparent;
+    position: relative;
+    transition: transform .15s, box-shadow .15s;
+    cursor: default;
+  }
+  .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.12); }
+  .kpi-card.green  { border-top-color: var(--green); }
+  .kpi-card.red    { border-top-color: var(--red); }
+  .kpi-card.amber  { border-top-color: var(--amber); }
+
+  .kpi-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .kpi-name {
+    font-size: 12px; color: var(--subtext); font-weight: 600;
+    text-transform: uppercase; letter-spacing: .6px; line-height: 1.4;
+    max-width: 72%;
+  }
+  .kpi-badge {
+    font-size: 10px; font-weight: 700; border-radius: 20px;
+    padding: 3px 9px; white-space: nowrap;
+  }
+  .badge-green { background: var(--green-lt); color: var(--green); }
+  .badge-red   { background: var(--red-lt);   color: var(--red); }
+  .badge-amber { background: var(--amber-lt); color: var(--amber); }
+
+  .kpi-value {
+    font-size: 32px; font-weight: 700; margin: 10px 0 6px;
+    line-height: 1; letter-spacing: -1px;
+  }
+  .kpi-card.green .kpi-value { color: var(--green); }
+  .kpi-card.red   .kpi-value { color: var(--red); }
+  .kpi-card.amber .kpi-value { color: var(--amber); }
+
+  .kpi-sub {
+    font-size: 11px; color: var(--subtext);
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  /* Progress bar */
+  .kpi-bar-wrap {
+    margin-top: 14px;
+    background: var(--border); border-radius: 4px; height: 5px; overflow: hidden;
+  }
+  .kpi-bar {
+    height: 100%; border-radius: 4px; transition: width .6s ease;
+  }
+  .kpi-card.green .kpi-bar { background: var(--green); }
+  .kpi-card.red   .kpi-bar { background: var(--red); }
+  .kpi-card.amber .kpi-bar { background: var(--amber); }
+
+  .kpi-targets {
+    display: flex; justify-content: space-between;
+    font-size: 10px; color: #a19f9d; margin-top: 5px;
+  }
+  .kpi-target-val { font-weight: 600; }
+
+  /* Tooltip */
+  .kpi-tooltip {
+    position: absolute; top: 12px; right: 12px;
+    width: 16px; height: 16px;
+    background: var(--border); border-radius: 50%;
+    font-size: 10px; display: flex; align-items: center; justify-content: center;
+    color: var(--subtext); cursor: pointer;
+    transition: background .15s;
+  }
+  .kpi-tooltip:hover { background: var(--blue); color: #fff; }
+  .kpi-tooltip .tip {
+    display: none;
+    position: absolute; bottom: 22px; right: 0;
+    background: #1a2f4e; color: #fff;
+    font-size: 10px; border-radius: 6px; padding: 8px 10px;
+    width: 200px; line-height: 1.5; z-index: 10;
+    box-shadow: 0 4px 12px rgba(0,0,0,.2);
+  }
+  .kpi-tooltip:hover .tip { display: block; }
+
+  /* ── Charts row ── */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 38% 1fr;
+    gap: 16px;
+    margin-top: 4px;
+  }
+
+  .chart-card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 20px 22px 18px;
+    box-shadow: var(--shadow);
+  }
+  .chart-title {
+    font-size: 14px; font-weight: 700; color: var(--navy);
+    margin-bottom: 4px;
+  }
+  .chart-subtitle {
+    font-size: 11px; color: var(--subtext); margin-bottom: 18px;
+  }
+  .chart-wrap { position: relative; }
+
+  /* ── Summary stats ── */
+  .summary-row {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    margin-bottom: 18px;
+  }
+  .stat-box {
+    background: var(--bg); border-radius: 8px; padding: 12px 14px;
+    border-left: 3px solid var(--blue);
+  }
+  .stat-box.green { border-left-color: var(--green); }
+  .stat-box.red   { border-left-color: var(--red); }
+  .stat-val { font-size: 18px; font-weight: 700; color: var(--navy); }
+  .stat-lbl { font-size: 10px; color: var(--subtext); margin-top: 2px; font-weight: 600; }
+
+  /* ── Aging table ── */
+  .aging-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 16px;
+  }
+  .aging-table th {
+    text-align: left; font-size: 10px; text-transform: uppercase;
+    letter-spacing: .8px; color: var(--subtext); padding: 6px 0;
+    border-bottom: 2px solid var(--border);
+  }
+  .aging-table td { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .aging-table tr:last-child td { border-bottom: none; }
+  .aging-bar-cell { width: 50%; }
+  .aging-inline-bar {
+    height: 8px; border-radius: 4px; background: var(--blue);
+    display: inline-block;
+  }
+  .aging-pct { font-size: 11px; color: var(--subtext); margin-left: 8px; }
+  .aging-amt { font-weight: 700; color: var(--navy); font-size: 13px; }
+
+  /* ── Legend ── */
+  .legend { display: flex; gap: 18px; margin-bottom: 14px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--subtext); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center; font-size: 11px; color: var(--subtext);
+    padding: 20px; margin-top: 12px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 1100px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+    .main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ Header ══════════════════════════════════════════════════════════════ -->
+<header class="header">
+  <div class="header-left">
+    <div class="header-icon">💼</div>
+    <div>
+      <h1>Financial Operations Dashboard</h1>
+      <p>Shipment · Collections · Aging Analysis · KPI Monitoring</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-date">
+      <strong id="live-date">—</strong>
+      Last refreshed today
+    </div>
+  </div>
+</header>
+
+<!-- ══ Main ════════════════════════════════════════════════════════════════ -->
+<div class="main">
+
+  <!-- KPI Cards -->
+  <div class="section-label">Key Performance Indicators</div>
+  <div class="kpi-grid" id="kpi-grid"></div>
+
+  <!-- Charts -->
+  <div class="section-label" style="margin-top:28px;">Aging Analysis &amp; Collection Performance</div>
+  <div class="charts-row">
+
+    <!-- Aging Analysis -->
+    <div class="chart-card">
+      <div class="chart-title">📋 Accounts Receivable Aging</div>
+      <div class="chart-subtitle">Outstanding balance by days overdue</div>
+
+      <!-- Summary -->
+      <div class="summary-row">
+        <div class="stat-box">
+          <div class="stat-val">$36.6M</div>
+          <div class="stat-lbl">Total Outstanding</div>
+        </div>
+        <div class="stat-box green">
+          <div class="stat-val">35.1%</div>
+          <div class="stat-lbl">Current %</div>
+        </div>
+        <div class="stat-box red">
+          <div class="stat-val">$6.34M</div>
+          <div class="stat-lbl">61–90 Days</div>
+        </div>
+      </div>
+
+      <!-- Inline bar table -->
+      <table class="aging-table">
+        <thead>
+          <tr>
+            <th>Bucket</th>
+            <th class="aging-bar-cell">Distribution</th>
+            <th style="text-align:right">Amount</th>
+          </tr>
+        </thead>
+        <tbody id="aging-tbody"></tbody>
+      </table>
+
+      <!-- Chart -->
+      <div class="chart-wrap" style="height:200px; margin-top:20px;">
+        <canvas id="agingChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Collection Performance -->
+    <div class="chart-card">
+      <div class="chart-title">📈 Collection Performance</div>
+      <div class="chart-subtitle">Monthly collected vs outstanding — Nov 2024 to Jun 2026</div>
+
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-dot" style="background:#0078d4"></div> Collected
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:#c50f1f"></div> Outstanding
+        </div>
+      </div>
+
+      <!-- Summary stats -->
+      <div class="summary-row" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat-box">
+          <div class="stat-val" id="s-latest-col">—</div>
+          <div class="stat-lbl">Latest Month Collected</div>
+        </div>
+        <div class="stat-box red">
+          <div class="stat-val" id="s-latest-out">—</div>
+          <div class="stat-lbl">Latest Outstanding</div>
+        </div>
+        <div class="stat-box green">
+          <div class="stat-val" id="s-growth">—</div>
+          <div class="stat-lbl">Collection Growth</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="s-col-rate">—</div>
+          <div class="stat-lbl">Avg Collection Rate</div>
+        </div>
+      </div>
+
+      <div class="chart-wrap" style="height:300px;">
+        <canvas id="collectionChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="footer">
+  Financial Operations Dashboard &nbsp;·&nbsp; Data sourced from Financial_Dashboard_Data_2.xlsx
+  &nbsp;·&nbsp; Generated <span id="gen-date"></span>
+</div>
+
+<!-- ══ Scripts ═════════════════════════════════════════════════════════════ -->
+<script>
+// ── Data ─────────────────────────────────────────────────────────────────────
+const KPI_DATA = [
+  {
+    name: "Total Shipment Value",
+    value: 847.2, uom: "$", min: 100, max: 5000, accepted: 1500,
+    higherIsBetter: true,
+    tip: "Total value of all shipments processed in the current period."
+  },
+  {
+    name: "On-Time Delivery",
+    value: 98.7, uom: "%", min: 0, max: 100, accepted: 98,
+    higherIsBetter: true,
+    tip: "Percentage of shipments delivered on or before the scheduled date."
+  },
+  {
+    name: "Chain of Custody Compliance",
+    value: 100, uom: "%", min: 0, max: 100, accepted: 98,
+    higherIsBetter: true,
+    tip: "Tracks whether every handoff of a shipment has been properly recorded from origin to destination."
+  },
+  {
+    name: "POD Availability",
+    value: 99.9, uom: "%", min: 0, max: 100, accepted: 98,
+    higherIsBetter: true,
+    tip: "Proof of Delivery — percentage of shipments with confirmed delivery documentation."
+  },
+  {
+    name: "Lost Shipment Rate",
+    value: 0.04, uom: "%", min: 0, max: 100, accepted: 0.05,
+    higherIsBetter: false,
+    tip: "Percentage of shipments that were lost or unaccounted for during transit."
+  },
+  {
+    name: "Revenue Leakage",
+    value: 0.8, uom: "%", min: 0, max: 100, accepted: 0.5,
+    higherIsBetter: false,
+    tip: "Vault Utilization measures how much of your secure storage capacity is currently being used."
+  },
+  {
+    name: "Vault Utilization",
+    value: 84, uom: "%", min: 0, max: 100, accepted: 50,
+    higherIsBetter: true,
+    tip: "Percentage of secure vault storage capacity currently in active use."
+  },
+  {
+    name: "Delivery Exceptions",
+    value: 1.1, uom: "%", min: 0, max: 100, accepted: 2,
+    higherIsBetter: false,
+    tip: "A Delivery Exception is any shipment that doesn't follow the normal delivery process and requires intervention."
+  }
+];
+
+const AGING_DATA = [
+  { bucket: "Current",     amount: 12850000 },
+  { bucket: "1–30 Days",   amount: 9420000  },
+  { bucket: "31–60 Days",  amount: 7980000  },
+  { bucket: "61–90 Days",  amount: 6340000  },
+];
+
+const COLLECTION_DATA = [
+  { month: "Nov-24", collected: 11620000, outstanding: 2580000 },
+  { month: "Dec-24", collected: 12100000, outstanding: 2720000 },
+  { month: "Jan-25", collected: 12450000, outstanding: 2650000 },
+  { month: "Feb-25", collected: 12820000, outstanding: 2790000 },
+  { month: "Mar-25", collected: 13250000, outstanding: 2720000 },
+  { month: "Apr-25", collected: 13680000, outstanding: 2860000 },
+  { month: "May-25", collected: 14050000, outstanding: 2940000 },
+  { month: "Jun-25", collected: 14480000, outstanding: 3020000 },
+  { month: "Jul-25", collected: 14920000, outstanding: 3150000 },
+  { month: "Aug-25", collected: 15350000, outstanding: 3080000 },
+  { month: "Sep-25", collected: 15820000, outstanding: 3240000 },
+  { month: "Oct-25", collected: 16280000, outstanding: 3180000 },
+  { month: "Nov-25", collected: 16740000, outstanding: 3360000 },
+  { month: "Dec-25", collected: 17250000, outstanding: 3420000 },
+  { month: "Jan-26", collected: 17820000, outstanding: 3550000 },
+  { month: "Feb-26", collected: 18350000, outstanding: 3480000 },
+  { month: "Mar-26", collected: 18920000, outstanding: 3640000 },
+  { month: "Apr-26", collected: 19480000, outstanding: 3720000 },
+  { month: "May-26", collected: 20050000, outstanding: 3810000 },
+  { month: "Jun-26", collected: 20620000, outstanding: 3950000 },
+];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const fmt = (n, uom) => {
+  if (uom === "$") return `$${n.toLocaleString()}`;
+  return `${n}${uom}`;
+};
+const fmtM = v => {
+  if (v >= 1e6) return `$${(v/1e6).toFixed(1)}M`;
+  if (v >= 1e3) return `$${(v/1e3).toFixed(0)}K`;
+  return `$${v}`;
+};
+
+function getStatus(kpi) {
+  const { value, accepted, higherIsBetter } = kpi;
+  if (higherIsBetter) {
+    return value >= accepted ? "green" : (value >= accepted * 0.9 ? "amber" : "red");
+  } else {
+    return value <= accepted ? "green" : (value <= accepted * 1.5 ? "amber" : "red");
+  }
+}
+
+function getBarPct(kpi) {
+  const { value, min, max } = kpi;
+  return Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
+}
+
+// ── KPI Cards ─────────────────────────────────────────────────────────────────
+const kpiGrid = document.getElementById("kpi-grid");
+KPI_DATA.forEach(kpi => {
+  const status = getStatus(kpi);
+  const barPct = getBarPct(kpi);
+  const acceptedPct = getBarPct({ ...kpi, value: kpi.accepted });
+  const badgeLabel = status === "green" ? "✓ On Track" : status === "amber" ? "⚠ Watch" : "✕ Off Track";
+
+  const card = document.createElement("div");
+  card.className = `kpi-card ${status}`;
+  card.innerHTML = `
+    <div class="kpi-header">
+      <div class="kpi-name">${kpi.name}</div>
+      ${kpi.tip ? `<div class="kpi-tooltip">i<span class="tip">${kpi.tip}</span></div>` : ''}
+    </div>
+    <div class="kpi-value">${fmt(kpi.value, kpi.uom)}</div>
+    <div class="kpi-sub">
+      <span class="kpi-badge badge-${status}">${badgeLabel}</span>
+    </div>
+    <div class="kpi-bar-wrap">
+      <div class="kpi-bar" style="width:${barPct}%"></div>
+    </div>
+    <div class="kpi-targets">
+      <span>Min: ${fmt(kpi.min, kpi.uom)}</span>
+      <span class="kpi-target-val">Target: ${fmt(kpi.accepted, kpi.uom)}</span>
+      <span>Max: ${fmt(kpi.max, kpi.uom)}</span>
+    </div>
+  `;
+  kpiGrid.appendChild(card);
+});
+
+// ── Aging Table ───────────────────────────────────────────────────────────────
+const total = AGING_DATA.reduce((s, d) => s + d.amount, 0);
+const BUCKET_COLORS = ["#0078d4", "#5c9fd4", "#107c10", "#c50f1f"];
+const agingTbody = document.getElementById("aging-tbody");
+AGING_DATA.forEach((d, i) => {
+  const pct = (d.amount / total * 100).toFixed(1);
+  const barW = (d.amount / AGING_DATA[0].amount * 100).toFixed(1);
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td style="font-weight:600;color:var(--navy);padding-right:10px">${d.bucket}</td>
+    <td class="aging-bar-cell">
+      <div style="display:flex;align-items:center">
+        <div class="aging-inline-bar" style="width:${barW}%;background:${BUCKET_COLORS[i]}"></div>
+        <span class="aging-pct">${pct}%</span>
+      </div>
+    </td>
+    <td style="text-align:right" class="aging-amt">${fmtM(d.amount)}</td>
+  `;
+  agingTbody.appendChild(tr);
+});
+
+// ── Aging Chart ───────────────────────────────────────────────────────────────
+new Chart(document.getElementById("agingChart"), {
+  type: "bar",
+  data: {
+    labels: AGING_DATA.map(d => d.bucket),
+    datasets: [{
+      label: "Amount ($)",
+      data: AGING_DATA.map(d => d.amount),
+      backgroundColor: BUCKET_COLORS,
+      borderRadius: 6,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${fmtM(ctx.raw)}`
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: { font: { size: 11 }, color: "#605e5c" }
+      },
+      y: {
+        grid: { color: "#f0f2f5" },
+        ticks: {
+          font: { size: 10 }, color: "#605e5c",
+          callback: v => fmtM(v)
+        },
+        border: { display: false }
+      }
+    }
+  }
+});
+
+// ── Collection Performance Chart ──────────────────────────────────────────────
+const latest = COLLECTION_DATA[COLLECTION_DATA.length - 1];
+const first  = COLLECTION_DATA[0];
+const growth = ((latest.collected - first.collected) / first.collected * 100).toFixed(1);
+const avgRate = (COLLECTION_DATA.reduce((s, d) => {
+  return s + (d.collected / (d.collected + d.outstanding));
+}, 0) / COLLECTION_DATA.length * 100).toFixed(1);
+
+document.getElementById("s-latest-col").textContent = fmtM(latest.collected);
+document.getElementById("s-latest-out").textContent = fmtM(latest.outstanding);
+document.getElementById("s-growth").textContent     = `+${growth}%`;
+document.getElementById("s-col-rate").textContent   = `${avgRate}%`;
+
+new Chart(document.getElementById("collectionChart"), {
+  type: "line",
+  data: {
+    labels: COLLECTION_DATA.map(d => d.month),
+    datasets: [
+      {
+        label: "Collected ($)",
+        data: COLLECTION_DATA.map(d => d.collected),
+        borderColor: "#0078d4",
+        backgroundColor: "rgba(0,120,212,.08)",
+        borderWidth: 2.5,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 3,
+        pointHoverRadius: 6,
+        pointBackgroundColor: "#0078d4",
+      },
+      {
+        label: "Outstanding ($)",
+        data: COLLECTION_DATA.map(d => d.outstanding),
+        borderColor: "#c50f1f",
+        backgroundColor: "rgba(197,15,31,.06)",
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 3,
+        pointHoverRadius: 6,
+        pointBackgroundColor: "#c50f1f",
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: "index", intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${ctx.dataset.label}: ${fmtM(ctx.raw)}`
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: {
+          font: { size: 10 }, color: "#605e5c",
+          maxRotation: 45, minRotation: 0,
+          maxTicksLimit: 10
+        }
+      },
+      y: {
+        grid: { color: "#f0f2f5" },
+        ticks: {
+          font: { size: 10 }, color: "#605e5c",
+          callback: v => fmtM(v)
+        },
+        border: { display: false }
+      }
+    }
+  }
+});
+
+// ── Date ─────────────────────────────────────────────────────────────────────
+const now = new Date();
+const opts = { weekday: "short", year: "numeric", month: "short", day: "numeric" };
+document.getElementById("live-date").textContent = now.toLocaleDateString("en-GB", opts);
+document.getElementById("gen-date").textContent  = now.toLocaleDateString("en-GB", opts);
+</script>
+</body>
+</html>
