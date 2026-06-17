@@ -1,9 +1,9 @@
 """
 Build SalesAnalytics_NewDash.pbix
 - Copies DataModel from uploaded PBIX exactly
-- 4 pages: Executive Summary, Sales Analysis, Customer Insights, Product Performance
+- Single page: full Sales Analytics dashboard
 - Professional dark theme: bg #0F1923, accent cyan #00D4FF, orange #FF6B35, purple #7C3AED
-- Canvas 1280x720
+- Canvas 1280x900 (taller to fit all visuals without overlap)
 """
 import json, zipfile, uuid, os, shutil
 
@@ -211,14 +211,9 @@ def scatter(x, y, w, h, det_e, det_a, det_c, xval_e, xval_a, xval_c, yval_e, yva
     }
     return vc(x, y, w, h, tab, sv)
 
-# ── Page background rectangle helper ─────────────────────────────────────────
-def page_config(display_name):
-    return json.dumps({
-        "displayArea": {"color": clr(BG)},
-        "outspacePane": {"backgroundColor": clr(BG)}
-    })
+# Canvas: 1280 wide x 900 tall (single scrollable page)
+W, H = 1280, 900
 
-# ── Page section builder ──────────────────────────────────────────────────────
 def section(sid, name, display_name, containers, ordinal):
     return {
         "id": sid,
@@ -228,240 +223,105 @@ def section(sid, name, display_name, containers, ordinal):
         "ordinal": ordinal,
         "visualContainers": containers,
         "config": json.dumps({
-            "layouts": [{"id": 0, "position": {"x": 0, "y": 0, "z": 0, "width": 1280, "height": 720}}],
+            "layouts": [{"id": 0, "position": {"x": 0, "y": 0, "z": 0, "width": W, "height": H}}],
             "objects": {
                 "background": [{"properties": {"color": clr(BG), "transparency": Ln(0)}}]
             }
         }),
         "displayOption": 1,
-        "width": 1280,
-        "height": 720
+        "width": W,
+        "height": H
     }
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# PAGE 1: Executive Summary
-# Layout: header bar, 4 KPI cards (top), trend line (mid-left), regional bar (mid-right)
+# SINGLE PAGE: Full Sales Analytics Dashboard
+#
+# Layout (y positions):
+#   0–55    : Header bar
+#   60–175  : Row 1 — 4 KPI cards (Net Sales, Profit, Orders, Avg Margin)
+#   180–430 : Row 2 — Revenue trend line (left 760px) + Category bar (right 500px)
+#   435–660 : Row 3 — Sales Channel column (left 415px) + Segment donut (center 415px) + Quarter column (right 430px)
+#   665–890 : Row 4 — Product category bar (left 415px) + Sub-cat bar (center 415px) + Summary table (right 430px)
 # ═══════════════════════════════════════════════════════════════════════════════
-# Using Sales table columns. Since DataModel is from a minimal PBIX, we use generic
-# placeholder entity names that match typical Sales Analytics models.
 
-p1_containers = []
+containers = []
 
-# Header bar (textbox)
-p1_containers.append(textbox(0, 0, 1280, 60, "  Executive Summary", 18, 1, WHITE, BG))
+# ── Header ────────────────────────────────────────────────────────────────────
+containers.append(textbox(0, 0, W, 55, "  Sales Analytics Dashboard", 20, 1, WHITE, BG))
 
-# 4 KPI cards: Revenue, Profit, Margin%, Units — row at y=70, each 300px wide, 110px tall
+# ── Row 1: KPI Cards (y=60, h=110) ───────────────────────────────────────────
 kpi_defs = [
-    ("Net Sales",   "Sales", "s", "Net Sales",       0, CYAN),
-    ("Profit",      "Sales", "s", "Profit",           0, GREEN),
-    ("Profit Margin %", "Sales", "s", "Profit Margin %", 1, ORANGE),
-    ("Total Orders","Sales", "s", "Order ID",         5, PURPLE),
+    ("Net Sales",        "Sales", "s", "Net Sales",        0, CYAN),
+    ("Total Profit",     "Sales", "s", "Profit",            0, GREEN),
+    ("Total Orders",     "Sales", "s", "Order ID",          5, ORANGE),
+    ("Avg Profit Margin","Sales", "s", "Profit Margin %",   1, PURPLE),
 ]
-card_w, card_h = 298, 110
-card_y = 70
+cw, ch, cy = 308, 110, 60
 for i, (title, entity, alias, col, agg, accent) in enumerate(kpi_defs):
-    cx = 10 + i * (card_w + 8)
-    p1_containers.append(card(cx, card_y, card_w, card_h, entity, alias, col, agg, title, 10+i, accent))
+    containers.append(card(8 + i * (cw + 8), cy, cw - 8, ch, entity, alias, col, agg, title, 10 + i, accent))
 
-# Trend line chart: Revenue by Month — large, left side
-# y=195, x=10, w=760, h=280
-p1_containers.append(
-    line(10, 195, 760, 280,
+# ── Row 2: Trend line + Category bar (y=180, h=245) ──────────────────────────
+containers.append(
+    line(8, 180, 755, 245,
          "Sales", "s", "Order Date",
          "Sales", "s", "Net Sales",
          0, "Revenue", 20,
          "Revenue Trend Over Time", CYAN)
 )
-
-# Regional bar chart: Sales by Category — right side
-# y=195, x=780, w=490, h=280
-p1_containers.append(
-    bar(780, 195, 490, 280,
+containers.append(
+    bar(770, 180, 502, 245,
         "Sales", "s", "Category",
         "Sales", "s", "Net Sales",
         0, "Revenue", 21,
         "clusteredBarChart", "Revenue by Category", ORANGE)
 )
 
-# Bottom: Profit by Sales Channel (line) left, Donut by Segment right
-p1_containers.append(
-    bar(10, 490, 500, 220,
+# ── Row 3: Channel column + Segment donut + Quarter column (y=435, h=220) ────
+containers.append(
+    bar(8, 435, 412, 220,
         "Sales", "s", "Sales Channel",
-        "Sales", "s", "Profit",
-        0, "Profit", 22,
-        "clusteredColumnChart", "Profit by Sales Channel", GREEN)
+        "Sales", "s", "Net Sales",
+        0, "Revenue", 30,
+        "clusteredColumnChart", "Revenue by Sales Channel", GREEN)
 )
-p1_containers.append(
-    donut(520, 490, 750, 220,
+containers.append(
+    donut(428, 435, 412, 220,
           "Sales", "s", "Order Status",
           "Sales", "s", "Net Sales",
-          0, "Revenue", 23,
+          0, "Revenue", 31,
           "Revenue by Order Status")
 )
-
-pg1 = section(0, "ExecSummary", "Executive Summary", p1_containers, 0)
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# PAGE 2: Sales Analysis
-# ═══════════════════════════════════════════════════════════════════════════════
-p2_containers = []
-p2_containers.append(textbox(0, 0, 1280, 60, "  Sales Analysis", 18, 1, WHITE, BG))
-
-# Time series chart (full width)
-p2_containers.append(
-    line(10, 70, 1260, 200,
-         "Sales", "s", "Order Date",
-         "Sales", "s", "Net Sales",
-         0, "Net Sales", 10,
-         "Monthly Sales Trend", CYAN)
-)
-
-# Category donut (left)
-p2_containers.append(
-    donut(10, 285, 380, 260,
-          "Sales", "s", "Category",
-          "Sales", "s", "Net Sales",
-          0, "Revenue", 11,
-          "Sales by Category")
-)
-
-# Payment method bar (center)
-p2_containers.append(
-    bar(400, 285, 430, 260,
+containers.append(
+    bar(848, 435, 424, 220,
         "Sales", "s", "Payment Method",
         "Sales", "s", "Net Sales",
-        0, "Revenue", 12,
-        "clusteredBarChart", "Sales by Payment Method", PURPLE)
+        0, "Revenue", 32,
+        "clusteredColumnChart", "Revenue by Payment Method", PURPLE)
 )
 
-# Quarter column chart (right)
-p2_containers.append(
-    bar(840, 285, 430, 260,
-        "Sales", "s", "Quarter",
-        "Sales", "s", "Net Sales",
-        0, "Revenue", 13,
-        "clusteredColumnChart", "Sales by Quarter", ORANGE)
-)
-
-# Top products table
-p2_containers.append(
-    table(10, 560, 1260, 150,
-          "Sales", "s",
-          [("Category", None), ("Net Sales", 0), ("Profit", 0), ("Quantity", 0)],
-          14, "Sales Summary by Category")
-)
-
-pg2 = section(1, "SalesAnalysis", "Sales Analysis", p2_containers, 1)
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# PAGE 3: Customer Insights
-# ═══════════════════════════════════════════════════════════════════════════════
-p3_containers = []
-p3_containers.append(textbox(0, 0, 1280, 60, "  Customer Insights", 18, 1, WHITE, BG))
-
-# Customer count card
-p3_containers.append(card(10, 70, 290, 110, "Sales", "s", "Customer ID", 5, "Total Customers", 10, CYAN))
-# Avg order value card
-p3_containers.append(card(308, 70, 290, 110, "Sales", "s", "Net Sales", 1, "Avg Order Value", 11, GREEN))
-# Total orders card
-p3_containers.append(card(606, 70, 290, 110, "Sales", "s", "Order ID", 5, "Total Orders", 12, ORANGE))
-# Avg profit card
-p3_containers.append(card(904, 70, 366, 110, "Sales", "s", "Profit", 1, "Avg Profit per Order", 13, PURPLE))
-
-# Customer segment donut (left)
-p3_containers.append(
-    donut(10, 195, 400, 270,
-          "Customers", "c", "Segment",
-          "Sales", "s", "Net Sales",
-          0, "Revenue", 20,
-          "Revenue by Customer Segment")
-)
-
-# Sales channel bar (center-right)
-p3_containers.append(
-    bar(420, 195, 430, 270,
-        "Sales", "s", "Sales Channel",
-        "Sales", "s", "Net Sales",
-        0, "Revenue", 21,
-        "clusteredBarChart", "Revenue by Sales Channel", ORANGE)
-)
-
-# Country bar (far right)
-p3_containers.append(
-    bar(860, 195, 410, 270,
-        "Customers", "c", "Country",
-        "Sales", "s", "Net Sales",
-        0, "Revenue", 22,
-        "clusteredBarChart", "Revenue by Country", CYAN)
-)
-
-# Customer table
-p3_containers.append(
-    table(10, 480, 1260, 230,
-          "Customers", "c",
-          [("Segment", None), ("Country", None), ("Credit Limit", 0)],
-          23, "Customer Summary")
-)
-
-pg3 = section(2, "CustomerInsights", "Customer Insights", p3_containers, 2)
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# PAGE 4: Product Performance
-# ═══════════════════════════════════════════════════════════════════════════════
-p4_containers = []
-p4_containers.append(textbox(0, 0, 1280, 60, "  Product Performance", 18, 1, WHITE, BG))
-
-# KPI cards for products
-p4_containers.append(card(10,   70, 290, 110, "Products", "p", "Unit Price", 1, "Avg Unit Price", 10, CYAN))
-p4_containers.append(card(308,  70, 290, 110, "Products", "p", "Profit Margin %", 1, "Avg Margin %", 11, GREEN))
-p4_containers.append(card(606,  70, 290, 110, "Products", "p", "Stock Quantity", 0, "Total Stock", 12, ORANGE))
-p4_containers.append(card(904,  70, 366, 110, "Sales", "s", "Net Sales", 0, "Total Revenue", 13, PURPLE))
-
-# Product category bar (left)
-p4_containers.append(
-    bar(10, 195, 490, 270,
+# ── Row 4: Product cat bar + Sub-cat bar + Summary table (y=665, h=225) ──────
+containers.append(
+    bar(8, 665, 412, 225,
         "Products", "p", "Category",
         "Sales", "s", "Net Sales",
-        0, "Revenue", 20,
+        0, "Revenue", 40,
         "clusteredColumnChart", "Revenue by Product Category", CYAN)
 )
-
-# Sub-category bar (center)
-p4_containers.append(
-    bar(510, 195, 490, 270,
+containers.append(
+    bar(428, 665, 412, 225,
         "Products", "p", "Sub Category",
         "Sales", "s", "Net Sales",
-        0, "Revenue", 21,
+        0, "Revenue", 41,
         "clusteredBarChart", "Revenue by Sub-Category", ORANGE)
 )
-
-# Brand donut (right)
-p4_containers.append(
-    donut(1010, 195, 260, 270,
-          "Products", "p", "Brand",
-          "Sales", "s", "Net Sales",
-          0, "Revenue", 22,
-          "Revenue by Brand")
+containers.append(
+    table(848, 665, 424, 225,
+          "Sales", "s",
+          [("Category", None), ("Net Sales", 0), ("Profit", 0)],
+          42, "Sales by Category")
 )
 
-# Scatter: Unit Price vs Profit Margin
-p4_containers.append(
-    scatter(10, 480, 600, 230,
-            "Products", "p", "Product Name",
-            "Products", "p", "Unit Price",
-            "Products", "p", "Profit Margin %",
-            23, "Price vs Profit Margin")
-)
-
-# Product table
-p4_containers.append(
-    table(620, 480, 650, 230,
-          "Products", "p",
-          [("Product Name", None), ("Category", None), ("Unit Price", 1), ("Profit Margin %", 1)],
-          24, "Product Details")
-)
-
-pg4 = section(3, "ProductPerformance", "Product Performance", p4_containers, 3)
+pg1 = section(0, "Dashboard", "Dashboard", containers, 0)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Assemble Report/Layout JSON
@@ -507,7 +367,7 @@ report_config = json.dumps({
 layout = {
     "id": 0,
     "resourcePackages": resource_packages,
-    "sections": [pg1, pg2, pg3, pg4],
+    "sections": [pg1],
     "config": report_config,
     "layoutOptimization": 0
 }
@@ -528,4 +388,4 @@ with zipfile.ZipFile(SRC_PBIX, 'r') as src_zip:
 size = os.path.getsize(OUT)
 print(f"Done! Output: {OUT}")
 print(f"Size: {size:,} bytes ({size/1024:.1f} KB)")
-print(f"Pages: Executive Summary, Sales Analysis, Customer Insights, Product Performance")
+print(f"Pages: 1 (Dashboard) — KPI cards, trend line, category/channel/segment/product charts + table")
