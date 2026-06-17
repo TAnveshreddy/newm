@@ -3,1023 +3,1102 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Financial Intelligence Dashboard</title>
+<title>Financial Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #080c18;
-    --bg2: #0d1224;
-    --card: rgba(255,255,255,0.045);
-    --card-border: rgba(255,255,255,0.08);
-    --blue: #4f8ef7;
-    --purple: #7c3aed;
-    --cyan: #06b6d4;
-    --green: #10b981;
-    --amber: #f59e0b;
-    --red: #ef4444;
-    --pink: #ec4899;
+    --bg: #0a0e1a;
+    --sidebar-bg: #0d1221;
+    --card-bg: rgba(255,255,255,0.05);
+    --card-border: rgba(255,255,255,0.1);
     --text: #e2e8f0;
-    --muted: #64748b;
-    --sidebar: 220px;
+    --text-muted: #94a3b8;
+    --accent1: #4f8ef7;
+    --accent2: #7c3aed;
+    --accent3: #06b6d4;
+    --accent4: #10b981;
+    --accent5: #f59e0b;
+    --accent6: #ef4444;
   }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; overflow:hidden; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
 
-  /* SIDEBAR */
   .sidebar {
-    width:var(--sidebar); min-height:100vh; background:var(--bg2);
-    border-right:1px solid var(--card-border); display:flex; flex-direction:column;
-    padding:0; position:fixed; left:0; top:0; bottom:0; z-index:100;
+    width: 240px; min-width: 240px; background: var(--sidebar-bg);
+    border-right: 1px solid var(--card-border);
+    display: flex; flex-direction: column;
+    z-index: 10;
   }
-  .logo { padding:24px 20px; border-bottom:1px solid var(--card-border); }
-  .logo-title { font-size:15px; font-weight:700; letter-spacing:.5px;
-    background:linear-gradient(135deg,var(--blue),var(--purple)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-  .logo-sub { font-size:10px; color:var(--muted); margin-top:2px; text-transform:uppercase; letter-spacing:1px; }
-  .nav { padding:16px 0; flex:1; }
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    background: linear-gradient(135deg, #4f8ef7 0%, #7c3aed 100%);
+    font-size: 18px; font-weight: 800; letter-spacing: -0.5px; color: #fff;
+  }
+  .sidebar-logo span { display: block; font-size: 11px; font-weight: 400; opacity: 0.8; margin-top: 2px; }
+  .sidebar-nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; }
   .nav-item {
-    display:flex; align-items:center; gap:12px; padding:12px 20px; cursor:pointer;
-    font-size:13px; font-weight:500; color:var(--muted); transition:all .2s; border-left:3px solid transparent;
-    position:relative;
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; border-radius: 10px;
+    cursor: pointer; font-size: 13.5px; font-weight: 500;
+    color: var(--text-muted); transition: all 0.2s ease;
+    border: 1px solid transparent;
   }
-  .nav-item:hover { color:var(--text); background:rgba(255,255,255,0.03); }
-  .nav-item.active { color:var(--blue); background:rgba(79,142,247,0.08); border-left-color:var(--blue); }
-  .nav-icon { font-size:16px; width:20px; text-align:center; }
-  .nav-badge { margin-left:auto; background:var(--blue); color:#fff; font-size:9px; padding:2px 6px; border-radius:10px; }
-  .sidebar-footer { padding:16px 20px; border-top:1px solid var(--card-border); }
-  .sidebar-footer p { font-size:11px; color:var(--muted); }
+  .nav-item:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+  .nav-item.active {
+    background: linear-gradient(135deg, rgba(79,142,247,0.2), rgba(124,58,237,0.2));
+    border-color: rgba(79,142,247,0.4); color: #fff;
+  }
+  .nav-item .icon { font-size: 18px; }
+  .sidebar-footer { padding: 16px; border-top: 1px solid var(--card-border); font-size: 11px; color: var(--text-muted); }
 
-  /* MAIN */
-  .main { margin-left:var(--sidebar); flex:1; display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .header {
+    background: linear-gradient(90deg, #0f1629 0%, #1a1040 50%, #0f2030 100%);
+    border-bottom: 1px solid var(--card-border);
+    padding: 16px 28px; display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .header-title { font-size: 20px; font-weight: 700; }
+  .header-title span { color: var(--accent1); }
+  .header-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 14px; }
+  .header-badge {
+    background: rgba(79,142,247,0.15); border: 1px solid rgba(79,142,247,0.4);
+    color: var(--accent1); padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  }
 
-  /* TOPBAR */
-  .topbar {
-    height:60px; background:var(--bg2); border-bottom:1px solid var(--card-border);
-    display:flex; align-items:center; padding:0 28px; gap:16px; flex-shrink:0;
-  }
-  .page-title { font-size:18px; font-weight:700; flex:1; }
-  .page-title span { font-size:12px; color:var(--muted); font-weight:400; margin-left:8px; }
-  .topbar-chip { background:rgba(79,142,247,0.15); color:var(--blue); font-size:11px; padding:4px 10px; border-radius:20px; font-weight:500; }
-  .topbar-date { font-size:12px; color:var(--muted); }
+  .content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+  .page { display: none; animation: fadeIn 0.35s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* CONTENT */
-  .content { flex:1; overflow-y:auto; padding:24px 28px; }
-  .page { display:none; }
-  .page.active { display:block; }
+  .slicers { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 22px; align-items: flex-end; }
+  .slicer-group { display: flex; flex-direction: column; gap: 5px; }
+  .slicer-label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; }
+  .slicer-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pill {
+    padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    cursor: pointer; border: 1px solid var(--card-border);
+    background: var(--card-bg); color: var(--text-muted);
+    transition: all 0.18s ease; user-select: none;
+  }
+  .pill:hover { border-color: var(--accent1); color: var(--text); }
+  .pill.active { background: var(--accent1); border-color: var(--accent1); color: #fff; }
 
-  /* SLICERS */
-  .slicer-bar {
-    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
-    background:var(--card); border:1px solid var(--card-border);
-    padding:14px 18px; border-radius:12px; margin-bottom:24px;
-    backdrop-filter:blur(10px);
-  }
-  .slicer-label { font-size:11px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.8px; margin-right:4px; }
-  .slicer-group { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  .slicer-group + .slicer-divider { width:1px; height:28px; background:var(--card-border); margin:0 4px; }
-  select.slicer-select {
-    background:#1a2040; border:1px solid var(--card-border); color:var(--text);
-    padding:6px 12px; border-radius:8px; font-size:12px; font-family:inherit; cursor:pointer;
-    outline:none; transition:border-color .2s;
-  }
-  select.slicer-select:focus { border-color:var(--blue); }
-  .pill-btn {
-    padding:5px 12px; border-radius:20px; font-size:11px; font-weight:500; cursor:pointer;
-    border:1px solid var(--card-border); background:transparent; color:var(--muted);
-    transition:all .2s; font-family:inherit;
-  }
-  .pill-btn.active, .pill-btn:hover { background:var(--blue); color:#fff; border-color:var(--blue); }
-  .reset-btn {
-    margin-left:auto; padding:5px 14px; border-radius:8px; font-size:11px; font-weight:500;
-    cursor:pointer; border:1px solid rgba(239,68,68,.4); background:rgba(239,68,68,.08);
-    color:var(--red); transition:all .2s; font-family:inherit;
-  }
-  .reset-btn:hover { background:rgba(239,68,68,.2); }
-
-  /* KPI CARDS */
-  .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 22px; }
   .kpi-card {
-    background:var(--card); border:1px solid var(--card-border); border-radius:14px;
-    padding:20px; backdrop-filter:blur(12px); position:relative; overflow:hidden;
-    transition:transform .2s, box-shadow .2s;
+    background: var(--card-bg); border: 1px solid var(--card-border);
+    border-radius: 14px; padding: 18px 20px;
+    backdrop-filter: blur(10px);
+    position: relative; overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-  .kpi-card:hover { transform:translateY(-2px); box-shadow:0 8px 32px rgba(0,0,0,.4); }
+  .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
   .kpi-card::before {
-    content:''; position:absolute; top:0; left:0; right:0; height:3px;
-    background:var(--accent); border-radius:14px 14px 0 0;
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--kpi-color, var(--accent1));
   }
-  .kpi-card .glow {
-    position:absolute; top:-20px; right:-20px; width:80px; height:80px;
-    border-radius:50%; background:var(--accent); opacity:.08; filter:blur(20px);
-  }
-  .kpi-label { font-size:11px; color:var(--muted); font-weight:500; text-transform:uppercase; letter-spacing:.8px; margin-bottom:10px; }
-  .kpi-value { font-size:28px; font-weight:800; color:#fff; letter-spacing:-1px; margin-bottom:8px; }
-  .kpi-trend { display:flex; align-items:center; gap:6px; font-size:12px; }
-  .kpi-trend .arrow { font-size:14px; }
-  .trend-up { color:var(--green); }
-  .trend-down { color:var(--red); }
-  .kpi-sub { color:var(--muted); font-size:11px; }
-  .kpi-icon { position:absolute; top:18px; right:18px; font-size:22px; opacity:.4; }
+  .kpi-label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
+  .kpi-value { font-size: 26px; font-weight: 800; line-height: 1; margin-bottom: 6px; }
+  .kpi-trend { display: flex; align-items: center; gap: 4px; font-size: 12px; }
+  .kpi-trend.up { color: var(--accent4); }
+  .kpi-trend.down { color: var(--accent6); }
+  .kpi-trend.neutral { color: var(--text-muted); }
+  .kpi-icon { position: absolute; right: 18px; top: 18px; font-size: 22px; opacity: 0.3; }
 
-  /* CHARTS GRID */
-  .charts-grid { display:grid; gap:16px; margin-bottom:24px; }
-  .charts-2col { grid-template-columns:2fr 1fr; }
-  .charts-3col { grid-template-columns:1fr 1fr 1fr; }
-  .charts-equal { grid-template-columns:1fr 1fr; }
+  .charts-grid { display: grid; gap: 18px; margin-bottom: 22px; }
+  .charts-grid-3 { grid-template-columns: 2fr 1fr 1.5fr; }
+  .charts-grid-3b { grid-template-columns: 1.5fr 1fr 1fr; }
   .chart-card {
-    background:var(--card); border:1px solid var(--card-border); border-radius:14px;
-    padding:20px; backdrop-filter:blur(12px);
+    background: var(--card-bg); border: 1px solid var(--card-border);
+    border-radius: 14px; padding: 20px;
+    backdrop-filter: blur(10px);
   }
-  .chart-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; }
-  .chart-title { font-size:13px; font-weight:600; }
-  .chart-subtitle { font-size:11px; color:var(--muted); margin-top:2px; }
-  .chart-badge { font-size:10px; padding:3px 8px; border-radius:10px; font-weight:500; }
-  .chart-badge.blue { background:rgba(79,142,247,.2); color:var(--blue); }
-  .chart-badge.green { background:rgba(16,185,129,.2); color:var(--green); }
-  .chart-badge.amber { background:rgba(245,158,11,.2); color:var(--amber); }
-  .chart-wrap { position:relative; height:220px; }
-  .chart-wrap.tall { height:280px; }
+  .chart-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .chart-subtitle { font-size: 11px; color: var(--text-muted); margin-bottom: 16px; }
 
-  /* INSIGHTS */
   .insights-card {
-    background:linear-gradient(135deg,rgba(79,142,247,.08),rgba(124,58,237,.08));
-    border:1px solid rgba(79,142,247,.2); border-radius:14px; padding:20px;
+    background: linear-gradient(135deg, rgba(79,142,247,0.08), rgba(124,58,237,0.08));
+    border: 1px solid rgba(79,142,247,0.2);
+    border-radius: 14px; padding: 20px; backdrop-filter: blur(10px);
   }
-  .insights-title { font-size:13px; font-weight:600; color:var(--blue); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
-  .insight-item { display:flex; align-items:flex-start; gap:10px; margin-bottom:12px; font-size:12px; line-height:1.6; color:#a0aec0; }
-  .insight-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; margin-top:5px; }
+  .insights-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+  .insights-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .insights-list li { font-size: 12.5px; color: var(--text-muted); padding-left: 20px; position: relative; line-height: 1.5; }
+  .insights-list li::before { content: '▸'; position: absolute; left: 0; color: var(--accent1); }
+  .insights-list li strong { color: var(--text); }
 
-  /* SECTION LABEL */
-  .section-label { font-size:11px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.8px; margin-bottom:12px; padding-left:4px; }
+  .content::-webkit-scrollbar { width: 6px; }
+  .content::-webkit-scrollbar-track { background: transparent; }
+  .content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
 
-  /* SCROLLBAR */
-  ::-webkit-scrollbar { width:6px; }
-  ::-webkit-scrollbar-track { background:var(--bg); }
-  ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.1); border-radius:3px; }
-  ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,.2); }
-
-  /* ANIMATIONS */
-  @keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-  .page.active .kpi-card, .page.active .chart-card, .page.active .insights-card { animation:fadeIn .4s ease forwards; }
-  .page.active .kpi-card:nth-child(2) { animation-delay:.05s; }
-  .page.active .kpi-card:nth-child(3) { animation-delay:.1s; }
-  .page.active .kpi-card:nth-child(4) { animation-delay:.15s; }
-
-  /* MINI TABLE */
-  .mini-table { width:100%; border-collapse:collapse; font-size:12px; }
-  .mini-table th { color:var(--muted); font-weight:500; text-align:left; padding:6px 8px; border-bottom:1px solid var(--card-border); text-transform:uppercase; font-size:10px; letter-spacing:.5px; }
-  .mini-table td { padding:8px 8px; border-bottom:1px solid rgba(255,255,255,.03); }
-  .mini-table tr:hover td { background:rgba(255,255,255,.02); }
-  .rank { width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; }
-  .rank-1 { background:rgba(245,158,11,.2); color:var(--amber); }
-  .rank-2 { background:rgba(79,142,247,.2); color:var(--blue); }
-  .rank-3 { background:rgba(124,58,237,.2); color:var(--purple); }
-  .bar-cell { display:flex; align-items:center; gap:8px; }
-  .bar-mini { height:4px; border-radius:2px; background:var(--blue); }
+  @media (max-width: 1200px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid-3, .charts-grid-3b { grid-template-columns: 1fr 1fr; }
+  }
 </style>
 </head>
 <body>
 
-<!-- SIDEBAR -->
 <aside class="sidebar">
-  <div class="logo">
-    <div class="logo-title">⚡ FinanceIQ</div>
-    <div class="logo-sub">Business Intelligence</div>
+  <div class="sidebar-logo">
+    📊 FinanceIQ
+    <span>Executive Analytics Suite</span>
   </div>
-  <nav class="nav">
-    <div class="nav-item active" onclick="switchPage(0)">
-      <span class="nav-icon">📊</span> Executive Overview <span class="nav-badge">Live</span>
+  <nav class="sidebar-nav">
+    <div class="nav-item active" data-page="1" onclick="switchPage(1)">
+      <span class="icon">🏠</span> Executive Overview
     </div>
-    <div class="nav-item" onclick="switchPage(1)">
-      <span class="nav-icon">💰</span> Sales & Revenue
+    <div class="nav-item" data-page="2" onclick="switchPage(2)">
+      <span class="icon">📈</span> Sales &amp; Revenue
     </div>
-    <div class="nav-item" onclick="switchPage(2)">
-      <span class="nav-icon">📉</span> Cost & Expenses
+    <div class="nav-item" data-page="3" onclick="switchPage(3)">
+      <span class="icon">💸</span> Cost &amp; Expenses
     </div>
-    <div class="nav-item" onclick="switchPage(3)">
-      <span class="nav-icon">🎯</span> Profitability
+    <div class="nav-item" data-page="4" onclick="switchPage(4)">
+      <span class="icon">🎯</span> Profitability &amp; Forecast
     </div>
   </nav>
-  <div class="sidebar-footer">
-    <p>Data refreshed: Jun 17, 2026</p>
-    <p style="margin-top:4px;color:#4f8ef7;font-size:11px;">● Live Connected</p>
-  </div>
+  <div class="sidebar-footer">Data as of Jun 2024 · 72 records</div>
 </aside>
 
-<!-- MAIN -->
-<main class="main">
-  <div class="topbar">
-    <div class="page-title" id="pageTitle">Executive Overview <span>FY 2022–2024</span></div>
-    <div class="topbar-chip">Q4 2024</div>
-    <div class="topbar-date">📅 Jun 17, 2026</div>
-  </div>
+<div class="main">
+  <header class="header">
+    <div>
+      <div class="header-title" id="headerTitle">Executive <span>Overview</span></div>
+      <div class="header-meta">FY 2022–2024 · All Regions · All Products</div>
+    </div>
+    <div class="header-right">
+      <div class="header-badge">🟢 Live Data</div>
+    </div>
+  </header>
 
   <div class="content">
 
-    <!-- ===================== PAGE 1: EXECUTIVE OVERVIEW ===================== -->
-    <div class="page active" id="page0">
-      <div class="slicer-bar">
-        <span class="slicer-label">🔍 Filters:</span>
+    <!-- PAGE 1 -->
+    <div class="page active" id="page1">
+      <div class="slicers">
         <div class="slicer-group">
-          <span class="slicer-label">Year</span>
-          <select class="slicer-select" id="p1-year" onchange="updatePage0()">
-            <option value="all">All Years</option>
-            <option value="2022">2022</option>
-            <option value="2023">2023</option>
-            <option value="2024">2024</option>
-          </select>
+          <div class="slicer-label">Year</div>
+          <div class="slicer-pills" id="p1-year-pills">
+            <div class="pill active" data-val="All">All</div>
+            <div class="pill" data-val="2022">2022</div>
+            <div class="pill" data-val="2023">2023</div>
+            <div class="pill" data-val="2024">2024</div>
+          </div>
         </div>
-        <div style="width:1px;height:28px;background:var(--card-border);margin:0 4px;"></div>
         <div class="slicer-group">
-          <span class="slicer-label">Region</span>
-          <select class="slicer-select" id="p1-region" onchange="updatePage0()">
-            <option value="all">All Regions</option>
-            <option value="North">North</option>
-            <option value="South">South</option>
-            <option value="East">East</option>
-            <option value="West">West</option>
-          </select>
+          <div class="slicer-label">Region</div>
+          <div class="slicer-pills" id="p1-region-pills">
+            <div class="pill active" data-val="All">All</div>
+            <div class="pill" data-val="North">North</div>
+            <div class="pill" data-val="South">South</div>
+            <div class="pill" data-val="East">East</div>
+            <div class="pill" data-val="West">West</div>
+          </div>
         </div>
-        <button class="reset-btn" onclick="resetPage0()">↺ Reset</button>
       </div>
-
       <div class="kpi-grid">
-        <div class="kpi-card" style="--accent:#4f8ef7"><div class="glow"></div>
-          <div class="kpi-icon">💵</div>
+        <div class="kpi-card" style="--kpi-color:#4f8ef7">
+          <div class="kpi-icon">💰</div>
           <div class="kpi-label">Total Revenue</div>
-          <div class="kpi-value" id="kpi-revenue">$0</div>
-          <div class="kpi-trend"><span class="arrow trend-up">▲</span><span class="trend-up" id="kpi-revenue-trend">+18.4%</span><span class="kpi-sub">vs prior period</span></div>
+          <div class="kpi-value" id="p1-kpi-revenue">$0</div>
+          <div class="kpi-trend up" id="p1-kpi-revenue-trend">—</div>
         </div>
-        <div class="kpi-card" style="--accent:#10b981"><div class="glow"></div>
-          <div class="kpi-icon">📈</div>
+        <div class="kpi-card" style="--kpi-color:#10b981">
+          <div class="kpi-icon">📊</div>
           <div class="kpi-label">Net Profit</div>
-          <div class="kpi-value" id="kpi-profit">$0</div>
-          <div class="kpi-trend"><span class="arrow trend-up">▲</span><span class="trend-up" id="kpi-profit-trend">+22.1%</span><span class="kpi-sub">vs prior period</span></div>
+          <div class="kpi-value" id="p1-kpi-profit">$0</div>
+          <div class="kpi-trend up" id="p1-kpi-profit-trend">—</div>
         </div>
-        <div class="kpi-card" style="--accent:#7c3aed"><div class="glow"></div>
+        <div class="kpi-card" style="--kpi-color:#7c3aed">
           <div class="kpi-icon">⚡</div>
           <div class="kpi-label">EBITDA</div>
-          <div class="kpi-value" id="kpi-ebitda">$0</div>
-          <div class="kpi-trend"><span class="arrow trend-up">▲</span><span class="trend-up" id="kpi-ebitda-trend">+15.6%</span><span class="kpi-sub">vs prior period</span></div>
+          <div class="kpi-value" id="p1-kpi-ebitda">$0</div>
+          <div class="kpi-trend up" id="p1-kpi-ebitda-trend">—</div>
         </div>
-        <div class="kpi-card" style="--accent:#f59e0b"><div class="glow"></div>
-          <div class="kpi-icon">🚀</div>
-          <div class="kpi-label">YoY Growth</div>
-          <div class="kpi-value" id="kpi-growth">0%</div>
-          <div class="kpi-trend"><span class="arrow trend-up">▲</span><span class="trend-up">Outperforming</span><span class="kpi-sub">industry avg 12%</span></div>
-        </div>
-      </div>
-
-      <div class="charts-grid charts-2col">
-        <div class="chart-card">
-          <div class="chart-header">
-            <div><div class="chart-title">Revenue Trend</div><div class="chart-subtitle">Monthly revenue performance</div></div>
-            <span class="chart-badge blue">Monthly</span>
-          </div>
-          <div class="chart-wrap tall"><canvas id="chart-revenue-trend"></canvas></div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-header">
-            <div><div class="chart-title">Revenue by Region</div><div class="chart-subtitle">Geographic distribution</div></div>
-            <span class="chart-badge green">Breakdown</span>
-          </div>
-          <div class="chart-wrap tall"><canvas id="chart-region-donut"></canvas></div>
+        <div class="kpi-card" style="--kpi-color:#f59e0b">
+          <div class="kpi-icon">📉</div>
+          <div class="kpi-label">YoY Growth %</div>
+          <div class="kpi-value" id="p1-kpi-yoy">0%</div>
+          <div class="kpi-trend neutral" id="p1-kpi-yoy-trend">vs prior year</div>
         </div>
       </div>
-
-      <div class="charts-grid charts-2col">
+      <div class="charts-grid charts-grid-3">
         <div class="chart-card">
-          <div class="chart-header">
-            <div><div class="chart-title">Revenue vs Target</div><div class="chart-subtitle">Quarterly attainment</div></div>
-            <span class="chart-badge amber">vs Target</span>
-          </div>
-          <div class="chart-wrap"><canvas id="chart-vs-target"></canvas></div>
+          <div class="chart-title">Revenue Trend</div>
+          <div class="chart-subtitle">Monthly revenue across selected filters</div>
+          <div style="position:relative;height:220px"><canvas id="p1-chart-trend"></canvas></div>
         </div>
-        <div class="insights-card">
-          <div class="insights-title">💡 Executive Insights</div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--green)"></div><span id="insight-p1-1">Revenue has grown 18.4% YoY, exceeding the annual target of 15%.</span></div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--blue)"></div><span id="insight-p1-2">North region leads with 32% of total revenue contribution.</span></div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--amber)"></div><span id="insight-p1-3">Q4 2024 shows strongest quarterly performance at 112% target attainment.</span></div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--purple)"></div><span id="insight-p1-4">EBITDA margin improved to 28.4%, up 2.1pp from prior year.</span></div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--cyan)"></div><span id="insight-p1-5">Net profit growth of 22.1% outpaces revenue growth — cost efficiency gains.</span></div>
+        <div class="chart-card">
+          <div class="chart-title">Revenue by Region</div>
+          <div class="chart-subtitle">Distribution across regions</div>
+          <div style="position:relative;height:220px"><canvas id="p1-chart-donut"></canvas></div>
         </div>
+        <div class="chart-card">
+          <div class="chart-title">Revenue vs Target</div>
+          <div class="chart-subtitle">Actual vs target by month</div>
+          <div style="position:relative;height:220px"><canvas id="p1-chart-target"></canvas></div>
+        </div>
+      </div>
+      <div class="insights-card">
+        <div class="insights-title">💡 Key Insights</div>
+        <ul class="insights-list" id="p1-insights"></ul>
       </div>
     </div>
 
-    <!-- ===================== PAGE 2: SALES & REVENUE ===================== -->
-    <div class="page" id="page1">
-      <div class="slicer-bar">
-        <span class="slicer-label">🔍 Filters:</span>
-        <div class="slicer-group">
-          <span class="slicer-label">Year</span>
-          <select class="slicer-select" id="p2-year" onchange="updatePage1()">
-            <option value="all">All Years</option>
-            <option value="2022">2022</option>
-            <option value="2023">2023</option>
-            <option value="2024">2024</option>
-          </select>
-        </div>
-        <div style="width:1px;height:28px;background:var(--card-border);margin:0 4px;"></div>
-        <div class="slicer-group">
-          <span class="slicer-label">Quarter</span>
-          <select class="slicer-select" id="p2-quarter" onchange="updatePage1()">
-            <option value="all">All Quarters</option>
-            <option value="Q1">Q1</option>
-            <option value="Q2">Q2</option>
-            <option value="Q3">Q3</option>
-            <option value="Q4">Q4</option>
-          </select>
-        </div>
-        <div style="width:1px;height:28px;background:var(--card-border);margin:0 4px;"></div>
-        <div class="slicer-group">
-          <span class="slicer-label">Channel</span>
-          <select class="slicer-select" id="p2-channel" onchange="updatePage1()">
-            <option value="all">All Channels</option>
-            <option value="Online">Online</option>
-            <option value="Retail">Retail</option>
-            <option value="Partner">Partner</option>
-          </select>
-        </div>
-        <div style="width:1px;height:28px;background:var(--card-border);margin:0 4px;"></div>
-        <div class="slicer-group">
-          <span class="slicer-label">Product</span>
-          <select class="slicer-select" id="p2-product" onchange="updatePage1()">
-            <option value="all">All Products</option>
-            <option value="Product A">Product A</option>
-            <option value="Product B">Product B</option>
-            <option value="Product C">Product C</option>
-            <option value="Product D">Product D</option>
-          </select>
-        </div>
-        <button class="reset-btn" onclick="resetPage1()">↺ Reset</button>
-      </div>
-
-      <div class="kpi-grid">
-        <div class="kpi-card" style="--accent:#06b6d4"><div class="glow"></div>
-          <div class="kpi-icon">🛒</div>
-          <div class="kpi-label">Total Sales Volume</div>
-          <div class="kpi-value" id="kpi-volume">0</div>
-          <div class="kpi-trend"><span class="arrow trend-up">▲</span><span class="trend-up" id="kpi-vol-trend">+14.2%</span><span class="kpi-sub">units sold</span></div>
-        </div>
-        <div class="kpi-card" style="--accent:#ec4899"><div class="glow"></div>
-          <div class="kpi-icon">💎</div>
-          <div class="kpi-label">Avg Deal Size</div>
-          <div class="kpi-value" id="kpi-deal">$0</div>
-          <div class="kpi-trend"><span class="arrow trend-up">▲</span><span class="trend-up" id="kpi-deal-trend">+8.7%</span><span class="kpi-sub">per transaction</span></div>
-        </div>
-        <div class="kpi-card" style="--accent:#10b981"><div class="glow"></div>
-          <div class="kpi-icon">🎯</div>
-          <div class="kpi-label">Win Rate</div>
-          <div class="kpi-value" id="kpi-winrate">0%</div>
-          <div class="kpi-trend"><span class="arrow trend-up">▲</span><span class="trend-up" id="kpi-win-trend">+3.2pp</span><span class="kpi-sub">vs last year</span></div>
-        </div>
-        <div class="kpi-card" style="--accent:#f59e0b"><div class="glow"></div>
-          <div class="kpi-icon">🏆</div>
-          <div class="kpi-label">Top Product Share</div>
-          <div class="kpi-value" id="kpi-topshare">0%</div>
-          <div class="kpi-trend"><span class="arrow">📦</span><span id="kpi-top-product" style="color:var(--amber)">Product A</span><span class="kpi-sub">leads revenue</span></div>
-        </div>
-      </div>
-
-      <div class="charts-grid charts-equal">
-        <div class="chart-card">
-          <div class="chart-header">
-            <div><div class="chart-title">Sales by Product</div><div class="chart-subtitle">Revenue contribution per product</div></div>
-            <span class="chart-badge blue">Grouped</span>
-          </div>
-          <div class="chart-wrap tall"><canvas id="chart-by-product"></canvas></div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-header">
-            <div><div class="chart-title">Sales by Channel</div><div class="chart-subtitle">Monthly channel performance</div></div>
-            <span class="chart-badge green">Multi-line</span>
-          </div>
-          <div class="chart-wrap tall"><canvas id="chart-by-channel"></canvas></div>
-        </div>
-      </div>
-
-      <div class="charts-grid charts-2col">
-        <div class="chart-card">
-          <div class="chart-header">
-            <div><div class="chart-title">Regional Sales Performance</div><div class="chart-subtitle">Revenue by geography</div></div>
-            <span class="chart-badge amber">Comparison</span>
-          </div>
-          <div class="chart-wrap"><canvas id="chart-regional-sales"></canvas></div>
-        </div>
-        <div class="insights-card">
-          <div class="insights-title">💡 Sales Insights</div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--cyan)"></div><span>Online channel grew 31% YoY — now largest revenue source at 42% share.</span></div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--pink)"></div><span>Product A dominates with 34% revenue share; Product C fastest growing at +28%.</span></div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--green)"></div><span>Win rate improved to 68.4%, driven by improved Partner channel conversion.</span></div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--amber)"></div><span>Average deal size increased $2,340 — premium product mix shifting upward.</span></div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--purple)"></div><span>West region showing accelerated growth at +24% — opportunity to expand.</span></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===================== PAGE 3: COST & EXPENSES ===================== -->
+    <!-- PAGE 2 -->
     <div class="page" id="page2">
-      <div class="slicer-bar">
-        <span class="slicer-label">🔍 Filters:</span>
+      <div class="slicers">
         <div class="slicer-group">
-          <span class="slicer-label">Year</span>
-          <select class="slicer-select" id="p3-year" onchange="updatePage2()">
-            <option value="all">All Years</option>
-            <option value="2022">2022</option>
-            <option value="2023">2023</option>
-            <option value="2024">2024</option>
-          </select>
+          <div class="slicer-label">Year</div>
+          <div class="slicer-pills" id="p2-year-pills">
+            <div class="pill active" data-val="All">All</div>
+            <div class="pill" data-val="2022">2022</div>
+            <div class="pill" data-val="2023">2023</div>
+            <div class="pill" data-val="2024">2024</div>
+          </div>
         </div>
-        <div style="width:1px;height:28px;background:var(--card-border);margin:0 4px;"></div>
         <div class="slicer-group">
-          <span class="slicer-label">Region</span>
-          <select class="slicer-select" id="p3-region" onchange="updatePage2()">
-            <option value="all">All Regions</option>
-            <option value="North">North</option>
-            <option value="South">South</option>
-            <option value="East">East</option>
-            <option value="West">West</option>
-          </select>
+          <div class="slicer-label">Quarter</div>
+          <div class="slicer-pills" id="p2-quarter-pills">
+            <div class="pill active" data-val="All">All</div>
+            <div class="pill" data-val="Q1">Q1</div>
+            <div class="pill" data-val="Q2">Q2</div>
+          </div>
         </div>
-        <div style="width:1px;height:28px;background:var(--card-border);margin:0 4px;"></div>
         <div class="slicer-group">
-          <span class="slicer-label">Quarter</span>
-          <select class="slicer-select" id="p3-quarter" onchange="updatePage2()">
-            <option value="all">All Quarters</option>
-            <option value="Q1">Q1</option>
-            <option value="Q2">Q2</option>
-            <option value="Q3">Q3</option>
-            <option value="Q4">Q4</option>
-          </select>
+          <div class="slicer-label">Channel</div>
+          <div class="slicer-pills" id="p2-channel-pills">
+            <div class="pill active" data-val="All">All</div>
+            <div class="pill" data-val="Online">Online</div>
+            <div class="pill" data-val="Retail">Retail</div>
+            <div class="pill" data-val="Partner">Partner</div>
+          </div>
         </div>
-        <button class="reset-btn" onclick="resetPage2()">↺ Reset</button>
+        <div class="slicer-group">
+          <div class="slicer-label">Product</div>
+          <div class="slicer-pills" id="p2-product-pills">
+            <div class="pill active" data-val="All">All</div>
+            <div class="pill" data-val="A">Product A</div>
+            <div class="pill" data-val="B">Product B</div>
+            <div class="pill" data-val="C">Product C</div>
+            <div class="pill" data-val="D">Product D</div>
+          </div>
+        </div>
       </div>
-
       <div class="kpi-grid">
-        <div class="kpi-card" style="--accent:#ef4444"><div class="glow"></div>
-          <div class="kpi-icon">💸</div>
+        <div class="kpi-card" style="--kpi-color:#06b6d4">
+          <div class="kpi-icon">📦</div>
+          <div class="kpi-label">Total Sales Volume</div>
+          <div class="kpi-value" id="p2-kpi-volume">0</div>
+          <div class="kpi-trend up" id="p2-kpi-volume-trend">—</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:#4f8ef7">
+          <div class="kpi-icon">💵</div>
+          <div class="kpi-label">Avg Deal Size</div>
+          <div class="kpi-value" id="p2-kpi-deal">$0</div>
+          <div class="kpi-trend up" id="p2-kpi-deal-trend">—</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:#10b981">
+          <div class="kpi-icon">🏆</div>
+          <div class="kpi-label">Win Rate %</div>
+          <div class="kpi-value" id="p2-kpi-winrate">0%</div>
+          <div class="kpi-trend up" id="p2-kpi-winrate-trend">—</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:#7c3aed">
+          <div class="kpi-icon">⭐</div>
+          <div class="kpi-label">Top Product Share</div>
+          <div class="kpi-value" id="p2-kpi-topshare">0%</div>
+          <div class="kpi-trend neutral" id="p2-kpi-topshare-trend">of total revenue</div>
+        </div>
+      </div>
+      <div class="charts-grid charts-grid-3b">
+        <div class="chart-card">
+          <div class="chart-title">Monthly Sales by Channel</div>
+          <div class="chart-subtitle">Multi-line trend per channel</div>
+          <div style="position:relative;height:220px"><canvas id="p2-chart-channel"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Sales by Product</div>
+          <div class="chart-subtitle">Revenue per product</div>
+          <div style="position:relative;height:220px"><canvas id="p2-chart-product"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Revenue by Region</div>
+          <div class="chart-subtitle">Regional performance</div>
+          <div style="position:relative;height:220px"><canvas id="p2-chart-region"></canvas></div>
+        </div>
+      </div>
+      <div class="insights-card">
+        <div class="insights-title">💡 Sales Insights</div>
+        <ul class="insights-list" id="p2-insights"></ul>
+      </div>
+    </div>
+
+    <!-- PAGE 3 -->
+    <div class="page" id="page3">
+      <div class="slicers">
+        <div class="slicer-group">
+          <div class="slicer-label">Year</div>
+          <div class="slicer-pills" id="p3-year-pills">
+            <div class="pill active" data-val="All">All</div>
+            <div class="pill" data-val="2022">2022</div>
+            <div class="pill" data-val="2023">2023</div>
+            <div class="pill" data-val="2024">2024</div>
+          </div>
+        </div>
+        <div class="slicer-group">
+          <div class="slicer-label">Region</div>
+          <div class="slicer-pills" id="p3-region-pills">
+            <div class="pill active" data-val="All">All</div>
+            <div class="pill" data-val="North">North</div>
+            <div class="pill" data-val="South">South</div>
+            <div class="pill" data-val="East">East</div>
+            <div class="pill" data-val="West">West</div>
+          </div>
+        </div>
+        <div class="slicer-group">
+          <div class="slicer-label">Quarter</div>
+          <div class="slicer-pills" id="p3-quarter-pills">
+            <div class="pill active" data-val="All">All</div>
+            <div class="pill" data-val="Q1">Q1</div>
+            <div class="pill" data-val="Q2">Q2</div>
+          </div>
+        </div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--kpi-color:#ef4444">
+          <div class="kpi-icon">🔧</div>
           <div class="kpi-label">Total Operating Cost</div>
-          <div class="kpi-value" id="kpi-opcost">$0</div>
-          <div class="kpi-trend"><span class="arrow trend-down">▼</span><span class="trend-down" id="kpi-opcost-trend">+9.2%</span><span class="kpi-sub">YoY increase</span></div>
+          <div class="kpi-value" id="p3-kpi-opcost">$0</div>
+          <div class="kpi-trend down" id="p3-kpi-opcost-trend">—</div>
         </div>
-        <div class="kpi-card" style="--accent:#f59e0b"><div class="glow"></div>
-          <div class="kpi-icon">⚖️</div>
+        <div class="kpi-card" style="--kpi-color:#f59e0b">
+          <div class="kpi-icon">📐</div>
           <div class="kpi-label">Cost-to-Revenue Ratio</div>
-          <div class="kpi-value" id="kpi-ctr">0%</div>
-          <div class="kpi-trend"><span class="arrow trend-up">▲</span><span class="trend-up" id="kpi-ctr-trend">-2.4pp</span><span class="kpi-sub">improved efficiency</span></div>
+          <div class="kpi-value" id="p3-kpi-ctr">0%</div>
+          <div class="kpi-trend neutral" id="p3-kpi-ctr-trend">efficiency metric</div>
         </div>
-        <div class="kpi-card" style="--accent:#7c3aed"><div class="glow"></div>
+        <div class="kpi-card" style="--kpi-color:#06b6d4">
           <div class="kpi-icon">🏭</div>
           <div class="kpi-label">COGS</div>
-          <div class="kpi-value" id="kpi-cogs">$0</div>
-          <div class="kpi-trend"><span class="arrow trend-down">▼</span><span class="trend-down" id="kpi-cogs-trend">+7.8%</span><span class="kpi-sub">cost of goods sold</span></div>
+          <div class="kpi-value" id="p3-kpi-cogs">$0</div>
+          <div class="kpi-trend down" id="p3-kpi-cogs-trend">—</div>
         </div>
-        <div class="kpi-card" style="--accent:#06b6d4"><div class="glow"></div>
+        <div class="kpi-card" style="--kpi-color:#7c3aed">
           <div class="kpi-icon">📋</div>
-          <div class="kpi-label">SG&A Expenses</div>
-          <div class="kpi-value" id="kpi-sga">$0</div>
-          <div class="kpi-trend"><span class="arrow trend-up">▲</span><span class="trend-up" id="kpi-sga-trend">-1.1pp</span><span class="kpi-sub">as % of revenue</span></div>
+          <div class="kpi-label">SG&amp;A Expenses</div>
+          <div class="kpi-value" id="p3-kpi-sga">$0</div>
+          <div class="kpi-trend down" id="p3-kpi-sga-trend">—</div>
         </div>
       </div>
-
-      <div class="charts-grid charts-2col">
+      <div class="charts-grid charts-grid-3">
         <div class="chart-card">
-          <div class="chart-header">
-            <div><div class="chart-title">Cost Breakdown (Monthly)</div><div class="chart-subtitle">Stacked cost categories over time</div></div>
-            <span class="chart-badge amber">Stacked</span>
-          </div>
-          <div class="chart-wrap tall"><canvas id="chart-cost-stacked"></canvas></div>
+          <div class="chart-title">Monthly Cost Breakdown</div>
+          <div class="chart-subtitle">Stacked COGS + SG&amp;A + Operating</div>
+          <div style="position:relative;height:220px"><canvas id="p3-chart-stack"></canvas></div>
         </div>
         <div class="chart-card">
-          <div class="chart-header">
-            <div><div class="chart-title">Expense Category Mix</div><div class="chart-subtitle">Share of total cost base</div></div>
-            <span class="chart-badge blue">Donut</span>
-          </div>
-          <div class="chart-wrap tall"><canvas id="chart-expense-pie"></canvas></div>
+          <div class="chart-title">Expense Categories</div>
+          <div class="chart-subtitle">Proportion of each cost type</div>
+          <div style="position:relative;height:220px"><canvas id="p3-chart-pie"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Cost vs Revenue</div>
+          <div class="chart-subtitle">Monthly comparison</div>
+          <div style="position:relative;height:220px"><canvas id="p3-chart-cvr"></canvas></div>
         </div>
       </div>
-
-      <div class="charts-grid charts-2col">
-        <div class="chart-card">
-          <div class="chart-header">
-            <div><div class="chart-title">Cost vs Revenue Bridge</div><div class="chart-subtitle">Quarterly cost efficiency</div></div>
-            <span class="chart-badge green">Bridge</span>
-          </div>
-          <div class="chart-wrap"><canvas id="chart-cost-bridge"></canvas></div>
-        </div>
-        <div class="insights-card">
-          <div class="insights-title">💡 Cost Insights</div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--green)"></div><span>Cost-to-revenue ratio improved from 68.4% to 66.0% — saving $4.2M in relative terms.</span></div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--amber)"></div><span>COGS grew slower than revenue (7.8% vs 18.4%) — improved procurement efficiency.</span></div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--red)"></div><span>R&D investment up 18% — strategic spend supporting next-gen product pipeline.</span></div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--purple)"></div><span>SG&A as % of revenue dropped 1.1pp — sales force productivity gains materializing.</span></div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--cyan)"></div><span>West region highest cost efficiency; South region has optimization opportunity.</span></div>
-        </div>
+      <div class="insights-card">
+        <div class="insights-title">💡 Cost Insights</div>
+        <ul class="insights-list" id="p3-insights"></ul>
       </div>
     </div>
 
-    <!-- ===================== PAGE 4: PROFITABILITY ===================== -->
-    <div class="page" id="page3">
-      <div class="slicer-bar">
-        <span class="slicer-label">🔍 Filters:</span>
+    <!-- PAGE 4 -->
+    <div class="page" id="page4">
+      <div class="slicers">
         <div class="slicer-group">
-          <span class="slicer-label">Year</span>
-          <select class="slicer-select" id="p4-year" onchange="updatePage3()">
-            <option value="all">All Years</option>
-            <option value="2022">2022</option>
-            <option value="2023">2023</option>
-            <option value="2024">2024</option>
-          </select>
+          <div class="slicer-label">Year</div>
+          <div class="slicer-pills" id="p4-year-pills">
+            <div class="pill active" data-val="All">All</div>
+            <div class="pill" data-val="2022">2022</div>
+            <div class="pill" data-val="2023">2023</div>
+            <div class="pill" data-val="2024">2024</div>
+          </div>
         </div>
-        <div style="width:1px;height:28px;background:var(--card-border);margin:0 4px;"></div>
         <div class="slicer-group">
-          <span class="slicer-label">Product</span>
-          <select class="slicer-select" id="p4-product" onchange="updatePage3()">
-            <option value="all">All Products</option>
-            <option value="Product A">Product A</option>
-            <option value="Product B">Product B</option>
-            <option value="Product C">Product C</option>
-            <option value="Product D">Product D</option>
-          </select>
+          <div class="slicer-label">Product</div>
+          <div class="slicer-pills" id="p4-product-pills">
+            <div class="pill active" data-val="All">All</div>
+            <div class="pill" data-val="A">Product A</div>
+            <div class="pill" data-val="B">Product B</div>
+            <div class="pill" data-val="C">Product C</div>
+            <div class="pill" data-val="D">Product D</div>
+          </div>
         </div>
-        <div style="width:1px;height:28px;background:var(--card-border);margin:0 4px;"></div>
         <div class="slicer-group">
-          <span class="slicer-label">Region</span>
-          <select class="slicer-select" id="p4-region" onchange="updatePage3()">
-            <option value="all">All Regions</option>
-            <option value="North">North</option>
-            <option value="South">South</option>
-            <option value="East">East</option>
-            <option value="West">West</option>
-          </select>
+          <div class="slicer-label">Region</div>
+          <div class="slicer-pills" id="p4-region-pills">
+            <div class="pill active" data-val="All">All</div>
+            <div class="pill" data-val="North">North</div>
+            <div class="pill" data-val="South">South</div>
+            <div class="pill" data-val="East">East</div>
+            <div class="pill" data-val="West">West</div>
+          </div>
         </div>
-        <button class="reset-btn" onclick="resetPage3()">↺ Reset</button>
       </div>
-
       <div class="kpi-grid">
-        <div class="kpi-card" style="--accent:#10b981"><div class="glow"></div>
+        <div class="kpi-card" style="--kpi-color:#10b981">
           <div class="kpi-icon">💹</div>
-          <div class="kpi-label">Net Profit Margin</div>
-          <div class="kpi-value" id="kpi-margin">0%</div>
-          <div class="kpi-trend"><span class="arrow trend-up">▲</span><span class="trend-up" id="kpi-margin-trend">+2.8pp</span><span class="kpi-sub">vs prior year</span></div>
+          <div class="kpi-label">Net Profit Margin %</div>
+          <div class="kpi-value" id="p4-kpi-npm">0%</div>
+          <div class="kpi-trend up" id="p4-kpi-npm-trend">—</div>
         </div>
-        <div class="kpi-card" style="--accent:#4f8ef7"><div class="glow"></div>
-          <div class="kpi-icon">♻️</div>
-          <div class="kpi-label">Return on Investment</div>
-          <div class="kpi-value" id="kpi-roi">0%</div>
-          <div class="kpi-trend"><span class="arrow trend-up">▲</span><span class="trend-up" id="kpi-roi-trend">+4.1pp</span><span class="kpi-sub">portfolio-wide ROI</span></div>
+        <div class="kpi-card" style="--kpi-color:#4f8ef7">
+          <div class="kpi-icon">🔄</div>
+          <div class="kpi-label">ROI %</div>
+          <div class="kpi-value" id="p4-kpi-roi">0%</div>
+          <div class="kpi-trend up" id="p4-kpi-roi-trend">—</div>
         </div>
-        <div class="kpi-card" style="--accent:#ec4899"><div class="glow"></div>
-          <div class="kpi-icon">📦</div>
+        <div class="kpi-card" style="--kpi-color:#7c3aed">
+          <div class="kpi-icon">📊</div>
           <div class="kpi-label">Gross Margin</div>
-          <div class="kpi-value" id="kpi-gross">0%</div>
-          <div class="kpi-trend"><span class="arrow trend-up">▲</span><span class="trend-up" id="kpi-gross-trend">+1.9pp</span><span class="kpi-sub">after direct costs</span></div>
+          <div class="kpi-value" id="p4-kpi-gm">0%</div>
+          <div class="kpi-trend up" id="p4-kpi-gm-trend">—</div>
         </div>
-        <div class="kpi-card" style="--accent:#f59e0b"><div class="glow"></div>
+        <div class="kpi-card" style="--kpi-color:#f59e0b">
           <div class="kpi-icon">🎯</div>
           <div class="kpi-label">Forecast Accuracy</div>
-          <div class="kpi-value" id="kpi-accuracy">0%</div>
-          <div class="kpi-trend"><span class="arrow trend-up">▲</span><span class="trend-up" id="kpi-acc-trend">+5.3pp</span><span class="kpi-sub">model precision</span></div>
+          <div class="kpi-value" id="p4-kpi-fa">0%</div>
+          <div class="kpi-trend neutral" id="p4-kpi-fa-trend">actual vs forecast</div>
         </div>
       </div>
-
-      <div class="charts-grid charts-2col">
+      <div class="charts-grid charts-grid-3">
         <div class="chart-card">
-          <div class="chart-header">
-            <div><div class="chart-title">Profit Margin Trend</div><div class="chart-subtitle">Net & gross margin over time</div></div>
-            <span class="chart-badge green">Trend</span>
-          </div>
-          <div class="chart-wrap tall"><canvas id="chart-margin-trend"></canvas></div>
+          <div class="chart-title">Profit Margin Trend</div>
+          <div class="chart-subtitle">Monthly net profit margin %</div>
+          <div style="position:relative;height:220px"><canvas id="p4-chart-margin"></canvas></div>
         </div>
         <div class="chart-card">
-          <div class="chart-header">
-            <div><div class="chart-title">ROI by Product & Region</div><div class="chart-subtitle">Investment return analysis</div></div>
-            <span class="chart-badge blue">Grouped</span>
-          </div>
-          <div class="chart-wrap tall"><canvas id="chart-roi"></canvas></div>
+          <div class="chart-title">ROI by Product</div>
+          <div class="chart-subtitle">Return on investment per product</div>
+          <div style="position:relative;height:220px"><canvas id="p4-chart-roi"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Forecast vs Actual</div>
+          <div class="chart-subtitle">Revenue accuracy by month</div>
+          <div style="position:relative;height:220px"><canvas id="p4-chart-forecast"></canvas></div>
         </div>
       </div>
-
-      <div class="charts-grid charts-2col">
-        <div class="chart-card">
-          <div class="chart-header">
-            <div><div class="chart-title">Forecast vs Actual (2024)</div><div class="chart-subtitle">Monthly prediction accuracy</div></div>
-            <span class="chart-badge amber">Forecast</span>
-          </div>
-          <div class="chart-wrap"><canvas id="chart-forecast"></canvas></div>
-        </div>
-        <div class="insights-card">
-          <div class="insights-title">💡 Profitability Insights</div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--green)"></div><span>Net profit margin reached 22.4% — highest in 3-year history, up 2.8pp YoY.</span></div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--blue)"></div><span>Product B delivers highest ROI at 38.2%, driven by low manufacturing cost.</span></div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--pink)"></div><span>Gross margin expansion reflects favorable product mix and pricing power.</span></div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--amber)"></div><span>Forecast accuracy at 91.7% — ML model refinements paying off significantly.</span></div>
-          <div class="insight-item"><div class="insight-dot" style="background:var(--cyan)"></div><span>North region most profitable; targeted investment recommended for East region.</span></div>
-        </div>
+      <div class="insights-card">
+        <div class="insights-title">💡 Profitability Insights</div>
+        <ul class="insights-list" id="p4-insights"></ul>
       </div>
     </div>
 
   </div>
-</main>
+</div>
 
 <script>
-// ======================== SAMPLE DATA ========================
-// Simulates Excel data with monthly records across 3 years
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+// ============================================================
+// 72-ROW DATASET: 3 years * 4 regions * 6 months
+// ============================================================
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun'];
 const REGIONS = ['North','South','East','West'];
-const PRODUCTS = ['Product A','Product B','Product C','Product D'];
+const PRODUCTS = ['A','B','C','D'];
 const CHANNELS = ['Online','Retail','Partner'];
+const YEARS = [2022, 2023, 2024];
 
-// Revenue base by region/product
-const regionBase = { North:0.32, South:0.24, East:0.22, West:0.22 };
-const productBase = { 'Product A':0.34, 'Product B':0.26, 'Product C':0.22, 'Product D':0.18 };
-const channelBase = { Online:0.42, Retail:0.33, Partner:0.25 };
+function seededRand(s) {
+  var x = Math.sin(s + 1) * 10000;
+  return x - Math.floor(x);
+}
 
-// Generate monthly data rows
-const rawData = [];
-const yearGrowth = { 2022:1.0, 2023:1.16, 2024:1.38 };
-const monthFactor = [0.78,0.82,0.9,0.95,1.0,1.05,0.98,1.02,1.08,1.12,1.18,1.32];
+var rawData = [];
+var seed = 0;
 
-for (const year of [2022,2023,2024]) {
-  for (let m=0; m<12; m++) {
-    const qtr = 'Q' + (Math.floor(m/3)+1);
-    for (const region of REGIONS) {
-      for (const product of PRODUCTS) {
-        for (const channel of CHANNELS) {
-          const base = 2400000;
-          const noise = 0.85 + Math.random()*0.3;
-          const revenue = Math.round(base * yearGrowth[year] * monthFactor[m]
-            * regionBase[region] * productBase[product] * channelBase[channel] / 0.32 * noise);
-          const cogsRate = 0.36 + Math.random()*0.06;
-          const sgaRate = 0.14 + Math.random()*0.04;
-          const rdRate = 0.07 + Math.random()*0.03;
-          const cogs = Math.round(revenue * cogsRate);
-          const sga = Math.round(revenue * sgaRate);
-          const rd = Math.round(revenue * rdRate);
-          const opCost = cogs + sga + rd;
-          const ebitda = revenue - opCost + Math.round(revenue*0.04);
-          const netProfit = Math.round(revenue * (0.18 + yearGrowth[year]*0.02 - 0.18 + 0.02));
-          const volume = Math.round(revenue / (8000 + Math.random()*4000));
-          rawData.push({
-            year, month:m, monthName:MONTHS[m], quarter:qtr,
-            region, product, channel,
-            revenue, cogs, sga, rd, opCost, ebitda, netProfit, volume
-          });
-        }
-      }
+var regionMult  = { North: 1.15, South: 0.95, East: 1.05, West: 1.0  };
+var productMult = { A: 1.2,  B: 0.9,  C: 1.05, D: 0.85 };
+var channelMult = { Online: 1.1, Retail: 0.95, Partner: 1.0 };
+var yearMult    = { 2022: 1.0, 2023: 1.12, 2024: 1.22 };
+
+for (var yi = 0; yi < 3; yi++) {
+  var year = YEARS[yi];
+  for (var ri = 0; ri < 4; ri++) {
+    var region = REGIONS[ri];
+    for (var mi = 0; mi < 6; mi++) {
+      var month   = MONTHS[mi];
+      var product = PRODUCTS[(mi + ri) % 4];
+      var channel = CHANNELS[(mi + ri * 2) % 3];
+
+      seed++;
+      var noise    = 0.86 + seededRand(seed) * 0.28;
+      var seasonal = 1 + 0.07 * Math.sin(mi * Math.PI / 3);
+      var base     = 420000;
+      var revenue  = Math.round(base * regionMult[region] * productMult[product] * channelMult[channel] * yearMult[year] * noise * seasonal);
+
+      seed++;
+      var targetRevenue  = Math.round(revenue * (0.93 + seededRand(seed) * 0.14));
+      seed++;
+      var cogs           = Math.round(revenue * (0.38 + seededRand(seed) * 0.07));
+      seed++;
+      var sga            = Math.round(revenue * (0.12 + seededRand(seed) * 0.05));
+      seed++;
+      var operatingCost  = Math.round(revenue * (0.07 + seededRand(seed) * 0.04));
+      var grossMargin    = Math.round(((revenue - cogs) / revenue) * 1000) / 10;
+      var netProfit      = revenue - cogs - sga - operatingCost;
+      var roi            = Math.round((netProfit / (cogs + sga + operatingCost)) * 1000) / 10;
+      seed++;
+      var salesVolume    = Math.round(revenue / (3000 + seededRand(seed) * 1000));
+      var avgDealSize    = Math.round(revenue / (salesVolume || 1));
+      seed++;
+      var winRate        = Math.round((52 + seededRand(seed) * 26) * 10) / 10;
+      seed++;
+      var forecastRev    = Math.round(revenue * (0.92 + seededRand(seed) * 0.16));
+
+      rawData.push({
+        year: year, month: month, region: region, product: product, channel: channel,
+        revenue: revenue, target_revenue: targetRevenue, cogs: cogs, sg_a: sga,
+        operating_cost: operatingCost, gross_margin: grossMargin, net_profit: netProfit,
+        roi: roi, sales_volume: salesVolume, avg_deal_size: avgDealSize,
+        win_rate: winRate, forecast_revenue: forecastRev
+      });
     }
   }
 }
 
-// ======================== CHART REGISTRY ========================
-const charts = {};
-const chartDefaults = {
-  responsive:true, maintainAspectRatio:false,
-  plugins:{ legend:{ labels:{ color:'#94a3b8', font:{size:11} } }, tooltip:{ backgroundColor:'rgba(10,14,26,0.95)', titleColor:'#e2e8f0', bodyColor:'#94a3b8', borderColor:'rgba(255,255,255,0.1)', borderWidth:1, padding:12 } },
-  scales:{
-    x:{ ticks:{color:'#64748b',font:{size:10}}, grid:{color:'rgba(255,255,255,0.05)'}, border:{color:'rgba(255,255,255,0.05)'} },
-    y:{ ticks:{color:'#64748b',font:{size:10},callback:v=>v>=1e6?'$'+(v/1e6).toFixed(1)+'M':v>=1e3?'$'+(v/1e3).toFixed(0)+'K':'$'+v}, grid:{color:'rgba(255,255,255,0.05)'}, border:{color:'rgba(255,255,255,0.05)'} }
-  }
+// ============================================================
+// STATE
+// ============================================================
+var state = {
+  page: 1,
+  p1: { year: 'All', region: 'All' },
+  p2: { year: 'All', quarter: 'All', channel: 'All', product: 'All' },
+  p3: { year: 'All', region: 'All', quarter: 'All' },
+  p4: { year: 'All', product: 'All', region: 'All' }
 };
-const pctDefaults = JSON.parse(JSON.stringify(chartDefaults));
-pctDefaults.scales.y.ticks.callback = v => v+'%';
+var charts = {};
 
-function makeChart(id, cfg) {
-  if (charts[id]) charts[id].destroy();
-  const ctx = document.getElementById(id);
-  if(!ctx) return;
-  charts[id] = new Chart(ctx, cfg);
+// ============================================================
+// UTILS
+// ============================================================
+function fmtM(v) {
+  if (Math.abs(v) >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+  if (Math.abs(v) >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K';
+  return '$' + Math.round(v);
 }
+function fmtPct(v) { return v.toFixed(1) + '%'; }
+function sumField(arr, key) { return arr.reduce(function(a, b) { return a + (b[key] || 0); }, 0); }
+function avgField(arr, key) { return arr.length ? sumField(arr, key) / arr.length : 0; }
+function monthToQ(m) { return (m === 'Jan' || m === 'Feb' || m === 'Mar') ? 'Q1' : 'Q2'; }
 
-function filterData(filters) {
-  return rawData.filter(d => {
-    if (filters.year && filters.year !== 'all' && String(d.year) !== filters.year) return false;
-    if (filters.region && filters.region !== 'all' && d.region !== filters.region) return false;
-    if (filters.product && filters.product !== 'all' && d.product !== filters.product) return false;
-    if (filters.channel && filters.channel !== 'all' && d.channel !== filters.channel) return false;
-    if (filters.quarter && filters.quarter !== 'all' && d.quarter !== filters.quarter) return false;
+function filterData(f) {
+  return rawData.filter(function(d) {
+    if (f.year    && f.year    !== 'All' && String(d.year) !== String(f.year))     return false;
+    if (f.region  && f.region  !== 'All' && d.region  !== f.region)                return false;
+    if (f.quarter && f.quarter !== 'All' && monthToQ(d.month) !== f.quarter)       return false;
+    if (f.channel && f.channel !== 'All' && d.channel !== f.channel)               return false;
+    if (f.product && f.product !== 'All' && d.product !== f.product)               return false;
     return true;
   });
 }
 
-function sum(arr, key) { return arr.reduce((a,d)=>a+d[key],0); }
-function avg(arr, key) { return arr.length ? sum(arr,key)/arr.length : 0; }
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
 
-function fmtM(v) { return v>=1e9?'$'+(v/1e9).toFixed(2)+'B':v>=1e6?'$'+(v/1e6).toFixed(1)+'M':v>=1e3?'$'+(v/1e3).toFixed(0)+'K':'$'+v; }
-function fmtK(v) { return v>=1e3?(v/1e3).toFixed(1)+'K':v.toFixed(0); }
-
-function animateValue(el, target, formatter, duration=800) {
-  const start = 0, startTime = performance.now();
+function animateCounter(el, target, formatter, duration) {
+  duration = duration || 900;
+  var start = performance.now();
   function step(now) {
-    const p = Math.min((now-startTime)/duration,1);
-    const ease = 1-Math.pow(1-p,3);
-    el.textContent = formatter(Math.round(start + (target-start)*ease));
-    if (p<1) requestAnimationFrame(step);
+    var p = Math.min((now - start) / duration, 1);
+    var ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = formatter(target * ease);
+    if (p < 1) requestAnimationFrame(step);
+    else el.textContent = formatter(target);
   }
   requestAnimationFrame(step);
 }
 
-// ======================== PAGE 0: EXECUTIVE ========================
-function updatePage0() {
-  const year = document.getElementById('p1-year').value;
-  const region = document.getElementById('p1-region').value;
-  const data = filterData({year, region});
+var XSCALE = { ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Inter', size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } };
+var YSCALE = { ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Inter', size: 10 }, callback: function(v) { return '$' + (v / 1e6).toFixed(1) + 'M'; } }, grid: { color: 'rgba(255,255,255,0.05)' } };
+var YSCALE_PCT = { ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Inter', size: 10 }, callback: function(v) { return v.toFixed(1) + '%'; } }, grid: { color: 'rgba(255,255,255,0.05)' } };
+var LEGEND = { labels: { color: 'rgba(255,255,255,0.7)', font: { family: 'Inter', size: 10 } } };
 
-  const totalRev = sum(data,'revenue');
-  const totalProfit = sum(data,'netProfit') + Math.round(totalRev*0.22);
-  const totalEbitda = Math.round(totalRev*0.284);
-  const growth = 18.4;
+function mkChart(id, cfg) {
+  destroyChart(id);
+  var ctx = document.getElementById(id).getContext('2d');
+  charts[id] = new Chart(ctx, cfg);
+  return charts[id];
+}
 
-  // KPIs
-  animateValue(document.getElementById('kpi-revenue'), totalRev, fmtM);
-  animateValue(document.getElementById('kpi-profit'), totalProfit, fmtM);
-  animateValue(document.getElementById('kpi-ebitda'), totalEbitda, fmtM);
-  document.getElementById('kpi-growth').textContent = growth.toFixed(1)+'%';
+// ============================================================
+// PAGE SWITCH
+// ============================================================
+function switchPage(n) {
+  state.page = n;
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('page' + n).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelector('.nav-item[data-page="' + n + '"]').classList.add('active');
+  var titles = ['', 'Executive Overview', 'Sales & Revenue', 'Cost & Expense Analysis', 'Profitability & Forecast'];
+  var accent = ['', 'Overview', 'Revenue', 'Analysis', 'Forecast'];
+  document.getElementById('headerTitle').innerHTML = titles[n].replace(accent[n], '<span>' + accent[n] + '</span>');
+  if (n === 1) initPage1();
+  else if (n === 2) initPage2();
+  else if (n === 3) initPage3();
+  else if (n === 4) initPage4();
+}
 
-  // Revenue Trend
-  const months12 = year === 'all'
-    ? MONTHS.map((_,i) => [2022,2023,2024].reduce((a,y)=>a+sum(filterData({year:String(y),region}).filter(d=>d.month===i),'revenue'),0))
-    : MONTHS.map((_,i) => sum(data.filter(d=>d.month===i),'revenue'));
+// ============================================================
+// SLICER SETUP
+// ============================================================
+function setupPills(containerId, stateKey, stateObj, callback) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  container.querySelectorAll('.pill').forEach(function(pill) {
+    pill.addEventListener('click', function() {
+      container.querySelectorAll('.pill').forEach(function(p) { p.classList.remove('active'); });
+      this.classList.add('active');
+      stateObj[stateKey] = this.dataset.val;
+      callback();
+    });
+  });
+}
 
-  makeChart('chart-revenue-trend',{
-    type:'line',
-    data:{
-      labels:MONTHS,
-      datasets:[{
-        label:'Revenue', data:months12,
-        borderColor:'#4f8ef7', backgroundColor:'rgba(79,142,247,0.12)',
-        borderWidth:2.5, fill:true, tension:.4, pointBackgroundColor:'#4f8ef7', pointRadius:3
+// ============================================================
+// PAGE 1 - EXECUTIVE OVERVIEW
+// ============================================================
+function initPage1() {
+  var f    = state.p1;
+  var data = filterData(f);
+
+  var totalRev    = sumField(data, 'revenue');
+  var totalProfit = sumField(data, 'net_profit');
+  var ebitda      = Math.round(totalRev * 0.215);
+
+  var yoy = 0;
+  if (f.year !== 'All') {
+    var prevY    = String(parseInt(f.year, 10) - 1);
+    var prevData = filterData(Object.assign({}, f, { year: prevY }));
+    var prevRev  = sumField(prevData, 'revenue');
+    yoy = prevRev ? (totalRev - prevRev) / prevRev * 100 : 0;
+  } else {
+    var d24 = filterData(Object.assign({}, f, { year: '2024' }));
+    var d23 = filterData(Object.assign({}, f, { year: '2023' }));
+    var r24 = sumField(d24, 'revenue');
+    var r23 = sumField(d23, 'revenue');
+    yoy = r23 ? (r24 - r23) / r23 * 100 : 0;
+  }
+
+  animateCounter(document.getElementById('p1-kpi-revenue'), totalRev,    fmtM);
+  animateCounter(document.getElementById('p1-kpi-profit'),  totalProfit, fmtM);
+  animateCounter(document.getElementById('p1-kpi-ebitda'),  ebitda,      fmtM);
+  animateCounter(document.getElementById('p1-kpi-yoy'),     yoy,         function(v) { return v.toFixed(1) + '%'; });
+
+  var profMargin = totalRev ? (totalProfit / totalRev * 100).toFixed(1) : 0;
+  document.getElementById('p1-kpi-revenue-trend').textContent = profMargin + '% profit margin';
+  document.getElementById('p1-kpi-revenue-trend').className = 'kpi-trend up';
+  document.getElementById('p1-kpi-profit-trend').textContent = (totalProfit > 0 ? '▲ ' : '▼ ') + profMargin + '% net margin';
+  document.getElementById('p1-kpi-profit-trend').className = 'kpi-trend ' + (totalProfit > 0 ? 'up' : 'down');
+  document.getElementById('p1-kpi-ebitda-trend').textContent = '▲ ' + (totalRev ? (ebitda / totalRev * 100).toFixed(1) : 0) + '% of revenue';
+  document.getElementById('p1-kpi-ebitda-trend').className = 'kpi-trend up';
+  document.getElementById('p1-kpi-yoy-trend').textContent = (yoy >= 0 ? '▲' : '▼') + ' vs prior year';
+  document.getElementById('p1-kpi-yoy-trend').className = 'kpi-trend ' + (yoy >= 0 ? 'up' : 'down');
+
+  // Monthly revenue map
+  var mRev = {};
+  MONTHS.forEach(function(m) { mRev[m] = 0; });
+  data.forEach(function(d) { mRev[d.month] += d.revenue; });
+  var mRevArr = MONTHS.map(function(m) { return mRev[m]; });
+
+  // Monthly target map
+  var mTgt = {};
+  MONTHS.forEach(function(m) { mTgt[m] = 0; });
+  data.forEach(function(d) { mTgt[d.month] += d.target_revenue; });
+
+  mkChart('p1-chart-trend', {
+    type: 'line',
+    data: {
+      labels: MONTHS,
+      datasets: [{
+        label: 'Revenue', data: mRevArr,
+        borderColor: '#4f8ef7', backgroundColor: 'rgba(79,142,247,0.12)',
+        borderWidth: 2.5, pointBackgroundColor: '#4f8ef7', pointRadius: 4,
+        fill: true, tension: 0.4
       }]
     },
-    options:{...chartDefaults}
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: XSCALE, y: YSCALE }
+    }
   });
 
-  // Region Donut
-  const regData = REGIONS.map(r => sum(data.filter(d=>d.region===r),'revenue'));
-  makeChart('chart-region-donut',{
-    type:'doughnut',
-    data:{
-      labels:REGIONS,
-      datasets:[{ data:regData, backgroundColor:['#4f8ef7','#7c3aed','#06b6d4','#10b981'], borderColor:'transparent', borderWidth:4, hoverOffset:8 }]
+  var rRev = {};
+  REGIONS.forEach(function(r) { rRev[r] = 0; });
+  data.forEach(function(d) { rRev[d.region] += d.revenue; });
+
+  mkChart('p1-chart-donut', {
+    type: 'doughnut',
+    data: {
+      labels: REGIONS,
+      datasets: [{ data: REGIONS.map(function(r) { return rRev[r]; }),
+        backgroundColor: ['#4f8ef7','#7c3aed','#06b6d4','#10b981'],
+        borderColor: '#0a0e1a', borderWidth: 3 }]
     },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{color:'#94a3b8',padding:12,font:{size:11}} }, tooltip:chartDefaults.plugins.tooltip }, cutout:'68%' }
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '65%',
+      plugins: { legend: { position: 'bottom', labels: Object.assign({ padding: 10 }, LEGEND.labels) } }
+    }
   });
 
-  // vs Target
-  const quarters = ['Q1','Q2','Q3','Q4'];
-  const qActual = quarters.map(q => sum(data.filter(d=>d.quarter===q),'revenue'));
-  const qTarget = qActual.map((v,i) => Math.round(v * [0.92,0.95,0.97,0.89][i]));
-  makeChart('chart-vs-target',{
-    type:'bar',
-    data:{
-      labels:year==='all'?['2022','2023','2024'].flatMap(y=>quarters.map(q=>y+' '+q)):quarters,
-      datasets:[
-        { label:'Actual', data:year==='all'?['2022','2023','2024'].flatMap(y=>quarters.map(q=>sum(filterData({year:y,region}).filter(d=>d.quarter===q),'revenue'))):qActual, backgroundColor:'rgba(79,142,247,0.8)', borderRadius:4 },
-        { label:'Target', data:year==='all'?['2022','2023','2024'].flatMap(y=>quarters.map(q=>Math.round(sum(filterData({year:y,region}).filter(d=>d.quarter===q),'revenue')*0.94))):qTarget, backgroundColor:'rgba(245,158,11,0.5)', borderRadius:4 }
+  mkChart('p1-chart-target', {
+    type: 'bar',
+    data: {
+      labels: MONTHS,
+      datasets: [
+        { label: 'Actual',  data: mRevArr, backgroundColor: 'rgba(79,142,247,0.7)', borderRadius: 4 },
+        { label: 'Target',  data: MONTHS.map(function(m) { return mTgt[m]; }), backgroundColor: 'rgba(245,158,11,0.5)', borderRadius: 4 }
       ]
     },
-    options:{...chartDefaults}
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: LEGEND }, scales: { x: XSCALE, y: YSCALE } }
   });
+
+  var topR = REGIONS.reduce(function(a, b) { return rRev[a] >= rRev[b] ? a : b; });
+  var topShare = totalRev ? (rRev[topR] / totalRev * 100).toFixed(1) : 0;
+  var avgAcc = data.length ? (data.reduce(function(a, d) { return a + d.revenue / (d.target_revenue || 1); }, 0) / data.length * 100).toFixed(1) : 100;
+
+  document.getElementById('p1-insights').innerHTML =
+    '<li><strong>Total revenue</strong> of ' + fmtM(totalRev) + ' with net profit ' + fmtM(totalProfit) + ' (' + profMargin + '% margin).</li>' +
+    '<li><strong>' + topR + ' region</strong> leads with ' + topShare + '% of total revenue this period.</li>' +
+    '<li><strong>YoY growth</strong> stands at ' + yoy.toFixed(1) + '% — ' + (yoy >= 12 ? 'exceeding' : 'approaching') + ' the 12% annual target.</li>' +
+    '<li><strong>Revenue vs target</strong> achieved ' + avgAcc + '% accuracy on average across all months.</li>' +
+    '<li><strong>EBITDA margin</strong> of ' + (totalRev ? (ebitda / totalRev * 100).toFixed(1) : 0) + '% reflects strong operational leverage.</li>';
 }
 
-function resetPage0() {
-  document.getElementById('p1-year').value='all';
-  document.getElementById('p1-region').value='all';
-  updatePage0();
-}
+// ============================================================
+// PAGE 2 - SALES & REVENUE
+// ============================================================
+function initPage2() {
+  var f    = state.p2;
+  var data = filterData(f);
 
-// ======================== PAGE 1: SALES ========================
-function updatePage1() {
-  const year = document.getElementById('p2-year').value;
-  const quarter = document.getElementById('p2-quarter').value;
-  const channel = document.getElementById('p2-channel').value;
-  const product = document.getElementById('p2-product').value;
-  const data = filterData({year, quarter, channel, product});
+  var totalVol  = sumField(data, 'sales_volume');
+  var avgDeal   = avgField(data, 'avg_deal_size');
+  var avgWin    = avgField(data, 'win_rate');
+  var totalRev  = sumField(data, 'revenue');
 
-  const totalVol = sum(data,'volume');
-  const totalRev = sum(data,'revenue');
-  const dealSize = totalVol > 0 ? totalRev/totalVol : 0;
-  const winRate = 65.2 + (year==='2024'?3.2:year==='2023'?1.8:0) + (channel==='Online'?2:channel==='Partner'?1:0);
+  var pRev = {};
+  PRODUCTS.forEach(function(p) { pRev[p] = 0; });
+  data.forEach(function(d) { pRev[d.product] += d.revenue; });
+  var topP = PRODUCTS.reduce(function(a, b) { return pRev[a] >= pRev[b] ? a : b; });
+  var topShare = totalRev ? pRev[topP] / totalRev * 100 : 0;
 
-  // Product shares
-  const prodRevs = PRODUCTS.map(p=>sum(data.filter(d=>d.product===p),'revenue'));
-  const maxProd = PRODUCTS[prodRevs.indexOf(Math.max(...prodRevs))];
-  const topShare = totalRev > 0 ? (Math.max(...prodRevs)/totalRev*100) : 34;
+  animateCounter(document.getElementById('p2-kpi-volume'),   totalVol,  function(v) { return Math.round(v).toLocaleString(); });
+  animateCounter(document.getElementById('p2-kpi-deal'),     avgDeal,   fmtM);
+  animateCounter(document.getElementById('p2-kpi-winrate'),  avgWin,    function(v) { return v.toFixed(1) + '%'; });
+  animateCounter(document.getElementById('p2-kpi-topshare'), topShare,  function(v) { return v.toFixed(1) + '%'; });
 
-  animateValue(document.getElementById('kpi-volume'), totalVol, v=>fmtK(v)+' units');
-  animateValue(document.getElementById('kpi-deal'), Math.round(dealSize), fmtM);
-  document.getElementById('kpi-winrate').textContent = Math.min(winRate,85).toFixed(1)+'%';
-  document.getElementById('kpi-topshare').textContent = topShare.toFixed(1)+'%';
-  document.getElementById('kpi-top-product').textContent = maxProd;
+  document.getElementById('p2-kpi-volume-trend').textContent  = '▲ Units sold this period';
+  document.getElementById('p2-kpi-volume-trend').className    = 'kpi-trend up';
+  document.getElementById('p2-kpi-deal-trend').textContent    = '▲ Average per closed deal';
+  document.getElementById('p2-kpi-deal-trend').className      = 'kpi-trend up';
+  document.getElementById('p2-kpi-winrate-trend').textContent = avgWin >= 60 ? '▲ Above 60% target' : '▼ Below 60% target';
+  document.getElementById('p2-kpi-winrate-trend').className   = 'kpi-trend ' + (avgWin >= 60 ? 'up' : 'down');
+  document.getElementById('p2-kpi-topshare-trend').textContent = 'Product ' + topP + ' leads';
+  document.getElementById('p2-kpi-topshare-trend').className  = 'kpi-trend neutral';
 
-  // By Product bar
-  const years = year==='all'?['2022','2023','2024']:[year];
-  const colors = ['#4f8ef7','#10b981','#f59e0b','#ec4899'];
-  makeChart('chart-by-product',{
-    type:'bar',
-    data:{
-      labels:PRODUCTS,
-      datasets: years.map((y,i)=>({
-        label:y, borderRadius:4,
-        data:PRODUCTS.map(p=>sum(filterData({year:y,quarter,channel,product}).filter(d=>d.product===p),'revenue')),
-        backgroundColor:[`rgba(79,142,247,${0.5+i*0.2})`,`rgba(16,185,129,${0.5+i*0.2})`,`rgba(245,158,11,${0.5+i*0.2})`,`rgba(236,72,153,${0.5+i*0.2})`]
-      }))
+  var cMap = {};
+  CHANNELS.forEach(function(c) { cMap[c] = {}; MONTHS.forEach(function(m) { cMap[c][m] = 0; }); });
+  data.forEach(function(d) { cMap[d.channel][d.month] += d.revenue; });
+  var cColors = ['#4f8ef7', '#10b981', '#f59e0b'];
+
+  mkChart('p2-chart-channel', {
+    type: 'line',
+    data: {
+      labels: MONTHS,
+      datasets: CHANNELS.map(function(c, i) {
+        return {
+          label: c, data: MONTHS.map(function(m) { return cMap[c][m]; }),
+          borderColor: cColors[i], backgroundColor: cColors[i] + '22',
+          borderWidth: 2, pointRadius: 3, tension: 0.4, fill: false
+        };
+      })
     },
-    options:{...chartDefaults, plugins:{...chartDefaults.plugins}}
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: LEGEND }, scales: { x: XSCALE, y: YSCALE } }
   });
 
-  // By Channel multi-line
-  const chanColors = {'Online':'#06b6d4','Retail':'#7c3aed','Partner':'#f59e0b'};
-  const activeChannels = channel==='all' ? CHANNELS : [channel];
-  makeChart('chart-by-channel',{
-    type:'line',
-    data:{
-      labels:MONTHS,
-      datasets:activeChannels.map(c=>({
-        label:c, borderColor:chanColors[c], backgroundColor:chanColors[c]+'20',
-        borderWidth:2.5, fill:false, tension:.4, pointRadius:2,
-        data:MONTHS.map((_,i)=>sum(filterData({year,quarter,channel:c,product}).filter(d=>d.month===i),'revenue'))
-      }))
+  mkChart('p2-chart-product', {
+    type: 'bar',
+    data: {
+      labels: PRODUCTS.map(function(p) { return 'Product ' + p; }),
+      datasets: [{ label: 'Revenue', data: PRODUCTS.map(function(p) { return pRev[p]; }),
+        backgroundColor: ['rgba(79,142,247,0.75)','rgba(124,58,237,0.75)','rgba(6,182,212,0.75)','rgba(16,185,129,0.75)'],
+        borderRadius: 6 }]
     },
-    options:{...chartDefaults}
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: XSCALE, y: YSCALE } }
   });
 
-  // Regional
-  makeChart('chart-regional-sales',{
-    type:'bar',
-    data:{
-      labels:REGIONS,
-      datasets:[{ label:'Revenue', data:REGIONS.map(r=>sum(data.filter(d=>d.region===r),'revenue')),
-        backgroundColor:['rgba(79,142,247,0.8)','rgba(124,58,237,0.8)','rgba(6,182,212,0.8)','rgba(16,185,129,0.8)'], borderRadius:6 }]
+  var rRev = {};
+  REGIONS.forEach(function(r) { rRev[r] = 0; });
+  data.forEach(function(d) { rRev[d.region] += d.revenue; });
+
+  mkChart('p2-chart-region', {
+    type: 'bar',
+    data: {
+      labels: REGIONS,
+      datasets: [{ label: 'Revenue', data: REGIONS.map(function(r) { return rRev[r]; }),
+        backgroundColor: ['rgba(79,142,247,0.7)','rgba(124,58,237,0.7)','rgba(6,182,212,0.7)','rgba(16,185,129,0.7)'],
+        borderRadius: 6 }]
     },
-    options:{...chartDefaults, indexAxis:'y'}
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: 'rgba(255,255,255,0.5)', font: { family:'Inter',size:10 }, callback: function(v) { return '$'+(v/1e6).toFixed(1)+'M'; } }, grid: { color:'rgba(255,255,255,0.05)' } },
+        y: { ticks: { color: 'rgba(255,255,255,0.5)', font: { family:'Inter',size:10 } }, grid: { color:'rgba(255,255,255,0.05)' } }
+      }
+    }
   });
+
+  var bestChan = CHANNELS.reduce(function(a, b) {
+    var sumA = MONTHS.reduce(function(s, m) { return s + cMap[a][m]; }, 0);
+    var sumB = MONTHS.reduce(function(s, m) { return s + cMap[b][m]; }, 0);
+    return sumA >= sumB ? a : b;
+  });
+
+  document.getElementById('p2-insights').innerHTML =
+    '<li><strong>Product ' + topP + '</strong> captures ' + topShare.toFixed(1) + '% of filtered revenue — dominant in the portfolio.</li>' +
+    '<li><strong>' + bestChan + ' channel</strong> generates the highest revenue volume across selected filters.</li>' +
+    '<li><strong>Average deal size</strong> of ' + fmtM(avgDeal) + ' with ' + totalVol.toLocaleString() + ' total units sold.</li>' +
+    '<li><strong>Win rate</strong> averages ' + avgWin.toFixed(1) + '% — ' + (avgWin >= 65 ? 'strong pipeline conversion' : 'opportunity to improve lead qualification') + '.</li>' +
+    '<li>Online channel shows consistent growth — consider increasing digital marketing investment.</li>';
 }
 
-function resetPage1() {
-  ['p2-year','p2-quarter','p2-channel','p2-product'].forEach(id=>document.getElementById(id).value='all');
-  updatePage1();
-}
+// ============================================================
+// PAGE 3 - COST & EXPENSE
+// ============================================================
+function initPage3() {
+  var f    = state.p3;
+  var data = filterData(f);
 
-// ======================== PAGE 2: COSTS ========================
-function updatePage2() {
-  const year = document.getElementById('p3-year').value;
-  const region = document.getElementById('p3-region').value;
-  const quarter = document.getElementById('p3-quarter').value;
-  const data = filterData({year, region, quarter});
+  var totalRev  = sumField(data, 'revenue');
+  var totalOp   = sumField(data, 'operating_cost');
+  var totalCogs = sumField(data, 'cogs');
+  var totalSga  = sumField(data, 'sg_a');
+  var ctr       = totalRev ? (totalCogs + totalSga + totalOp) / totalRev * 100 : 0;
 
-  const totalRev = sum(data,'revenue');
-  const totalCogs = sum(data,'cogs');
-  const totalSga = sum(data,'sga');
-  const totalRd = sum(data,'rd');
-  const totalOp = totalCogs + totalSga + totalRd;
-  const ctr = totalRev > 0 ? (totalOp/totalRev*100) : 66;
+  animateCounter(document.getElementById('p3-kpi-opcost'), totalOp,   fmtM);
+  animateCounter(document.getElementById('p3-kpi-ctr'),   ctr,       function(v) { return v.toFixed(1) + '%'; });
+  animateCounter(document.getElementById('p3-kpi-cogs'),  totalCogs, fmtM);
+  animateCounter(document.getElementById('p3-kpi-sga'),   totalSga,  fmtM);
 
-  animateValue(document.getElementById('kpi-opcost'), totalOp, fmtM);
-  document.getElementById('kpi-ctr').textContent = ctr.toFixed(1)+'%';
-  animateValue(document.getElementById('kpi-cogs'), totalCogs, fmtM);
-  animateValue(document.getElementById('kpi-sga'), totalSga, fmtM);
+  document.getElementById('p3-kpi-opcost-trend').textContent = (totalRev ? (totalOp/totalRev*100).toFixed(1) : 0) + '% of revenue';
+  document.getElementById('p3-kpi-opcost-trend').className   = 'kpi-trend down';
+  document.getElementById('p3-kpi-ctr-trend').textContent    = ctr <= 65 ? '▼ Efficient, below 65%' : '▲ Above 65% threshold';
+  document.getElementById('p3-kpi-ctr-trend').className      = 'kpi-trend ' + (ctr <= 65 ? 'up' : 'down');
+  document.getElementById('p3-kpi-cogs-trend').textContent   = (totalRev ? (totalCogs/totalRev*100).toFixed(1) : 0) + '% of revenue';
+  document.getElementById('p3-kpi-cogs-trend').className     = 'kpi-trend down';
+  document.getElementById('p3-kpi-sga-trend').textContent    = (totalRev ? (totalSga/totalRev*100).toFixed(1) : 0) + '% of revenue';
+  document.getElementById('p3-kpi-sga-trend').className      = 'kpi-trend down';
 
-  // Stacked monthly
-  makeChart('chart-cost-stacked',{
-    type:'bar',
-    data:{
-      labels:MONTHS,
-      datasets:[
-        { label:'COGS', data:MONTHS.map((_,i)=>sum(data.filter(d=>d.month===i),'cogs')), backgroundColor:'rgba(239,68,68,0.7)', borderRadius:2 },
-        { label:'SG&A', data:MONTHS.map((_,i)=>sum(data.filter(d=>d.month===i),'sga')), backgroundColor:'rgba(245,158,11,0.7)', borderRadius:2 },
-        { label:'R&D', data:MONTHS.map((_,i)=>sum(data.filter(d=>d.month===i),'rd')), backgroundColor:'rgba(124,58,237,0.7)', borderRadius:2 }
+  var mCogs = {}, mSga = {}, mOp = {}, mRev = {};
+  MONTHS.forEach(function(m) { mCogs[m] = 0; mSga[m] = 0; mOp[m] = 0; mRev[m] = 0; });
+  data.forEach(function(d) {
+    mCogs[d.month] += d.cogs;
+    mSga[d.month]  += d.sg_a;
+    mOp[d.month]   += d.operating_cost;
+    mRev[d.month]  += d.revenue;
+  });
+
+  mkChart('p3-chart-stack', {
+    type: 'bar',
+    data: {
+      labels: MONTHS,
+      datasets: [
+        { label: 'COGS',      data: MONTHS.map(function(m){return mCogs[m];}), backgroundColor: 'rgba(6,182,212,0.75)',   borderRadius: 0 },
+        { label: 'SG&A',      data: MONTHS.map(function(m){return mSga[m];}),  backgroundColor: 'rgba(124,58,237,0.75)', borderRadius: 0 },
+        { label: 'Operating', data: MONTHS.map(function(m){return mOp[m];}),   backgroundColor: 'rgba(239,68,68,0.75)',  borderRadius: 0 }
       ]
     },
-    options:{...chartDefaults, scales:{...chartDefaults.scales}, plugins:{...chartDefaults.plugins, legend:{labels:{color:'#94a3b8'}}}}
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: LEGEND },
+      scales: {
+        x: Object.assign({ stacked: true }, XSCALE),
+        y: Object.assign({ stacked: true }, YSCALE)
+      }
+    }
   });
 
-  // Expense pie
-  makeChart('chart-expense-pie',{
-    type:'doughnut',
-    data:{
-      labels:['COGS','SG&A','R&D','Other'],
-      datasets:[{ data:[totalCogs, totalSga, totalRd, Math.round(totalOp*0.05)],
-        backgroundColor:['#ef4444','#f59e0b','#7c3aed','#06b6d4'], borderColor:'transparent', cutout:'65%' }]
-    },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{color:'#94a3b8',padding:12,font:{size:11}} }, tooltip:chartDefaults.plugins.tooltip } }
-  });
-
-  // Cost vs Revenue bridge
-  const qtrs = ['Q1','Q2','Q3','Q4'];
-  makeChart('chart-cost-bridge',{
-    type:'bar',
-    data:{
-      labels:qtrs,
-      datasets:[
-        { label:'Revenue', data:qtrs.map(q=>sum(data.filter(d=>d.quarter===q),'revenue')), backgroundColor:'rgba(79,142,247,0.7)', borderRadius:4 },
-        { label:'Total Cost', data:qtrs.map(q=>{ const d2=data.filter(d=>d.quarter===q); return sum(d2,'cogs')+sum(d2,'sga')+sum(d2,'rd'); }), backgroundColor:'rgba(239,68,68,0.6)', borderRadius:4 }
-      ]
-    },
-    options:{...chartDefaults}
-  });
-}
-
-function resetPage2() {
-  ['p3-year','p3-region','p3-quarter'].forEach(id=>document.getElementById(id).value='all');
-  updatePage2();
-}
-
-// ======================== PAGE 3: PROFITABILITY ========================
-function updatePage3() {
-  const year = document.getElementById('p4-year').value;
-  const product = document.getElementById('p4-product').value;
-  const region = document.getElementById('p4-region').value;
-  const data = filterData({year, product, region});
-
-  const totalRev = sum(data,'revenue');
-  const totalCogs = sum(data,'cogs');
-  const totalOp = sum(data,'opCost');
-  const grossMargin = totalRev > 0 ? ((totalRev-totalCogs)/totalRev*100) : 62.4;
-  const netMargin = 22.4 + (year==='2024'?0:year==='2023'?-2.1:-4.8) + (product!=='all'?1.2:0);
-  const roi = 32.8 + (year==='2024'?0:year==='2023'?-4.1:-8.2);
-  const accuracy = 91.7 + (year==='2024'?0:year==='2023'?-5.3:-10);
-
-  document.getElementById('kpi-margin').textContent = Math.max(netMargin,10).toFixed(1)+'%';
-  document.getElementById('kpi-roi').textContent = Math.max(roi,15).toFixed(1)+'%';
-  document.getElementById('kpi-gross').textContent = grossMargin.toFixed(1)+'%';
-  document.getElementById('kpi-accuracy').textContent = Math.min(accuracy,99).toFixed(1)+'%';
-
-  // Margin trend (monthly)
-  const activeYears = year==='all'?[2022,2023,2024]:[parseInt(year)];
-  const allMonthLabels = year==='all' ? MONTHS.concat(MONTHS).concat(MONTHS).map((m,i)=>['22','23','24'][Math.floor(i/12)]+' '+m) : MONTHS;
-  const grossVals = year==='all'
-    ? activeYears.flatMap(y=>MONTHS.map((_,i)=>{ const d=filterData({year:String(y),product,region}).filter(r=>r.month===i); const r=sum(d,'revenue'); const c=sum(d,'cogs'); return r>0?(r-c)/r*100:0; }))
-    : MONTHS.map((_,i)=>{ const d=data.filter(r=>r.month===i); const r=sum(d,'revenue'); const c=sum(d,'cogs'); return r>0?(r-c)/r*100:0; });
-  const netVals = grossVals.map((g,i)=>Math.max(g - 40 - Math.sin(i)*2 + (year==='2024'?2:year==='2023'?0:-2), 8));
-
-  makeChart('chart-margin-trend',{
-    type:'line',
-    data:{
-      labels:allMonthLabels,
-      datasets:[
-        { label:'Gross Margin %', data:grossVals, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,0.1)', fill:true, tension:.4, borderWidth:2.5, pointRadius:2 },
-        { label:'Net Margin %', data:netVals, borderColor:'#4f8ef7', backgroundColor:'rgba(79,142,247,0.1)', fill:true, tension:.4, borderWidth:2, pointRadius:2 }
-      ]
-    },
-    options:{...pctDefaults}
-  });
-
-  // ROI by product
-  const prodRoi = PRODUCTS.map((p,i)=>[34.2,38.2,29.7,27.4][i] + (region!=='all'?2:0) + (Math.random()*2-1));
-  const regRoi = REGIONS.map((r,i)=>[35.1,28.4,31.2,33.7][i] + (product!=='all'?1.5:0));
-  makeChart('chart-roi',{
-    type:'bar',
-    data:{
-      labels:[...PRODUCTS,...REGIONS],
-      datasets:[{
-        label:'ROI %',
-        data:[...prodRoi,...regRoi],
-        backgroundColor:[...PRODUCTS.map(()=>'rgba(79,142,247,0.75)'),...REGIONS.map(()=>'rgba(16,185,129,0.65)')],
-        borderRadius:5
+  mkChart('p3-chart-pie', {
+    type: 'pie',
+    data: {
+      labels: ['COGS', 'SG&A', 'Operating'],
+      datasets: [{
+        data: [totalCogs, totalSga, totalOp],
+        backgroundColor: ['rgba(6,182,212,0.8)','rgba(124,58,237,0.8)','rgba(239,68,68,0.8)'],
+        borderColor: '#0a0e1a', borderWidth: 3
       }]
     },
-    options:{...pctDefaults, scales:{...pctDefaults.scales, y:{...pctDefaults.scales.y, ticks:{...pctDefaults.scales.y.ticks, callback:v=>v+'%'}}}}
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: Object.assign({ padding: 10 }, LEGEND.labels) } }
+    }
   });
 
-  // Forecast vs Actual
-  const actuals = MONTHS.map((_,i)=>sum(filterData({year:'2024',product,region}).filter(d=>d.month===i),'revenue'));
-  const forecasts = actuals.map(v=>Math.round(v*(0.9+Math.random()*0.2)));
-  makeChart('chart-forecast',{
-    type:'line',
-    data:{
-      labels:MONTHS,
-      datasets:[
-        { label:'Actual', data:actuals, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,0.1)', fill:false, tension:.4, borderWidth:2.5, pointRadius:3 },
-        { label:'Forecast', data:forecasts, borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,0.1)', fill:false, tension:.4, borderWidth:2, borderDash:[6,3], pointRadius:3 }
+  var totalCostArr = MONTHS.map(function(m) { return mCogs[m] + mSga[m] + mOp[m]; });
+
+  mkChart('p3-chart-cvr', {
+    type: 'bar',
+    data: {
+      labels: MONTHS,
+      datasets: [
+        { label: 'Revenue',    data: MONTHS.map(function(m){return mRev[m];}), backgroundColor: 'rgba(79,142,247,0.65)', borderRadius: 4 },
+        { label: 'Total Cost', data: totalCostArr,                              backgroundColor: 'rgba(239,68,68,0.6)',   borderRadius: 4 }
       ]
     },
-    options:{...chartDefaults}
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: LEGEND }, scales: { x: XSCALE, y: YSCALE } }
   });
+
+  var cogsPct = (totalCogs + totalSga + totalOp) ? (totalCogs / (totalCogs + totalSga + totalOp) * 100).toFixed(1) : 0;
+  document.getElementById('p3-insights').innerHTML =
+    '<li><strong>COGS dominates</strong> at ' + cogsPct + '% of total cost base — optimize supplier contracts for margin uplift.</li>' +
+    '<li><strong>Cost-to-Revenue ratio</strong> of ' + ctr.toFixed(1) + '% — ' + (ctr <= 65 ? 'healthy, within target range' : 'requires attention, above 65% threshold') + '.</li>' +
+    '<li><strong>SG&A at ' + (totalRev ? (totalSga/totalRev*100).toFixed(1) : 0) + '%</strong> of revenue — review sales headcount efficiency and marketing ROI.</li>' +
+    '<li><strong>Operating costs</strong> of ' + fmtM(totalOp) + ' — automate repetitive processes to reduce overhead.</li>' +
+    '<li>Monthly cost trend shows ' + (totalCostArr[5] > totalCostArr[0] ? 'rising' : 'declining') + ' trajectory — monitor closely in upcoming quarters.</li>';
 }
 
-function resetPage3() {
-  ['p4-year','p4-product','p4-region'].forEach(id=>document.getElementById(id).value='all');
-  updatePage3();
+// ============================================================
+// PAGE 4 - PROFITABILITY & FORECAST
+// ============================================================
+function initPage4() {
+  var f    = state.p4;
+  var data = filterData(f);
+
+  var totalRev    = sumField(data, 'revenue');
+  var totalProfit = sumField(data, 'net_profit');
+  var avgRoi      = avgField(data, 'roi');
+  var avgGm       = avgField(data, 'gross_margin');
+  var npm         = totalRev ? totalProfit / totalRev * 100 : 0;
+
+  var fa = data.length ? data.reduce(function(a, d) {
+    var r = d.forecast_revenue ? Math.min(d.revenue / d.forecast_revenue, 1.3) : 1;
+    return a + r;
+  }, 0) / data.length * 100 : 0;
+
+  animateCounter(document.getElementById('p4-kpi-npm'), npm,    function(v) { return v.toFixed(1) + '%'; });
+  animateCounter(document.getElementById('p4-kpi-roi'), avgRoi, function(v) { return v.toFixed(1) + '%'; });
+  animateCounter(document.getElementById('p4-kpi-gm'),  avgGm,  function(v) { return v.toFixed(1) + '%'; });
+  animateCounter(document.getElementById('p4-kpi-fa'),  fa,     function(v) { return v.toFixed(1) + '%'; });
+
+  document.getElementById('p4-kpi-npm-trend').textContent  = npm >= 15 ? '▲ Above 15% target' : '▼ Below 15% target';
+  document.getElementById('p4-kpi-npm-trend').className    = 'kpi-trend ' + (npm >= 15 ? 'up' : 'down');
+  document.getElementById('p4-kpi-roi-trend').textContent  = avgRoi >= 25 ? '▲ Strong ROI' : '▼ Below 25% benchmark';
+  document.getElementById('p4-kpi-roi-trend').className    = 'kpi-trend ' + (avgRoi >= 25 ? 'up' : 'down');
+  document.getElementById('p4-kpi-gm-trend').textContent   = avgGm >= 50 ? '▲ Healthy gross margin' : '▼ Below 50% target';
+  document.getElementById('p4-kpi-gm-trend').className     = 'kpi-trend ' + (avgGm >= 50 ? 'up' : 'down');
+  document.getElementById('p4-kpi-fa-trend').textContent   = fa >= 95 ? '▲ Highly accurate' : 'actual vs forecast';
+  document.getElementById('p4-kpi-fa-trend').className     = 'kpi-trend ' + (fa >= 90 ? 'up' : 'neutral');
+
+  var mProfit = {}, mRev = {}, mFcst = {};
+  MONTHS.forEach(function(m) { mProfit[m] = 0; mRev[m] = 0; mFcst[m] = 0; });
+  data.forEach(function(d) {
+    mProfit[d.month] += d.net_profit;
+    mRev[d.month]    += d.revenue;
+    mFcst[d.month]   += d.forecast_revenue;
+  });
+  var marginTrend = MONTHS.map(function(m) { return mRev[m] ? mProfit[m] / mRev[m] * 100 : 0; });
+
+  mkChart('p4-chart-margin', {
+    type: 'line',
+    data: {
+      labels: MONTHS,
+      datasets: [{
+        label: 'Net Profit Margin %', data: marginTrend,
+        borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)',
+        borderWidth: 2.5, pointBackgroundColor: '#10b981', pointRadius: 4,
+        fill: true, tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: XSCALE, y: YSCALE_PCT }
+    }
+  });
+
+  var pRoi = {};
+  PRODUCTS.forEach(function(p) { pRoi[p] = { sum: 0, cnt: 0 }; });
+  data.forEach(function(d) { pRoi[d.product].sum += d.roi; pRoi[d.product].cnt++; });
+  var pRoiAvg = PRODUCTS.map(function(p) { return pRoi[p].cnt ? pRoi[p].sum / pRoi[p].cnt : 0; });
+
+  mkChart('p4-chart-roi', {
+    type: 'bar',
+    data: {
+      labels: PRODUCTS.map(function(p) { return 'Product ' + p; }),
+      datasets: [{ label: 'Avg ROI %', data: pRoiAvg,
+        backgroundColor: ['rgba(79,142,247,0.75)','rgba(124,58,237,0.75)','rgba(6,182,212,0.75)','rgba(16,185,129,0.75)'],
+        borderRadius: 6 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: XSCALE, y: YSCALE_PCT }
+    }
+  });
+
+  mkChart('p4-chart-forecast', {
+    type: 'bar',
+    data: {
+      labels: MONTHS,
+      datasets: [
+        { label: 'Actual',   data: MONTHS.map(function(m){return mRev[m];}),  backgroundColor: 'rgba(79,142,247,0.7)',  borderRadius: 4 },
+        { label: 'Forecast', data: MONTHS.map(function(m){return mFcst[m];}), backgroundColor: 'rgba(245,158,11,0.5)', borderRadius: 4 }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: LEGEND }, scales: { x: XSCALE, y: YSCALE } }
+  });
+
+  var bestP = PRODUCTS.reduce(function(a, b) { return pRoiAvg[PRODUCTS.indexOf(a)] >= pRoiAvg[PRODUCTS.indexOf(b)] ? a : b; });
+  document.getElementById('p4-insights').innerHTML =
+    '<li><strong>Net profit margin of ' + npm.toFixed(1) + '%</strong> — ' + (npm >= 15 ? 'exceeds the 15% target' : 'below 15% target, cost reduction recommended') + '.</li>' +
+    '<li><strong>Product ' + bestP + '</strong> delivers highest ROI of ' + pRoiAvg[PRODUCTS.indexOf(bestP)].toFixed(1) + '% — prioritize in sales mix.</li>' +
+    '<li><strong>Gross margin averaging ' + avgGm.toFixed(1) + '%</strong> — ' + (avgGm >= 50 ? 'strong pricing power maintained' : 'review pricing strategy') + '.</li>' +
+    '<li><strong>Forecast accuracy of ' + fa.toFixed(1) + '%</strong> — ' + (fa >= 90 ? 'prediction models are well-calibrated' : 'improve forecasting model inputs for better accuracy') + '.</li>' +
+    '<li>Upward trend in profit margin through H1 signals improving operational leverage and scale benefits.</li>';
 }
 
-// ======================== NAVIGATION ========================
-const pageTitles = ['Executive Overview','Sales & Revenue','Cost & Expense Analysis','Profitability & Forecast'];
-const pageSubtitles = ['FY 2022–2024','All Products & Channels','Full Cost Structure','Margin & ROI Analysis'];
-const updateFns = [updatePage0, updatePage1, updatePage2, updatePage3];
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+  Chart.defaults.color = 'rgba(255,255,255,0.7)';
+  Chart.defaults.font.family = 'Inter';
 
-function switchPage(idx) {
-  document.querySelectorAll('.page').forEach((p,i)=>p.classList.toggle('active',i===idx));
-  document.querySelectorAll('.nav-item').forEach((n,i)=>n.classList.toggle('active',i===idx));
-  document.getElementById('pageTitle').innerHTML = `${pageTitles[idx]} <span>${pageSubtitles[idx]}</span>`;
-  // Delay to allow DOM to settle
-  requestAnimationFrame(()=>updateFns[idx]());
-}
+  setupPills('p1-year-pills',    'year',    state.p1, initPage1);
+  setupPills('p1-region-pills',  'region',  state.p1, initPage1);
 
-// ======================== INIT ========================
-Chart.defaults.color = '#64748b';
-Chart.defaults.font.family = 'Inter';
-updatePage0();
+  setupPills('p2-year-pills',    'year',    state.p2, initPage2);
+  setupPills('p2-quarter-pills', 'quarter', state.p2, initPage2);
+  setupPills('p2-channel-pills', 'channel', state.p2, initPage2);
+  setupPills('p2-product-pills', 'product', state.p2, initPage2);
+
+  setupPills('p3-year-pills',    'year',    state.p3, initPage3);
+  setupPills('p3-region-pills',  'region',  state.p3, initPage3);
+  setupPills('p3-quarter-pills', 'quarter', state.p3, initPage3);
+
+  setupPills('p4-year-pills',    'year',    state.p4, initPage4);
+  setupPills('p4-product-pills', 'product', state.p4, initPage4);
+  setupPills('p4-region-pills',  'region',  state.p4, initPage4);
+
+  initPage1();
+});
 </script>
 </body>
 </html>
