@@ -258,11 +258,24 @@ CT = '<?xml version="1.0" encoding="utf-8"?>\n' \
      '  <Override PartName="/SecurityBindings" ContentType="application/octet-stream"/>\n' \
      '</Types>'
 
+# ── Strip fields unsupported by older Power BI Desktop versions ───────────────
+UNSUPPORTED_KEYS = {"lineageTag", "isKey", "sourceLineageTag"}
+
+def strip_unsupported(obj):
+    """Recursively remove keys that older PBI Desktop versions reject."""
+    if isinstance(obj, dict):
+        return {k: strip_unsupported(v) for k, v in obj.items() if k not in UNSUPPORTED_KEYS}
+    if isinstance(obj, list):
+        return [strip_unsupported(i) for i in obj]
+    return obj
+
+TMSL_CLEAN = strip_unsupported(TMSL)
+
 # ── Write PBIT ────────────────────────────────────────────────────────────────
 # KEY: reuse Report/Layout, Settings, Metadata, Version, SecurityBindings
 # from the working source PBIX — only DataModelSchema and DiagramLayout are new.
-tmsl_bytes = json.dumps(TMSL,   ensure_ascii=False, separators=(",",":")).encode("utf-16-le")
-diag_bytes = json.dumps(DIAGRAM,ensure_ascii=False, separators=(",",":")).encode("utf-16-le")
+tmsl_bytes = json.dumps(TMSL_CLEAN, ensure_ascii=False, separators=(",",":")).encode("utf-16-le")
+diag_bytes = json.dumps(DIAGRAM,    ensure_ascii=False, separators=(",",":")).encode("utf-16-le")
 
 with zipfile.ZipFile(DST, "w", compression=zipfile.ZIP_DEFLATED) as zout:
     zout.writestr("Version",             raw["Version"])          # original version file
