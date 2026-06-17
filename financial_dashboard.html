@@ -266,6 +266,8 @@
             <div class="pill active" data-val="All">All</div>
             <div class="pill" data-val="Q1">Q1</div>
             <div class="pill" data-val="Q2">Q2</div>
+            <div class="pill" data-val="Q3">Q3</div>
+            <div class="pill" data-val="Q4">Q4</div>
           </div>
         </div>
         <div class="slicer-group">
@@ -365,6 +367,8 @@
             <div class="pill active" data-val="All">All</div>
             <div class="pill" data-val="Q1">Q1</div>
             <div class="pill" data-val="Q2">Q2</div>
+            <div class="pill" data-val="Q3">Q3</div>
+            <div class="pill" data-val="Q4">Q4</div>
           </div>
         </div>
       </div>
@@ -506,7 +510,7 @@
 // ============================================================
 // 72-ROW DATASET: 3 years * 4 regions * 6 months
 // ============================================================
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const REGIONS = ['North','South','East','West'];
 const PRODUCTS = ['A','B','C','D'];
 const CHANNELS = ['Online','Retail','Partner'];
@@ -529,14 +533,14 @@ for (var yi = 0; yi < 3; yi++) {
   var year = YEARS[yi];
   for (var ri = 0; ri < 4; ri++) {
     var region = REGIONS[ri];
-    for (var mi = 0; mi < 6; mi++) {
+    for (var mi = 0; mi < 12; mi++) {
       var month   = MONTHS[mi];
       var product = PRODUCTS[(mi + ri) % 4];
       var channel = CHANNELS[(mi + ri * 2) % 3];
 
       seed++;
       var noise    = 0.86 + seededRand(seed) * 0.28;
-      var seasonal = 1 + 0.07 * Math.sin(mi * Math.PI / 3);
+      var seasonal = 1 + 0.12 * Math.sin((mi / 11) * Math.PI) + (mi >= 10 ? 0.15 : 0);
       var base     = 420000;
       var revenue  = Math.round(base * regionMult[region] * productMult[product] * channelMult[channel] * yearMult[year] * noise * seasonal);
 
@@ -593,7 +597,12 @@ function fmtM(v) {
 function fmtPct(v) { return v.toFixed(1) + '%'; }
 function sumField(arr, key) { return arr.reduce(function(a, b) { return a + (b[key] || 0); }, 0); }
 function avgField(arr, key) { return arr.length ? sumField(arr, key) / arr.length : 0; }
-function monthToQ(m) { return (m === 'Jan' || m === 'Feb' || m === 'Mar') ? 'Q1' : 'Q2'; }
+function monthToQ(m) {
+  if (m==='Jan'||m==='Feb'||m==='Mar') return 'Q1';
+  if (m==='Apr'||m==='May'||m==='Jun') return 'Q2';
+  if (m==='Jul'||m==='Aug'||m==='Sep') return 'Q3';
+  return 'Q4';
+}
 
 function filterData(f) {
   return rawData.filter(function(d) {
