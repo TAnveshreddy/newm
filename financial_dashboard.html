@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Financial Dashboard — Nexus Corp</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #1e2433;
+    --surface:   #252d42;
+    --surface2:  #2d3654;
+    --border:    #323d5a;
+    --blue:      #0078d4;
+    --blue-lt:   #1a8fe0;
+    --green:     #00b050;
+    --red:       #ff4444;
+    --orange:    #ff8c00;
+    --purple:    #7c5cbf;
+    --text:      #e8ecf4;
+    --text-muted:#8b95b0;
+    --text-dim:  #5c6785;
+    --radius:    10px;
+    --sidebar-w: 230px;
+    --header-h:  60px;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  /* ── Layout Shell ── */
+  .shell {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: #161c2e;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+  }
+
+  .logo-area {
+    height: var(--header-h);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-icon {
+    width: 34px;
+    height: 34px;
+    background: linear-gradient(135deg, var(--blue), #0050a0);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -1px;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .logo-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .logo-sub {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .nav-section {
+    padding: 20px 0 8px;
+  }
+
+  .nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0 18px 8px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .nav-item:hover {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  .nav-item.active {
+    color: var(--blue);
+    background: rgba(0,120,212,0.12);
+  }
+
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 4px; bottom: 4px;
+    width: 3px;
+    background: var(--blue);
+    border-radius: 0 3px 3px 0;
+  }
+
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .user-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+  }
+
+  .user-info { overflow: hidden; }
+  .user-name { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-role { font-size: 10px; color: var(--text-muted); }
+
+  /* ── Main Area ── */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Top Bar ── */
+  .topbar {
+    height: var(--header-h);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 24px;
+    flex-shrink: 0;
+  }
+
+  .topbar-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-right: 8px;
+  }
+
+  .topbar-breadcrumb {
+    font-size: 12px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .topbar-breadcrumb span { color: var(--text-muted); }
+
+  .topbar-spacer { flex: 1; }
+
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .filter-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .filter-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238b95b0'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 24px;
+    transition: border-color 0.15s;
+  }
+
+  .filter-select:hover, .filter-select:focus {
+    border-color: var(--blue);
+  }
+
+  .filter-divider {
+    width: 1px; height: 24px;
+    background: var(--border);
+    margin: 0 4px;
+  }
+
+  .btn-refresh {
+    background: var(--blue);
+    border: none;
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: background 0.15s;
+    font-family: inherit;
+  }
+
+  .btn-refresh:hover { background: var(--blue-lt); }
+
+  /* ── Content Scroll Area ── */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .content::-webkit-scrollbar { width: 6px; }
+  .content::-webkit-scrollbar-track { background: transparent; }
+  .content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── Section Header ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px; height: 14px;
+    background: var(--blue);
+    border-radius: 2px;
+  }
+
+  .section-meta {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  /* ── KPI Cards ── */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+    cursor: default;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  }
+
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    border-color: var(--blue);
+  }
+
+  .kpi-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  .kpi-card.blue::after   { background: var(--blue); }
+  .kpi-card.green::after  { background: var(--green); }
+  .kpi-card.red::after    { background: var(--red); }
+  .kpi-card.orange::after { background: var(--orange); }
+
+  .kpi-icon {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    margin-bottom: 14px;
+  }
+
+  .kpi-card.blue   .kpi-icon { background: rgba(0,120,212,0.18); }
+  .kpi-card.green  .kpi-icon { background: rgba(0,176,80,0.18); }
+  .kpi-card.red    .kpi-icon { background: rgba(255,68,68,0.18); }
+  .kpi-card.orange .kpi-icon { background: rgba(255,140,0,0.18); }
+
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .kpi-value {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .kpi-delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+
+  .kpi-delta.up   { background: rgba(0,176,80,0.15); color: var(--green); }
+  .kpi-delta.down { background: rgba(255,68,68,0.15); color: var(--red); }
+
+  .kpi-delta-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: 8px;
+  }
+
+  .kpi-footer {
+    display: flex;
+    align-items: center;
+    margin-top: 8px;
+  }
+
+  /* ── Chart Cards ── */
+  .chart-row {
+    display: grid;
+    gap: 16px;
+  }
+
+  .chart-row.two-col { grid-template-columns: 2fr 1fr; }
+  .chart-row.equal   { grid-template-columns: 1fr 1fr; }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    transition: border-color 0.2s;
+  }
+
+  .chart-card:hover { border-color: var(--border); }
+
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+  }
+
+  /* ── Tables ── */
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .table-card-header {
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .data-table thead th {
+    background: #1a2035;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 10px 16px;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .data-table thead th.num { text-align: right; }
+
+  .data-table tbody tr {
+    border-bottom: 1px solid rgba(50,61,90,0.5);
+    transition: background 0.15s;
+  }
+
+  .data-table tbody tr:last-child { border-bottom: none; }
+
+  .data-table tbody tr:hover { background: rgba(0,120,212,0.07); }
+
+  .data-table tbody td {
+    padding: 11px 16px;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .data-table tbody td.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+
+  .data-table tbody td.pos { color: var(--green); }
+  .data-table tbody td.neg { color: var(--red); }
+  .data-table tbody td.muted { color: var(--text-muted); }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .badge-q1 { background: rgba(0,120,212,0.2); color: #4da6ff; }
+  .badge-q2 { background: rgba(0,176,80,0.2);  color: #33cc77; }
+  .badge-q3 { background: rgba(255,140,0,0.2); color: #ffa030; }
+  .badge-q4 { background: rgba(124,92,191,0.2);color: #a080e0; }
+
+  /* rank badge */
+  .rank {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--surface2);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+
+  .rank.top { background: rgba(255,140,0,0.2); color: var(--orange); }
+
+  /* progress bar in table */
+  .prog-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .prog-bar-bg {
+    flex: 1;
+    height: 5px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .prog-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--blue), var(--blue-lt));
+    transition: width 1s ease;
+  }
+
+  /* ── Sparkline mini stat ── */
+  .mini-stats {
+    display: flex;
+    gap: 24px;
+    padding: 12px 22px;
+    background: #1a2035;
+    border-top: 1px solid var(--border);
+  }
+
+  .mini-stat { display: flex; flex-direction: column; gap: 2px; }
+  .mini-stat-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+  .mini-stat-val   { font-size: 13px; font-weight: 700; color: var(--text); }
+
+  /* ── Divider ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Tooltip override ── */
+  .chartjs-tooltip {
+    background: #0d1220 !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    padding: 8px 12px !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 12px !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5) !important;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 1200px) {
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .chart-row.two-col { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .kpi-row { grid-template-columns: 1fr 1fr; }
+    .chart-row.equal { grid-template-columns: 1fr; }
+    .filter-group { display: none; }
+  }
+
+  /* ── Update pulse ── */
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.3; }
+  }
+
+  .live-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse-dot 2s ease infinite;
+    display: inline-block;
+  }
+
+  /* ── Number counter animation ── */
+  .kpi-value { transition: opacity 0.3s; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ═══════════════════════════════════════════ SIDEBAR ═══ -->
+  <nav class="sidebar">
+    <div class="logo-area">
+      <div class="logo-icon">NC</div>
+      <div class="logo-text">
+        <div class="logo-name">Nexus Corp</div>
+        <div class="logo-sub">Finance Suite</div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <div class="nav-item active"><span class="nav-icon">&#9741;</span> Dashboard</div>
+      <div class="nav-item"><span class="nav-icon">&#128202;</span> Analytics</div>
+      <div class="nav-item"><span class="nav-icon">&#128176;</span> Revenue</div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Finance</div>
+      <div class="nav-item"><span class="nav-icon">&#128200;</span> P&amp;L Statement</div>
+      <div class="nav-item"><span class="nav-icon">&#127970;</span> Balance Sheet</div>
+      <div class="nav-item"><span class="nav-icon">&#128181;</span> Cash Flow</div>
+      <div class="nav-item"><span class="nav-icon">&#128451;</span> Budget vs Actual</div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Reports</div>
+      <div class="nav-item"><span class="nav-icon">&#128196;</span> Monthly Reports</div>
+      <div class="nav-item"><span class="nav-icon">&#128201;</span> Forecasting</div>
+      <div class="nav-item"><span class="nav-icon">&#9881;</span> Settings</div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="avatar">AN</div>
+        <div class="user-info">
+          <div class="user-name">Anvesh N.</div>
+          <div class="user-role">CFO · Admin</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════ MAIN ═══ -->
+  <div class="main">
+
+    <!-- Top Bar -->
+    <div class="topbar">
+      <div class="topbar-title">Financial Overview</div>
+      <div class="topbar-breadcrumb">
+        <span>Home</span> › <span style="color:var(--text-muted)">Dashboard</span>
+      </div>
+      <div class="topbar-spacer"></div>
+
+      <div class="filter-group">
+        <span class="live-dot"></span>
+        <span class="filter-label">Live</span>
+        <div class="filter-divider"></div>
+        <span class="filter-label">Year</span>
+        <select class="filter-select">
+          <option>FY 2025</option>
+          <option>FY 2024</option>
+          <option>FY 2023</option>
+        </select>
+        <span class="filter-label">Quarter</span>
+        <select class="filter-select">
+          <option>All Quarters</option>
+          <option>Q1</option>
+          <option>Q2</option>
+          <option>Q3</option>
+          <option>Q4</option>
+        </select>
+        <span class="filter-label">Region</span>
+        <select class="filter-select">
+          <option>Global</option>
+          <option>North America</option>
+          <option>Europe</option>
+          <option>APAC</option>
+        </select>
+        <div class="filter-divider"></div>
+        <button class="btn-refresh">&#8635; Refresh</button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- ── KPI Cards ── -->
+      <section>
+        <div class="section-header">
+          <div class="section-title">Key Performance Indicators</div>
+          <div class="section-meta">As of June 2025 &nbsp;·&nbsp; FY 2025</div>
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi-card blue">
+            <div class="kpi-icon">&#128178;</div>
+            <div class="kpi-label">Total Revenue</div>
+            <div class="kpi-value" id="kpi-revenue">$0</div>
+            <div class="kpi-footer">
+              <span class="kpi-delta up">&#9650; 14.2%</span>
+              <span class="kpi-delta-label">vs prior year</span>
+            </div>
+          </div>
+
+          <div class="kpi-card green">
+            <div class="kpi-icon">&#128200;</div>
+            <div class="kpi-label">Net Profit</div>
+            <div class="kpi-value" id="kpi-profit">$0</div>
+            <div class="kpi-footer">
+              <span class="kpi-delta up">&#9650; 9.7%</span>
+              <span class="kpi-delta-label">vs prior year</span>
+            </div>
+          </div>
+
+          <div class="kpi-card red">
+            <div class="kpi-icon">&#128197;</div>
+            <div class="kpi-label">Operating Expenses</div>
+            <div class="kpi-value" id="kpi-opex">$0</div>
+            <div class="kpi-footer">
+              <span class="kpi-delta down">&#9650; 6.3%</span>
+              <span class="kpi-delta-label">vs prior year</span>
+            </div>
+          </div>
+
+          <div class="kpi-card orange">
+            <div class="kpi-icon">&#9741;</div>
+            <div class="kpi-label">Profit Margin</div>
+            <div class="kpi-value" id="kpi-margin">0%</div>
+            <div class="kpi-footer">
+              <span class="kpi-delta up">&#9650; 1.8pp</span>
+              <span class="kpi-delta-label">vs prior year</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Revenue vs Expenses & Donut ── -->
+      <section>
+        <div class="chart-row two-col">
+
+          <div class="chart-card">
+            <div class="section-header">
+              <div class="section-title">Monthly Revenue vs Expenses</div>
+              <div class="section-meta">Jan – Dec 2025</div>
+            </div>
+            <div class="chart-wrap" style="height:280px">
+              <canvas id="barChart"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="section-header">
+              <div class="section-title">Revenue by Category</div>
+              <div class="section-meta">FY 2025</div>
+            </div>
+            <div class="chart-wrap" style="height:220px;display:flex;align-items:center;justify-content:center;">
+              <canvas id="donutChart"></canvas>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;">
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)"><span style="width:10px;height:10px;background:#0078d4;border-radius:50%;display:inline-block"></span>Products</div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)"><span style="width:10px;height:10px;background:#00b050;border-radius:50%;display:inline-block"></span>Services</div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)"><span style="width:10px;height:10px;background:#ff8c00;border-radius:50%;display:inline-block"></span>Subscriptions</div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)"><span style="width:10px;height:10px;background:#7c5cbf;border-radius:50%;display:inline-block"></span>Consulting</div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ── Quarterly P&L Table ── -->
+      <section>
+        <div class="table-card">
+          <div class="table-card-header">
+            <div class="section-header" style="margin-bottom:0">
+              <div class="section-title">Quarterly P&amp;L Statement</div>
+              <div class="section-meta">FY 2025 · USD thousands</div>
+            </div>
+          </div>
+          <table class="data-table" id="plTable"></table>
+          <div class="mini-stats" id="plFooter"></div>
+        </div>
+      </section>
+
+      <!-- ── Cash Flow & Top Products ── -->
+      <section>
+        <div class="chart-row equal">
+
+          <div class="chart-card">
+            <div class="section-header">
+              <div class="section-title">Cash Flow Analysis</div>
+              <div class="section-meta">Monthly · FY 2025</div>
+            </div>
+            <div class="chart-wrap" style="height:260px">
+              <canvas id="cashFlowChart"></canvas>
+            </div>
+          </div>
+
+          <div class="table-card" style="display:flex;flex-direction:column;">
+            <div class="table-card-header">
+              <div class="section-header" style="margin-bottom:0">
+                <div class="section-title">Top 5 Products</div>
+                <div class="section-meta">By Revenue · FY 2025</div>
+              </div>
+            </div>
+            <table class="data-table" id="topProducts"></table>
+          </div>
+
+        </div>
+      </section>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+/* ════════════════════════════════════
+   SAMPLE FINANCIAL DATA
+   ════════════════════════════════════ */
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// Monthly revenue & expenses (thousands)
+const monthlyRevenue  = [4820, 5130, 5640, 5280, 5990, 6240, 6180, 6550, 6820, 7110, 7340, 7680];
+const monthlyExpenses = [3210, 3490, 3780, 3590, 3980, 4110, 4070, 4250, 4390, 4550, 4680, 4890];
+
+// Revenue by category (thousands)
+const categoryData = {
+  labels: ['Products', 'Services', 'Subscriptions', 'Consulting'],
+  values: [28640, 19380, 14720, 7460]
+};
+
+// Quarterly P&L (thousands)
+const quarterlyPL = [
+  { q: 'Q1 2025', badge: 'badge-q1', revenue: 15590, cogs: 7012, opex: 10480, netIncome: null },
+  { q: 'Q2 2025', badge: 'badge-q2', revenue: 17510, cogs: 7880, opex: 11680, netIncome: null },
+  { q: 'Q3 2025', badge: 'badge-q3', revenue: 19550, cogs: 8798, opex: 12710, netIncome: null },
+  { q: 'Q4 2025', badge: 'badge-q4', revenue: 22130, cogs: 9959, opex: 14120, netIncome: null },
+];
+
+quarterlyPL.forEach(r => {
+  r.grossProfit = r.revenue - r.cogs;
+  r.netIncome   = r.grossProfit - r.opex;
+  r.margin      = ((r.netIncome / r.revenue) * 100).toFixed(1);
+});
+
+// Cash flow (thousands)
+const cashOperating  = [1820, 2130, 2340, 2180, 2490, 2610, 2540, 2720, 2890, 3010, 3140, 3290];
+const cashInvesting  = [-820, -640, -910, -730, -880, -1020, -750, -690, -840, -1120, -960, -1080];
+const cashFinancing  = [-240, -310, -180, -290, -340, -380, -260, -310, -290, -420, -380, -450];
+
+// Top 5 products
+const topProducts = [
+  { rank: 1, name: 'Enterprise Suite Pro',  category: 'Software',  revenue: 14820, units: 312,  growth: 22.4 },
+  { rank: 2, name: 'CloudSync Platform',    category: 'SaaS',      revenue: 12340, units: 1840, growth: 18.7 },
+  { rank: 3, name: 'DataVault Analytics',   category: 'Software',  revenue:  9610, units: 204,  growth: 14.2 },
+  { rank: 4, name: 'SecureConnect VPN',     category: 'Subscript.',revenue:  8290, units: 6720, growth:  9.8 },
+  { rank: 5, name: 'AI Insights Engine',    category: 'Services',  revenue:  7480, units: 98,   growth: 31.6 },
+];
+
+/* ════════════════════════════════════
+   HELPERS
+   ════════════════════════════════════ */
+const fmt = (v, decimals=0) =>
+  '$' + (v/1000).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + 'M';
+
+const fmtK = v => '$' + v.toLocaleString('en-US') + 'K';
+
+const sum = arr => arr.reduce((a,b) => a+b, 0);
+
+/* ════════════════════════════════════
+   KPI COUNTER ANIMATION
+   ════════════════════════════════════ */
+function animateCounter(el, target, prefix='$', suffix='', decimals=0, isMillion=true) {
+  const start = 0;
+  const duration = 1400;
+  const startTime = performance.now();
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+
+  function tick(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const value = start + (target - start) * easeOut(progress);
+
+    if (isMillion) {
+      el.textContent = prefix + (value / 1000).toFixed(decimals) + 'M' + suffix;
+    } else {
+      el.textContent = prefix + value.toFixed(decimals) + suffix;
+    }
+
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+// Totals
+const totalRevenue = sum(monthlyRevenue);
+const totalExpenses = sum(monthlyExpenses);
+const totalNetProfit = totalRevenue - totalExpenses;
+const profitMargin = (totalNetProfit / totalRevenue) * 100;
+
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    animateCounter(document.getElementById('kpi-revenue'), totalRevenue, '$', '', 2, true);
+    animateCounter(document.getElementById('kpi-profit'),  totalNetProfit, '$', '', 2, true);
+    animateCounter(document.getElementById('kpi-opex'),    totalExpenses, '$', '', 2, true);
+    animateCounter(document.getElementById('kpi-margin'),  profitMargin, '', '%', 1, false);
+  }, 200);
+});
+
+/* ════════════════════════════════════
+   CHART DEFAULTS
+   ════════════════════════════════════ */
+Chart.defaults.color = '#8b95b0';
+Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+Chart.defaults.font.size = 12;
+
+const gridColor  = 'rgba(50,61,90,0.6)';
+const tooltipBg  = '#0d1220';
+const tooltipBdr = '#323d5a';
+
+const tooltipDefaults = {
+  backgroundColor: tooltipBg,
+  borderColor: tooltipBdr,
+  borderWidth: 1,
+  titleColor: '#e8ecf4',
+  bodyColor: '#8b95b0',
+  padding: 10,
+  cornerRadius: 8,
+  displayColors: true,
+  boxWidth: 10,
+  boxHeight: 10,
+};
+
+/* ════════════════════════════════════
+   BAR CHART — Revenue vs Expenses
+   ════════════════════════════════════ */
+(function() {
+  const ctx = document.getElementById('barChart').getContext('2d');
+
+  const gradRev = ctx.createLinearGradient(0,0,0,300);
+  gradRev.addColorStop(0, 'rgba(0,120,212,0.85)');
+  gradRev.addColorStop(1, 'rgba(0,120,212,0.4)');
+
+  const gradExp = ctx.createLinearGradient(0,0,0,300);
+  gradExp.addColorStop(0, 'rgba(255,68,68,0.75)');
+  gradExp.addColorStop(1, 'rgba(255,68,68,0.3)');
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: MONTHS,
+      datasets: [
+        {
+          label: 'Revenue',
+          data: monthlyRevenue,
+          backgroundColor: gradRev,
+          borderRadius: 5,
+          borderSkipped: false,
+        },
+        {
+          label: 'Expenses',
+          data: monthlyExpenses,
+          backgroundColor: gradExp,
+          borderRadius: 5,
+          borderSkipped: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'top',
+          align: 'end',
+          labels: { usePointStyle: true, pointStyle: 'circle', padding: 16, font: { size: 11 } }
+        },
+        tooltip: {
+          ...tooltipDefaults,
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString()}K`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: gridColor, drawBorder: false },
+          ticks: { font: { size: 11 } }
+        },
+        y: {
+          grid: { color: gridColor, drawBorder: false },
+          ticks: {
+            font: { size: 11 },
+            callback: v => '$' + (v/1000).toFixed(0) + 'M'
+          }
+        }
+      }
+    }
+  });
+})();
+
+/* ════════════════════════════════════
+   DONUT CHART — Revenue by Category
+   ════════════════════════════════════ */
+(function() {
+  const ctx = document.getElementById('donutChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: categoryData.labels,
+      datasets: [{
+        data: categoryData.values,
+        backgroundColor: ['#0078d4','#00b050','#ff8c00','#7c5cbf'],
+        hoverBackgroundColor: ['#1a8fe0','#00c860','#ffa030','#9070cf'],
+        borderWidth: 3,
+        borderColor: '#252d42',
+        hoverBorderColor: '#252d42',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      cutout: '70%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...tooltipDefaults,
+          callbacks: {
+            label: ctx => {
+              const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+              const pct = ((ctx.parsed / total)*100).toFixed(1);
+              return ` ${ctx.label}: $${(ctx.parsed/1000).toFixed(2)}M (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+})();
+
+/* ════════════════════════════════════
+   CASH FLOW LINE CHART
+   ════════════════════════════════════ */
+(function() {
+  const ctx = document.getElementById('cashFlowChart').getContext('2d');
+
+  const makeGrad = (ctx, color1, color2) => {
+    const g = ctx.createLinearGradient(0,0,0,260);
+    g.addColorStop(0, color1);
+    g.addColorStop(1, color2);
+    return g;
+  };
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: MONTHS,
+      datasets: [
+        {
+          label: 'Operating',
+          data: cashOperating,
+          borderColor: '#0078d4',
+          backgroundColor: makeGrad(ctx,'rgba(0,120,212,0.25)','rgba(0,120,212,0.02)'),
+          borderWidth: 2.5,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#0078d4',
+          fill: true,
+          tension: 0.4,
+        },
+        {
+          label: 'Investing',
+          data: cashInvesting,
+          borderColor: '#ff4444',
+          backgroundColor: makeGrad(ctx,'rgba(255,68,68,0.18)','rgba(255,68,68,0.02)'),
+          borderWidth: 2,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#ff4444',
+          fill: true,
+          tension: 0.4,
+        },
+        {
+          label: 'Financing',
+          data: cashFinancing,
+          borderColor: '#ff8c00',
+          backgroundColor: makeGrad(ctx,'rgba(255,140,0,0.15)','rgba(255,140,0,0.02)'),
+          borderWidth: 2,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#ff8c00',
+          fill: true,
+          tension: 0.4,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'top',
+          align: 'end',
+          labels: { usePointStyle: true, pointStyle: 'circle', padding: 14, font: { size: 11 } }
+        },
+        tooltip: {
+          ...tooltipDefaults,
+          callbacks: {
+            label: ctx => {
+              const val = ctx.parsed.y;
+              const sign = val >= 0 ? '+' : '';
+              return ` ${ctx.dataset.label}: ${sign}$${val.toLocaleString()}K`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: gridColor, drawBorder: false },
+          ticks: { font: { size: 11 } }
+        },
+        y: {
+          grid: { color: gridColor, drawBorder: false },
+          ticks: {
+            font: { size: 11 },
+            callback: v => (v >= 0 ? '+' : '') + '$' + (v/1000).toFixed(1) + 'M'
+          }
+        }
+      }
+    }
+  });
+})();
+
+/* ════════════════════════════════════
+   QUARTERLY P&L TABLE
+   ════════════════════════════════════ */
+(function() {
+  const table = document.getElementById('plTable');
+
+  const totalRev = quarterlyPL.reduce((a,r) => a + r.revenue, 0);
+  const totalNI  = quarterlyPL.reduce((a,r) => a + r.netIncome, 0);
+  const totalGP  = quarterlyPL.reduce((a,r) => a + r.grossProfit, 0);
+  const totalOE  = quarterlyPL.reduce((a,r) => a + r.opex, 0);
+
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>Quarter</th>
+        <th class="num">Revenue</th>
+        <th class="num">COGS</th>
+        <th class="num">Gross Profit</th>
+        <th class="num">Operating Exp.</th>
+        <th class="num">Net Income</th>
+        <th class="num">Margin %</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${quarterlyPL.map(r => `
+        <tr>
+          <td><span class="badge ${r.badge}">${r.q}</span></td>
+          <td class="num">$${r.revenue.toLocaleString()}K</td>
+          <td class="num muted">$${r.cogs.toLocaleString()}K</td>
+          <td class="num pos">$${r.grossProfit.toLocaleString()}K</td>
+          <td class="num neg">$${r.opex.toLocaleString()}K</td>
+          <td class="num" style="color:${r.netIncome >= 0 ? 'var(--green)' : 'var(--red)'}">
+            ${r.netIncome >= 0 ? '+' : ''}$${r.netIncome.toLocaleString()}K
+          </td>
+          <td class="num" style="color:${parseFloat(r.margin) > 15 ? 'var(--green)' : parseFloat(r.margin) > 5 ? 'var(--orange)' : 'var(--red)'}">
+            ${r.margin}%
+          </td>
+        </tr>
+      `).join('')}
+      <tr style="background:#1a2035;font-weight:700;">
+        <td style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px">FY Total</td>
+        <td class="num" style="color:var(--blue)">$${totalRev.toLocaleString()}K</td>
+        <td class="num muted">—</td>
+        <td class="num pos">$${totalGP.toLocaleString()}K</td>
+        <td class="num neg">$${totalOE.toLocaleString()}K</td>
+        <td class="num" style="color:var(--green)">+$${totalNI.toLocaleString()}K</td>
+        <td class="num" style="color:var(--green)">${((totalNI/totalRev)*100).toFixed(1)}%</td>
+      </tr>
+    </tbody>
+  `;
+
+  // Footer mini stats
+  document.getElementById('plFooter').innerHTML = `
+    <div class="mini-stat">
+      <div class="mini-stat-label">YoY Rev Growth</div>
+      <div class="mini-stat-val" style="color:var(--green)">+14.2%</div>
+    </div>
+    <div class="mini-stat">
+      <div class="mini-stat-label">Gross Margin</div>
+      <div class="mini-stat-val" style="color:var(--blue)">${((totalGP/totalRev)*100).toFixed(1)}%</div>
+    </div>
+    <div class="mini-stat">
+      <div class="mini-stat-label">Net Margin</div>
+      <div class="mini-stat-val" style="color:var(--orange)">${((totalNI/totalRev)*100).toFixed(1)}%</div>
+    </div>
+    <div class="mini-stat">
+      <div class="mini-stat-label">EBITDA (est.)</div>
+      <div class="mini-stat-val">$${(totalNI * 1.18 / 1000).toFixed(2)}M</div>
+    </div>
+    <div class="mini-stat">
+      <div class="mini-stat-label">Best Quarter</div>
+      <div class="mini-stat-val" style="color:var(--purple)">Q4 2025</div>
+    </div>
+  `;
+})();
+
+/* ════════════════════════════════════
+   TOP 5 PRODUCTS TABLE
+   ════════════════════════════════════ */
+(function() {
+  const table = document.getElementById('topProducts');
+  const maxRev = Math.max(...topProducts.map(p => p.revenue));
+
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Product</th>
+        <th class="num">Revenue</th>
+        <th class="num">Growth</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${topProducts.map(p => `
+        <tr>
+          <td><span class="rank ${p.rank === 1 ? 'top' : ''}">${p.rank}</span></td>
+          <td>
+            <div style="font-weight:600;font-size:12px;margin-bottom:2px">${p.name}</div>
+            <div style="font-size:10px;color:var(--text-dim)">${p.category} · ${p.units.toLocaleString()} units</div>
+            <div class="prog-wrap" style="margin-top:5px">
+              <div class="prog-bar-bg">
+                <div class="prog-bar-fill" style="width:${(p.revenue/maxRev*100).toFixed(1)}%"></div>
+              </div>
+            </div>
+          </td>
+          <td class="num" style="white-space:nowrap">$${(p.revenue/1000).toFixed(2)}M</td>
+          <td class="num ${p.growth > 0 ? 'pos' : 'neg'}" style="white-space:nowrap">
+            ${p.growth > 0 ? '&#9650;' : '&#9660;'} ${Math.abs(p.growth).toFixed(1)}%
+          </td>
+        </tr>
+      `).join('')}
+    </tbody>
+  `;
+})();
+</script>
+</body>
+</html>
