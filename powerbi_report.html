@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Nexus Corp FY2024 — Power BI Report</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:#c8c6c4;overflow:hidden;height:100vh;display:flex;flex-direction:column}
+
+/* ── RIBBON ── */
+.ribbon{background:#f3f2f1;border-bottom:1px solid #e1dfdd;flex-shrink:0}
+.ribbon-top{display:flex;align-items:center;height:36px;padding:0 8px;gap:4px}
+.pbi-logo{display:flex;align-items:center;gap:6px;margin-right:12px;font-weight:600;font-size:13px;color:#252423}
+.pbi-logo svg{width:22px;height:22px}
+.ribbon-tabs{display:flex;gap:0}
+.ribbon-tab{padding:8px 14px;font-size:12px;color:#605e5c;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.ribbon-tab:hover{background:#edebe9;color:#323130}
+.ribbon-tab.active{color:#0078d4;border-bottom-color:#0078d4;font-weight:600}
+.ribbon-tools{display:flex;align-items:center;height:52px;padding:4px 8px 4px 12px;gap:2px;border-top:1px solid #e1dfdd}
+.rtool{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 8px;cursor:pointer;border-radius:2px;color:#605e5c;font-size:10px;gap:2px;min-width:40px}
+.rtool:hover{background:#edebe9}
+.rtool-icon{font-size:16px}
+.rtool-sep{width:1px;background:#e1dfdd;height:40px;margin:0 4px}
+.rtool-group{display:flex;align-items:center;border-right:1px solid #e1dfdd;padding-right:6px;margin-right:6px;gap:2px}
+
+/* ── SHELL ── */
+.shell{display:flex;flex:1;overflow:hidden}
+
+/* ── LEFT ICON STRIP ── */
+.left-strip{width:44px;background:#252423;display:flex;flex-direction:column;align-items:center;padding-top:8px;gap:2px;flex-shrink:0}
+.licon{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;color:#c8c6c4;font-size:18px;position:relative}
+.licon:hover{background:#3b3a39}
+.licon.active{background:#0078d4;color:#fff}
+.licon-sep{width:28px;height:1px;background:#3b3a39;margin:4px 0}
+.licon-bottom{margin-top:auto;padding-bottom:8px;display:flex;flex-direction:column;gap:2px;align-items:center}
+
+/* ── CENTER: canvas + page tabs ── */
+.center{display:flex;flex-direction:column;flex:1;overflow:hidden}
+.canvas-area{flex:1;overflow:auto;background:#c8c6c4;padding:16px;position:relative}
+.report-canvas{background:#fff;min-height:680px;position:relative;box-shadow:0 2px 12px rgba(0,0,0,0.25);overflow:hidden}
+/* dot grid */
+.report-canvas::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,#e1dfdd 1px,transparent 1px);background-size:20px 20px;pointer-events:none;z-index:0}
+
+/* page tabs */
+.page-tabs{background:#f3f2f1;border-top:1px solid #e1dfdd;display:flex;align-items:center;height:32px;padding:0 8px;gap:0;flex-shrink:0}
+.page-tab{padding:0 16px;height:32px;display:flex;align-items:center;font-size:12px;cursor:pointer;color:#605e5c;border-right:1px solid #e1dfdd;position:relative;white-space:nowrap}
+.page-tab:hover{background:#edebe9;color:#323130}
+.page-tab.active{background:#fff;color:#323130;font-weight:600;border-top:2px solid #0078d4;margin-top:-1px}
+.page-add{width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#605e5c;font-size:18px;border-radius:2px;margin-left:4px}
+.page-add:hover{background:#edebe9}
+
+/* status bar */
+.status-bar{background:#0078d4;color:#fff;height:22px;display:flex;align-items:center;padding:0 12px;font-size:11px;gap:16px;flex-shrink:0}
+.status-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.zoom-ctrl{display:flex;align-items:center;gap:6px}
+.zoom-ctrl input[type=range]{width:80px;accent-color:#fff}
+
+/* ── RIGHT PANES ── */
+.right-panes{width:280px;background:#f3f2f1;border-left:1px solid #e1dfdd;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.pane-header{padding:10px 12px 6px;font-weight:600;font-size:12px;color:#323130;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e1dfdd}
+.pane-close{cursor:pointer;color:#605e5c;font-size:16px;line-height:1}
+.pane-section{padding:8px 12px;border-bottom:1px solid #e1dfdd}
+.pane-section-title{font-size:11px;color:#605e5c;font-weight:600;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.pane-section-title span{font-size:12px}
+.filter-item{background:#fff;border:1px solid #e1dfdd;border-radius:2px;padding:6px 8px;margin-bottom:4px;font-size:11px;color:#323130;cursor:pointer}
+.filter-item:hover{background:#f3f2f1}
+.filter-label{color:#605e5c;font-size:10px;margin-bottom:2px}
+
+/* viz icons grid */
+.viz-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:8px 0}
+.viz-icon{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:1px solid #e1dfdd;border-radius:2px;cursor:pointer;font-size:18px;background:#fff;color:#605e5c}
+.viz-icon:hover{background:#edebe9;border-color:#0078d4}
+.viz-icon.active{background:#deecf9;border-color:#0078d4;color:#0078d4}
+
+/* fields list */
+.fields-section{flex:1;overflow-y:auto}
+.field-table{padding:6px 12px;border-bottom:1px solid #e1dfdd}
+.field-table-name{font-size:11px;font-weight:600;color:#323130;display:flex;align-items:center;gap:6px;cursor:pointer;padding:4px 0}
+.field-table-name::before{content:'▶';font-size:9px;color:#605e5c}
+.field-table-name.open::before{content:'▼'}
+.field-item{padding:3px 0 3px 16px;font-size:11px;color:#605e5c;display:flex;align-items:center;gap:6px;cursor:pointer}
+.field-item:hover{color:#0078d4}
+.field-item::before{content:'Σ';font-size:10px;color:#0078d4}
+.field-item.dim::before{content:'≡';color:#605e5c}
+
+/* ── VISUALS on canvas ── */
+.page{display:none;position:relative;z-index:1;padding:12px;min-height:680px}
+.page.active{display:grid}
+
+/* Page 1 grid */
+#page1{grid-template-columns:repeat(4,1fr);grid-template-rows:auto auto auto auto;gap:10px;align-content:start}
+/* Page 2 grid */
+#page2{grid-template-columns:repeat(3,1fr);grid-template-rows:auto auto auto;gap:10px;align-content:start}
+/* Page 3 grid */
+#page3{grid-template-columns:repeat(2,1fr);grid-template-rows:auto auto auto;gap:10px;align-content:start}
+
+.visual{background:#fff;border:1px solid #e1dfdd;border-radius:2px;padding:12px;position:relative;cursor:pointer;transition:box-shadow .15s}
+.visual:hover{box-shadow:0 0 0 2px #118DFF;z-index:2}
+.visual:hover .visual-menu{display:flex}
+.visual-menu{display:none;position:absolute;top:6px;right:6px;gap:4px;z-index:10}
+.visual-menu-btn{width:24px;height:24px;background:#fff;border:1px solid #e1dfdd;border-radius:2px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:#605e5c}
+.visual-menu-btn:hover{background:#edebe9}
+.visual-title{font-size:12px;font-weight:600;color:#252423;margin-bottom:2px}
+.visual-sub{font-size:10px;color:#8a8886;margin-bottom:8px}
+
+/* KPI card */
+.kpi-card{display:flex;flex-direction:column;justify-content:center;min-height:90px}
+.kpi-value{font-size:28px;font-weight:300;color:#252423;line-height:1.1}
+.kpi-label{font-size:11px;color:#605e5c;margin-top:4px}
+.kpi-trend{font-size:11px;margin-top:6px;display:flex;align-items:center;gap:4px}
+.up{color:#107c10} .down{color:#a80000} .neutral{color:#605e5c}
+
+/* Table visual */
+.vtable{width:100%;border-collapse:collapse;font-size:11px}
+.vtable th{background:#f3f2f1;padding:6px 8px;text-align:left;font-weight:600;color:#323130;border-bottom:2px solid #e1dfdd;white-space:nowrap}
+.vtable td{padding:5px 8px;color:#323130;border-bottom:1px solid #f3f2f1;white-space:nowrap}
+.vtable tr:nth-child(even) td{background:#faf9f8}
+.vtable tr:hover td{background:#deecf9}
+.vtable .total-row td{font-weight:700;background:#f3f2f1;border-top:2px solid #e1dfdd}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.badge-green{background:#dff6dd;color:#107c10}
+.badge-yellow{background:#fff4ce;color:#7d5c00}
+.badge-red{background:#fde7e9;color:#a80000}
+.badge-blue{background:#deecf9;color:#0078d4}
+.bar-wrap{background:#e1dfdd;border-radius:2px;height:6px;width:60px;display:inline-block;vertical-align:middle}
+.bar-fill{background:#118DFF;border-radius:2px;height:6px}
+.bar-fill.green{background:#107c10}
+.bar-fill.red{background:#a80000}
+
+/* Gauge */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0}
+.gauge-svg{width:160px;height:90px}
+.gauge-value{font-size:26px;font-weight:700;color:#107c10;margin-top:-4px}
+.gauge-label{font-size:10px;color:#605e5c}
+.gauge-target{font-size:10px;color:#605e5c;margin-top:4px}
+
+canvas.vchart{width:100%!important}
+
+/* span helpers */
+.span2{grid-column:span 2}
+.span3{grid-column:span 3}
+.span4{grid-column:span 4}
+.span1{grid-column:span 1}
+
+/* churn matrix */
+.matrix-grid{display:grid;grid-template-columns:auto repeat(3,1fr);grid-template-rows:auto repeat(3,1fr);gap:3px;font-size:11px}
+.matrix-hdr{background:#f3f2f1;padding:6px 8px;text-align:center;font-weight:600;color:#323130;border-radius:2px}
+.matrix-row-hdr{background:#f3f2f1;padding:6px 8px;font-weight:600;color:#323130;border-radius:2px;display:flex;align-items:center}
+.matrix-cell{border-radius:2px;padding:10px 6px;text-align:center;font-size:12px;font-weight:600}
+.mc-low{background:#dff6dd;color:#107c10}
+.mc-med{background:#fff4ce;color:#7d5c00}
+.mc-high{background:#fde7e9;color:#a80000}
+</style>
+</head>
+<body>
+
+<!-- ── RIBBON ── -->
+<div class="ribbon">
+  <div class="ribbon-top">
+    <div class="pbi-logo">
+      <svg viewBox="0 0 24 24" fill="none">
+        <rect x="2" y="10" width="4" height="12" rx="1" fill="#F2C811"/>
+        <rect x="8" y="6" width="4" height="16" rx="1" fill="#F2C811" opacity=".85"/>
+        <rect x="14" y="2" width="4" height="20" rx="1" fill="#F2C811" opacity=".7"/>
+        <rect x="20" y="7" width="2" height="15" rx="1" fill="#F2C811" opacity=".5"/>
+      </svg>
+      Power BI Desktop
+    </div>
+    <div class="ribbon-tabs">
+      <div class="ribbon-tab active">File</div>
+      <div class="ribbon-tab">Home</div>
+      <div class="ribbon-tab">Insert</div>
+      <div class="ribbon-tab">Modeling</div>
+      <div class="ribbon-tab">View</div>
+      <div class="ribbon-tab">Optimize</div>
+      <div class="ribbon-tab">Help</div>
+    </div>
+  </div>
+  <div class="ribbon-tools">
+    <div class="rtool-group">
+      <div class="rtool"><span class="rtool-icon">💾</span>Save</div>
+      <div class="rtool"><span class="rtool-icon">↩</span>Undo</div>
+      <div class="rtool"><span class="rtool-icon">↪</span>Redo</div>
+    </div>
+    <div class="rtool-group">
+      <div class="rtool"><span class="rtool-icon">🔄</span>Refresh</div>
+      <div class="rtool"><span class="rtool-icon">🔗</span>Get data</div>
+      <div class="rtool"><span class="rtool-icon">📊</span>New visual</div>
+      <div class="rtool"><span class="rtool-icon">📝</span>Text box</div>
+    </div>
+    <div class="rtool-group">
+      <div class="rtool"><span class="rtool-icon">🎨</span>Themes</div>
+      <div class="rtool"><span class="rtool-icon">📐</span>Format</div>
+    </div>
+    <div class="rtool-group">
+      <div class="rtool"><span class="rtool-icon">🔍</span>Q&A</div>
+      <div class="rtool"><span class="rtool-icon">🤖</span>Copilot</div>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:8px;font-size:11px;color:#605e5c">
+      <span>Nexus Corp FY2024.pbix</span>
+      <span style="background:#fff4ce;color:#7d5c00;padding:2px 8px;border-radius:2px;font-size:10px">● Publishing</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── SHELL ── -->
+<div class="shell">
+
+  <!-- LEFT STRIP -->
+  <div class="left-strip">
+    <div class="licon active" title="Report view">📊</div>
+    <div class="licon" title="Table view">🗃</div>
+    <div class="licon" title="Model view">🔗</div>
+    <div class="licon-sep"></div>
+    <div class="licon" title="DAX query">fx</div>
+    <div class="licon-bottom">
+      <div class="licon" title="Settings">⚙</div>
+      <div class="licon" title="Help">❓</div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="center">
+    <div class="canvas-area">
+      <div class="report-canvas">
+
+        <!-- PAGE 1: Executive Summary -->
+        <div class="page active" id="page1">
+
+          <!-- KPI Cards -->
+          <div class="visual kpi-card">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div><div class="visual-menu-btn">⤢</div></div>
+            <div class="visual-sub">Total Revenue</div>
+            <div class="kpi-value">$76.8M</div>
+            <div class="kpi-trend up">▲ 17.2% vs FY2023</div>
+          </div>
+          <div class="visual kpi-card">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div><div class="visual-menu-btn">⤢</div></div>
+            <div class="visual-sub">Annual Recurring Revenue</div>
+            <div class="kpi-value">$42.3M</div>
+            <div class="kpi-trend up">▲ 18.4% YoY</div>
+          </div>
+          <div class="visual kpi-card">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div><div class="visual-menu-btn">⤢</div></div>
+            <div class="visual-sub">Net Profit</div>
+            <div class="kpi-value">$11.4M</div>
+            <div class="kpi-trend up">▲ 38.6% YoY</div>
+          </div>
+          <div class="visual kpi-card">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div><div class="visual-menu-btn">⤢</div></div>
+            <div class="visual-sub">EBITDA Margin</div>
+            <div class="kpi-value">25.0%</div>
+            <div class="kpi-trend up">▲ 2.2pp YoY</div>
+          </div>
+
+          <!-- Revenue by Quarter bar -->
+          <div class="visual span2">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div><div class="visual-menu-btn">⤢</div></div>
+            <div class="visual-title">Revenue by Quarter</div>
+            <div class="visual-sub">FY2024 actuals — $M</div>
+            <canvas id="qtrBar" class="vchart" height="160"></canvas>
+          </div>
+
+          <!-- Monthly ARR trend -->
+          <div class="visual span2">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div><div class="visual-menu-btn">⤢</div></div>
+            <div class="visual-title">Monthly ARR Trend</div>
+            <div class="visual-sub">Jan – Dec 2024 ($M)</div>
+            <canvas id="arrLine" class="vchart" height="160"></canvas>
+          </div>
+
+          <!-- ARR Waterfall -->
+          <div class="visual span2">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div><div class="visual-menu-btn">⤢</div></div>
+            <div class="visual-title">ARR Bridge FY2024</div>
+            <div class="visual-sub">Starting → Ending ARR movement ($M)</div>
+            <canvas id="arrWaterfall" class="vchart" height="170"></canvas>
+          </div>
+
+          <!-- Revenue Mix donut -->
+          <div class="visual">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div><div class="visual-menu-btn">⤢</div></div>
+            <div class="visual-title">Revenue Mix</div>
+            <div class="visual-sub">By stream — FY2024</div>
+            <canvas id="revDonut" class="vchart" height="170"></canvas>
+          </div>
+
+          <!-- NRR Gauge -->
+          <div class="visual">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div><div class="visual-menu-btn">⤢</div></div>
+            <div class="visual-title">Net Revenue Retention</div>
+            <div class="visual-sub">Target: ≥ 100%</div>
+            <div class="gauge-wrap">
+              <svg class="gauge-svg" viewBox="0 0 160 90">
+                <path d="M15,85 A65,65 0 0,1 145,85" fill="none" stroke="#e1dfdd" stroke-width="14" stroke-linecap="round"/>
+                <path d="M15,85 A65,65 0 0,1 145,85" fill="none" stroke="#107c10" stroke-width="14" stroke-linecap="round" stroke-dasharray="204 204" stroke-dashoffset="40"/>
+                <text x="80" y="78" text-anchor="middle" font-size="22" font-weight="700" fill="#107c10">118%</text>
+                <text x="80" y="90" text-anchor="middle" font-size="9" fill="#605e5c">NRR</text>
+                <text x="15" y="100" text-anchor="middle" font-size="9" fill="#605e5c">0%</text>
+                <text x="145" y="100" text-anchor="middle" font-size="9" fill="#605e5c">150%</text>
+              </svg>
+              <div class="gauge-target">Target 100% · Benchmark 110%</div>
+            </div>
+          </div>
+
+          <!-- Segment table -->
+          <div class="visual span4">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div><div class="visual-menu-btn">⤢</div></div>
+            <div class="visual-title">Segment Performance</div>
+            <div class="visual-sub">Unit economics by customer tier — FY2024</div>
+            <table class="vtable">
+              <thead><tr>
+                <th>Segment</th><th>Customers</th><th>ARR</th><th>ARPU</th>
+                <th>Gross Margin</th><th>NRR</th><th>CAC</th><th>LTV</th><th>LTV:CAC</th>
+              </tr></thead>
+              <tbody>
+                <tr><td>SMB</td><td>1,847</td><td>$12.4M</td><td>$6,713</td><td>72%</td>
+                  <td><span class="badge badge-yellow">104%</span></td><td>$1,240</td><td>$19.8K</td><td>16.0x</td></tr>
+                <tr><td>Mid-Market</td><td>312</td><td>$18.6M</td><td>$59,615</td><td>71%</td>
+                  <td><span class="badge badge-green">118%</span></td><td>$8,400</td><td>$176K</td><td>20.9x</td></tr>
+                <tr><td>Enterprise</td><td>28</td><td>$11.3M</td><td>$403,571</td><td>66%</td>
+                  <td><span class="badge badge-green">134%</span></td><td>$62,000</td><td>$1.07M</td><td>17.2x</td></tr>
+                <tr class="total-row"><td>Total SaaS</td><td>2,187</td><td>$42.3M</td><td>$19,343</td><td>70%</td>
+                  <td><span class="badge badge-green">118%</span></td><td>$4,820</td><td>$57.8K</td><td>12.0x</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Quarterly P&L matrix -->
+          <div class="visual span4">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div><div class="visual-menu-btn">⤢</div></div>
+            <div class="visual-title">Quarterly Income Statement</div>
+            <div class="visual-sub">FY2024 actuals — $M</div>
+            <table class="vtable">
+              <thead><tr><th>Metric</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>FY2024</th><th>YoY%</th></tr></thead>
+              <tbody>
+                <tr><td>SaaS Revenue</td><td>$9.8M</td><td>$10.4M</td><td>$10.9M</td><td>$11.2M</td><td>$42.3M</td><td class="up">+18.4%</td></tr>
+                <tr><td>Prof. Services</td><td>$4.1M</td><td>$4.6M</td><td>$5.0M</td><td>$5.3M</td><td>$19.0M</td><td class="up">+24.2%</td></tr>
+                <tr><td>Maintenance</td><td>$3.7M</td><td>$3.8M</td><td>$3.9M</td><td>$4.0M</td><td>$15.4M</td><td class="up">+8.1%</td></tr>
+                <tr class="total-row"><td>Total Revenue</td><td>$17.6M</td><td>$18.8M</td><td>$19.8M</td><td>$20.5M</td><td>$76.8M</td><td class="up">+17.2%</td></tr>
+                <tr><td>COGS</td><td>$5.8M</td><td>$6.1M</td><td>$6.4M</td><td>$6.5M</td><td>$24.8M</td><td class="down">+11.2%</td></tr>
+                <tr class="total-row"><td>Gross Profit</td><td>$11.8M</td><td>$12.7M</td><td>$13.4M</td><td>$14.0M</td><td>$52.0M</td><td class="up">+20.4%</td></tr>
+                <tr><td style="padding-left:20px;color:#605e5c">Gross Margin</td><td>67.0%</td><td>67.6%</td><td>67.7%</td><td>68.3%</td><td>67.7%</td><td class="up">+2.1pp</td></tr>
+                <tr><td>S&amp;M</td><td>$4.2M</td><td>$4.5M</td><td>$4.7M</td><td>$4.8M</td><td>$18.2M</td><td></td></tr>
+                <tr><td>R&amp;D</td><td>$2.9M</td><td>$3.1M</td><td>$3.2M</td><td>$3.3M</td><td>$12.5M</td><td></td></tr>
+                <tr><td>G&amp;A</td><td>$1.8M</td><td>$1.8M</td><td>$1.9M</td><td>$1.9M</td><td>$7.4M</td><td></td></tr>
+                <tr class="total-row"><td>EBITDA</td><td>$4.2M</td><td>$4.7M</td><td>$5.1M</td><td>$5.2M</td><td>$19.2M</td><td class="up">+28.0%</td></tr>
+                <tr><td style="padding-left:20px;color:#605e5c">EBITDA Margin</td><td>23.9%</td><td>25.0%</td><td>25.8%</td><td>25.4%</td><td>25.0%</td><td class="up">+2.2pp</td></tr>
+                <tr class="total-row"><td>Net Income</td><td>$2.3M</td><td>$2.7M</td><td>$3.0M</td><td>$3.4M</td><td>$11.4M</td><td class="up">+38.6%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div><!-- /page1 -->
+
+        <!-- PAGE 2: Customer Analytics -->
+        <div class="page" id="page2">
+          <!-- KPIs row -->
+          <div class="visual kpi-card">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div></div>
+            <div class="visual-sub">Total Customers</div>
+            <div class="kpi-value">2,187</div>
+            <div class="kpi-trend up">▲ 312 net new</div>
+          </div>
+          <div class="visual kpi-card">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div></div>
+            <div class="visual-sub">Avg Health Score</div>
+            <div class="kpi-value">76 / 100</div>
+            <div class="kpi-trend neutral">● 14% at-risk accounts</div>
+          </div>
+          <div class="visual kpi-card">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div></div>
+            <div class="visual-sub">Gross Churn Rate</div>
+            <div class="kpi-value">13.9%</div>
+            <div class="kpi-trend down">▼ Industry avg: 10%</div>
+          </div>
+
+          <!-- Top 10 Customers -->
+          <div class="visual span3">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div></div>
+            <div class="visual-title">Top 10 Customers by ARR</div>
+            <div class="visual-sub">With health scores and churn risk signals</div>
+            <table class="vtable">
+              <thead><tr><th>#</th><th>Customer</th><th>Segment</th><th>ARR</th><th>Since</th><th>NRR</th><th>Products</th><th>Health</th><th>Risk</th></tr></thead>
+              <tbody>
+                <tr><td>1</td><td><b>Meridian Financial</b></td><td>Enterprise</td><td>$1.84M</td><td>2019</td><td class="up">148%</td><td>4</td>
+                  <td><div class="bar-wrap"><div class="bar-fill green" style="width:92%"></div></div> 92</td>
+                  <td><span class="badge badge-green">Low</span></td></tr>
+                <tr><td>2</td><td><b>TechNova Inc</b></td><td>Enterprise</td><td>$1.62M</td><td>2020</td><td class="up">131%</td><td>3</td>
+                  <td><div class="bar-wrap"><div class="bar-fill green" style="width:88%"></div></div> 88</td>
+                  <td><span class="badge badge-green">Low</span></td></tr>
+                <tr><td>3</td><td><b>GlobalTrade Co</b></td><td>Enterprise</td><td>$1.47M</td><td>2021</td><td class="up">119%</td><td>3</td>
+                  <td><div class="bar-wrap"><div class="bar-fill" style="width:74%"></div></div> 74</td>
+                  <td><span class="badge badge-yellow">Medium</span></td></tr>
+                <tr><td>4</td><td><b>Alpine Healthcare</b></td><td>Enterprise</td><td>$1.31M</td><td>2018</td><td class="up">162%</td><td>5</td>
+                  <td><div class="bar-wrap"><div class="bar-fill green" style="width:95%"></div></div> 95</td>
+                  <td><span class="badge badge-green">Low</span></td></tr>
+                <tr><td>5</td><td><b>Cascade Logistics</b></td><td>Enterprise</td><td>$1.18M</td><td>2022</td><td class="down">108%</td><td>2</td>
+                  <td><div class="bar-wrap"><div class="bar-fill red" style="width:61%"></div></div> 61</td>
+                  <td><span class="badge badge-red">High</span></td></tr>
+                <tr><td>6</td><td><b>Vertex Analytics</b></td><td>Mid-Market</td><td>$0.94M</td><td>2020</td><td class="up">127%</td><td>3</td>
+                  <td><div class="bar-wrap"><div class="bar-fill green" style="width:85%"></div></div> 85</td>
+                  <td><span class="badge badge-green">Low</span></td></tr>
+                <tr><td>7</td><td><b>Sterling Retail</b></td><td>Mid-Market</td><td>$0.87M</td><td>2021</td><td class="up">113%</td><td>2</td>
+                  <td><div class="bar-wrap"><div class="bar-fill green" style="width:79%"></div></div> 79</td>
+                  <td><span class="badge badge-green">Low</span></td></tr>
+                <tr><td>8</td><td><b>Pinnacle Law</b></td><td>Mid-Market</td><td>$0.76M</td><td>2023</td><td class="neutral">101%</td><td>2</td>
+                  <td><div class="bar-wrap"><div class="bar-fill" style="width:67%"></div></div> 67</td>
+                  <td><span class="badge badge-yellow">Medium</span></td></tr>
+                <tr><td>9</td><td><b>Horizon Energy</b></td><td>Mid-Market</td><td>$0.71M</td><td>2022</td><td class="down">94%</td><td>1</td>
+                  <td><div class="bar-wrap"><div class="bar-fill red" style="width:52%"></div></div> 52</td>
+                  <td><span class="badge badge-red">High</span></td></tr>
+                <tr><td>10</td><td><b>BlueSky Media</b></td><td>Mid-Market</td><td>$0.68M</td><td>2021</td><td class="up">122%</td><td>2</td>
+                  <td><div class="bar-wrap"><div class="bar-fill green" style="width:81%"></div></div> 81</td>
+                  <td><span class="badge badge-green">Low</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- NRR by segment line -->
+          <div class="visual span2">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div></div>
+            <div class="visual-title">NRR Trend by Segment</div>
+            <div class="visual-sub">Quarterly — FY2024</div>
+            <canvas id="nrrLine" class="vchart" height="180"></canvas>
+          </div>
+
+          <!-- Customer mix donut -->
+          <div class="visual">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div></div>
+            <div class="visual-title">Customers by Segment</div>
+            <div class="visual-sub">Count — FY2024</div>
+            <canvas id="custDonut" class="vchart" height="180"></canvas>
+          </div>
+
+          <!-- Churn risk matrix -->
+          <div class="visual span3">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div></div>
+            <div class="visual-title">Churn Risk Matrix</div>
+            <div class="visual-sub">Accounts at risk × segment (count of customers)</div>
+            <div class="matrix-grid">
+              <div></div>
+              <div class="matrix-hdr">SMB</div>
+              <div class="matrix-hdr">Mid-Market</div>
+              <div class="matrix-hdr">Enterprise</div>
+              <div class="matrix-row-hdr">Low Risk</div>
+              <div class="matrix-cell mc-low">1,412</div>
+              <div class="matrix-cell mc-low">228</div>
+              <div class="matrix-cell mc-low">18</div>
+              <div class="matrix-row-hdr">Medium Risk</div>
+              <div class="matrix-cell mc-med">298</div>
+              <div class="matrix-cell mc-med">61</div>
+              <div class="matrix-cell mc-med">7</div>
+              <div class="matrix-row-hdr">High Risk</div>
+              <div class="matrix-cell mc-high">137</div>
+              <div class="matrix-cell mc-high">23</div>
+              <div class="matrix-cell mc-high">3</div>
+            </div>
+          </div>
+        </div><!-- /page2 -->
+
+        <!-- PAGE 3: Cash & Profitability -->
+        <div class="page" id="page3">
+          <!-- KPIs -->
+          <div class="visual kpi-card">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div></div>
+            <div class="visual-sub">Cash Position (Jun 2024)</div>
+            <div class="kpi-value">$35.9M</div>
+            <div class="kpi-trend up">▲ 25 months runway</div>
+          </div>
+          <div class="visual kpi-card">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div></div>
+            <div class="visual-sub">Days Sales Outstanding</div>
+            <div class="kpi-value">38 days</div>
+            <div class="kpi-trend up">▼ 9 days vs prior year</div>
+          </div>
+
+          <!-- Monthly cash flow -->
+          <div class="visual span2">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div></div>
+            <div class="visual-title">Monthly Cash Flow Statement</div>
+            <div class="visual-sub">H1 2024 — $M</div>
+            <table class="vtable">
+              <thead><tr><th>Month</th><th>Operating CF</th><th>Investing CF</th><th>Financing CF</th><th>Net CF</th><th>Cash Balance</th><th>Runway</th></tr></thead>
+              <tbody>
+                <tr><td>Jan 2024</td><td class="up">+$1.84M</td><td class="down">-$0.42M</td><td>—</td><td class="up">+$1.42M</td><td>$28.4M</td><td><span class="badge badge-blue">20 mo</span></td></tr>
+                <tr><td>Feb 2024</td><td class="up">+$1.92M</td><td class="down">-$0.38M</td><td>—</td><td class="up">+$1.54M</td><td>$29.9M</td><td><span class="badge badge-blue">21 mo</span></td></tr>
+                <tr><td>Mar 2024</td><td class="up">+$2.11M</td><td class="down">-$1.20M</td><td>—</td><td class="up">+$0.91M</td><td>$30.8M</td><td><span class="badge badge-blue">22 mo</span></td></tr>
+                <tr><td>Apr 2024</td><td class="up">+$1.78M</td><td class="down">-$0.44M</td><td>—</td><td class="up">+$1.34M</td><td>$32.2M</td><td><span class="badge badge-blue">23 mo</span></td></tr>
+                <tr><td>May 2024</td><td class="up">+$2.34M</td><td class="down">-$0.51M</td><td>—</td><td class="up">+$1.83M</td><td>$34.0M</td><td><span class="badge badge-blue">24 mo</span></td></tr>
+                <tr><td>Jun 2024</td><td class="up">+$2.56M</td><td class="down">-$0.62M</td><td>—</td><td class="up">+$1.94M</td><td>$35.9M</td><td><span class="badge badge-blue">25 mo</span></td></tr>
+                <tr class="total-row"><td>H1 Total</td><td class="up">+$12.55M</td><td class="down">-$3.57M</td><td>—</td><td class="up">+$8.98M</td><td colspan="2"></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Operating CF bar chart -->
+          <div class="visual span2">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div></div>
+            <div class="visual-title">Cash Flow Trend</div>
+            <div class="visual-sub">Operating vs Cumulative Cash Position ($M)</div>
+            <canvas id="cfChart" class="vchart" height="200"></canvas>
+          </div>
+
+          <!-- Expense breakdown stacked bar -->
+          <div class="visual span2">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div></div>
+            <div class="visual-title">Operating Expense Breakdown</div>
+            <div class="visual-sub">By category — quarterly ($M)</div>
+            <canvas id="opexBar" class="vchart" height="200"></canvas>
+          </div>
+
+          <!-- DSO Trend -->
+          <div class="visual">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div></div>
+            <div class="visual-title">DSO Trend</div>
+            <div class="visual-sub">Days Sales Outstanding — monthly 2024</div>
+            <canvas id="dsoLine" class="vchart" height="200"></canvas>
+          </div>
+
+          <!-- Gross margin trend -->
+          <div class="visual">
+            <div class="visual-menu"><div class="visual-menu-btn">⋯</div></div>
+            <div class="visual-title">Gross Margin Trend</div>
+            <div class="visual-sub">% by quarter vs prior year</div>
+            <canvas id="gmLine" class="vchart" height="200"></canvas>
+          </div>
+        </div><!-- /page3 -->
+
+      </div><!-- /report-canvas -->
+    </div><!-- /canvas-area -->
+
+    <!-- PAGE TABS -->
+    <div class="page-tabs">
+      <div class="page-tab active" onclick="switchPage(1,this)">📊 Executive Summary</div>
+      <div class="page-tab" onclick="switchPage(2,this)">👥 Customer Analytics</div>
+      <div class="page-tab" onclick="switchPage(3,this)">💰 Cash &amp; Profitability</div>
+      <div class="page-add" title="Add page">＋</div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:8px;font-size:10px;color:#605e5c;padding-right:8px">
+        <span>Last updated: Jun 17, 2026</span>
+        <span>|</span>
+        <span>FY2024 Actuals · Nexus Corp</span>
+      </div>
+    </div>
+
+    <!-- STATUS BAR -->
+    <div class="status-bar">
+      <span>Reading view</span>
+      <span>|</span>
+      <span id="page-indicator">Page 1 of 3</span>
+      <div class="status-right">
+        <span>Fit to page</span>
+        <span>⊞</span>
+        <span>⊡</span>
+        <div class="zoom-ctrl">
+          <span>−</span>
+          <input type="range" min="50" max="200" value="100" oninput="document.getElementById('zoom-val').textContent=this.value+'%'"/>
+          <span>+</span>
+          <span id="zoom-val">100%</span>
+        </div>
+      </div>
+    </div>
+  </div><!-- /center -->
+
+  <!-- RIGHT PANES -->
+  <div class="right-panes" id="rightPanes">
+    <!-- Filters pane -->
+    <div class="pane-header">
+      Filters
+      <span class="pane-close" onclick="document.getElementById('rightPanes').style.display='none'">✕</span>
+    </div>
+    <div class="pane-section">
+      <div class="pane-section-title">Filters on this visual <span>∨</span></div>
+      <div class="filter-item"><div class="filter-label">Year</div>FY2024</div>
+    </div>
+    <div class="pane-section">
+      <div class="pane-section-title">Filters on this page <span>∨</span></div>
+      <div class="filter-item"><div class="filter-label">Segment</div>All segments</div>
+      <div class="filter-item"><div class="filter-label">Quarter</div>Q1, Q2, Q3, Q4</div>
+    </div>
+    <div class="pane-section">
+      <div class="pane-section-title">Filters on all pages <span>∨</span></div>
+      <div class="filter-item"><div class="filter-label">Region</div>All regions</div>
+    </div>
+
+    <!-- Visualizations pane -->
+    <div class="pane-header" style="margin-top:4px">Visualizations</div>
+    <div class="pane-section">
+      <div class="viz-grid">
+        <div class="viz-icon active" title="Bar chart">📊</div>
+        <div class="viz-icon" title="Line chart">📈</div>
+        <div class="viz-icon" title="Pie/Donut">🥧</div>
+        <div class="viz-icon" title="Table">⊞</div>
+        <div class="viz-icon" title="Matrix">⊟</div>
+        <div class="viz-icon" title="Card">🃏</div>
+        <div class="viz-icon" title="KPI">🎯</div>
+        <div class="viz-icon" title="Gauge">⏱</div>
+        <div class="viz-icon" title="Waterfall">🌊</div>
+        <div class="viz-icon" title="Scatter">⚬</div>
+        <div class="viz-icon" title="Map">🗺</div>
+        <div class="viz-icon" title="Treemap">▦</div>
+        <div class="viz-icon" title="Funnel">🔽</div>
+        <div class="viz-icon" title="Ribbon">🎀</div>
+        <div class="viz-icon" title="Slicer">🔘</div>
+      </div>
+    </div>
+
+    <!-- Fields pane -->
+    <div class="pane-header">Fields</div>
+    <div class="fields-section">
+      <div class="field-table">
+        <div class="field-table-name open">FinancialData</div>
+        <div class="field-item">Revenue</div>
+        <div class="field-item">COGS</div>
+        <div class="field-item">Gross Profit</div>
+        <div class="field-item">EBITDA</div>
+        <div class="field-item">Net Income</div>
+        <div class="field-item dim">Quarter</div>
+        <div class="field-item dim">Month</div>
+        <div class="field-item dim">Year</div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-name open">CustomerData</div>
+        <div class="field-item">ARR</div>
+        <div class="field-item">NRR</div>
+        <div class="field-item">CAC</div>
+        <div class="field-item">LTV</div>
+        <div class="field-item">Health Score</div>
+        <div class="field-item dim">Segment</div>
+        <div class="field-item dim">Customer Name</div>
+        <div class="field-item dim">Risk Level</div>
+      </div>
+      <div class="field-table">
+        <div class="field-table-name">CashFlow</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /shell -->
+
+<script>
+// ── Page switching
+function switchPage(n, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page'+n).classList.add('active');
+  el.classList.add('active');
+  document.getElementById('page-indicator').textContent = 'Page '+n+' of 3';
+}
+
+// ── Chart defaults
+Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#605e5c';
+Chart.defaults.plugins.legend.labels.boxWidth = 12;
+Chart.defaults.plugins.legend.labels.padding = 12;
+
+const PBI_BLUE = '#118DFF';
+const PBI_COLORS = ['#118DFF','#12239E','#E66C37','#6B007B','#E044A7','#744EC2','#D9B300','#D64550'];
+
+// Q1-Q4 Revenue bar
+new Chart(document.getElementById('qtrBar'), {
+  type:'bar',
+  data:{
+    labels:['Q1 2024','Q2 2024','Q3 2024','Q4 2024'],
+    datasets:[{
+      label:'Revenue ($M)',
+      data:[17.6,18.8,19.8,20.5],
+      backgroundColor: PBI_BLUE,
+      borderRadius:2,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:true,
+    plugins:{legend:{display:false}},
+    scales:{
+      y:{grid:{color:'#f3f2f1'},ticks:{callback:v=>'$'+v+'M'}},
+      x:{grid:{display:false}}
+    }
+  }
+});
+
+// Monthly ARR line
+new Chart(document.getElementById('arrLine'), {
+  type:'line',
+  data:{
+    labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    datasets:[{
+      label:'ARR ($M)',
+      data:[36.2,36.8,37.4,38.1,38.9,39.6,40.2,40.8,41.3,41.7,42.0,42.3],
+      borderColor: PBI_BLUE,
+      backgroundColor:'rgba(17,141,255,0.08)',
+      fill:true, tension:0.35, pointRadius:3, pointBackgroundColor: PBI_BLUE
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:true,
+    plugins:{legend:{display:false}},
+    scales:{
+      y:{grid:{color:'#f3f2f1'},ticks:{callback:v=>'$'+v+'M'},min:35},
+      x:{grid:{display:false}}
+    }
+  }
+});
+
+// ARR Waterfall (floating bars)
+new Chart(document.getElementById('arrWaterfall'), {
+  type:'bar',
+  data:{
+    labels:['Starting ARR','New Logos','Expansion','Contraction','Churn','Ending ARR'],
+    datasets:[
+      // invisible spacer
+      {data:[0,35.7,43.9,50.3,48.2,0], backgroundColor:'transparent', borderColor:'transparent'},
+      // visible bar
+      {data:[35.7,8.2,6.4,-2.1,-5.9,42.3],
+       backgroundColor:['#605e5c','#107c10','#107c10','#a80000','#a80000','#118DFF'],
+       borderRadius:2}
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:true,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
+      const v=ctx.raw; return (v>=0?'+':'')+v.toFixed(1)+'M';
+    }}}},
+    scales:{
+      x:{stacked:true,grid:{display:false}},
+      y:{stacked:true,ticks:{callback:v=>'$'+v+'M'},grid:{color:'#f3f2f1'}}
+    }
+  }
+});
+
+// Revenue mix donut
+new Chart(document.getElementById('revDonut'), {
+  type:'doughnut',
+  data:{
+    labels:['SaaS','Prof. Services','Maintenance'],
+    datasets:[{data:[42.3,19.0,15.4],backgroundColor:['#118DFF','#E66C37','#12239E'],borderWidth:2,borderColor:'#fff'}]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:true, cutout:'68%',
+    plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:ctx=>'$'+ctx.raw+'M'}}}
+  }
+});
+
+// NRR by segment line
+new Chart(document.getElementById('nrrLine'), {
+  type:'line',
+  data:{
+    labels:['Q1','Q2','Q3','Q4'],
+    datasets:[
+      {label:'SMB',data:[101,103,104,106],borderColor:'#E66C37',fill:false,tension:0.3,pointRadius:4},
+      {label:'Mid-Market',data:[112,115,118,121],borderColor:PBI_BLUE,fill:false,tension:0.3,pointRadius:4},
+      {label:'Enterprise',data:[128,131,134,138],borderColor:'#107c10',fill:false,tension:0.3,pointRadius:4}
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:true,
+    plugins:{legend:{position:'bottom'}},
+    scales:{
+      y:{ticks:{callback:v=>v+'%'},grid:{color:'#f3f2f1'},min:95},
+      x:{grid:{display:false}}
+    }
+  }
+});
+
+// Customers by segment donut
+new Chart(document.getElementById('custDonut'), {
+  type:'doughnut',
+  data:{
+    labels:['SMB (1,847)','Mid-Market (312)','Enterprise (28)'],
+    datasets:[{data:[1847,312,28],backgroundColor:['#118DFF','#E66C37','#107c10'],borderWidth:2,borderColor:'#fff'}]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:true, cutout:'60%',
+    plugins:{legend:{position:'bottom'}}
+  }
+});
+
+// Cash flow chart
+new Chart(document.getElementById('cfChart'), {
+  type:'bar',
+  data:{
+    labels:['Jan','Feb','Mar','Apr','May','Jun'],
+    datasets:[
+      {type:'bar',label:'Operating CF',data:[1.84,1.92,2.11,1.78,2.34,2.56],backgroundColor:'rgba(17,141,255,0.7)',yAxisID:'y'},
+      {type:'line',label:'Cash Balance',data:[28.4,29.9,30.8,32.2,34.0,35.9],borderColor:'#107c10',pointBackgroundColor:'#107c10',fill:false,tension:0.3,yAxisID:'y2',pointRadius:4}
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:true,
+    plugins:{legend:{position:'bottom'}},
+    scales:{
+      y:{ticks:{callback:v=>'$'+v+'M'},grid:{color:'#f3f2f1'},title:{display:true,text:'Operating CF'}},
+      y2:{position:'right',ticks:{callback:v=>'$'+v+'M'},grid:{display:false},title:{display:true,text:'Cash Balance'}},
+      x:{grid:{display:false}}
+    }
+  }
+});
+
+// OpEx breakdown stacked bar
+new Chart(document.getElementById('opexBar'), {
+  type:'bar',
+  data:{
+    labels:['Q1','Q2','Q3','Q4'],
+    datasets:[
+      {label:'S&M',data:[4.2,4.5,4.7,4.8],backgroundColor:'#118DFF'},
+      {label:'R&D',data:[2.9,3.1,3.2,3.3],backgroundColor:'#12239E'},
+      {label:'G&A',data:[1.8,1.8,1.9,1.9],backgroundColor:'#E66C37'}
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:true,
+    plugins:{legend:{position:'bottom'}},
+    scales:{
+      x:{stacked:true,grid:{display:false}},
+      y:{stacked:true,ticks:{callback:v=>'$'+v+'M'},grid:{color:'#f3f2f1'}}
+    }
+  }
+});
+
+// DSO line
+new Chart(document.getElementById('dsoLine'), {
+  type:'line',
+  data:{
+    labels:['Jan','Feb','Mar','Apr','May','Jun'],
+    datasets:[
+      {label:'DSO (days)',data:[47,45,43,41,39,38],borderColor:'#E66C37',fill:false,tension:0.3,pointRadius:4,pointBackgroundColor:'#E66C37'},
+      {label:'Target (30d)',data:[30,30,30,30,30,30],borderColor:'#e1dfdd',borderDash:[4,4],fill:false,pointRadius:0}
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:true,
+    plugins:{legend:{position:'bottom'}},
+    scales:{
+      y:{ticks:{callback:v=>v+' d'},grid:{color:'#f3f2f1'},min:20,max:55},
+      x:{grid:{display:false}}
+    }
+  }
+});
+
+// Gross margin trend
+new Chart(document.getElementById('gmLine'), {
+  type:'line',
+  data:{
+    labels:['Q1','Q2','Q3','Q4'],
+    datasets:[
+      {label:'FY2024',data:[67.0,67.6,67.7,68.3],borderColor:PBI_BLUE,fill:false,tension:0.3,pointRadius:4,pointBackgroundColor:PBI_BLUE},
+      {label:'FY2023',data:[64.5,65.2,65.8,66.1],borderColor:'#e1dfdd',borderDash:[4,4],fill:false,tension:0.3,pointRadius:3}
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:true,
+    plugins:{legend:{position:'bottom'}},
+    scales:{
+      y:{ticks:{callback:v=>v+'%'},grid:{color:'#f3f2f1'},min:62,max:71},
+      x:{grid:{display:false}}
+    }
+  }
+});
+</script>
+</body>
+</html>
