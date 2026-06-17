@@ -3,642 +3,721 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Financial Dashboard</title>
+<title>Financial Operations Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f2f5;--card:#fff;--navy:#1a2f4e;--blue:#0078d4;--blue-lt:#e8f4fd;
+  --green:#107c10;--green-lt:#dff6dd;--red:#c50f1f;--red-lt:#fde7e9;
+  --amber:#ca5010;--amber-lt:#fde8d8;--text:#323130;--sub:#605e5c;
+  --border:#e1dfdd;--sh:0 2px 8px rgba(0,0,0,.08);
+  --sidebar:240px;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh}
 
-  :root {
-    --bg:        #f0f2f5;
-    --card:      #ffffff;
-    --navy:      #1a2f4e;
-    --blue:      #0078d4;
-    --blue-lt:   #e8f4fd;
-    --green:     #107c10;
-    --green-lt:  #dff6dd;
-    --red:       #c50f1f;
-    --red-lt:    #fde7e9;
-    --amber:     #ca5010;
-    --amber-lt:  #fde8d8;
-    --text:      #323130;
-    --subtext:   #605e5c;
-    --border:    #e1dfdd;
-    --shadow:    0 2px 8px rgba(0,0,0,.08);
-  }
+/* ── Header ── */
+.hdr{background:linear-gradient(135deg,#1a2f4e 0%,#0f4c8a 100%);color:#fff;
+  padding:14px 24px;display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 2px 12px rgba(0,0,0,.25);z-index:20;position:sticky;top:0}
+.hdr-l{display:flex;align-items:center;gap:12px}
+.hdr-icon{width:38px;height:38px;background:rgba(255,255,255,.15);border-radius:9px;
+  display:flex;align-items:center;justify-content:center;font-size:18px}
+.hdr h1{font-size:18px;font-weight:700}
+.hdr p{font-size:11px;color:rgba(255,255,255,.7);margin-top:1px}
+.hdr-date{font-size:11px;color:rgba(255,255,255,.7);text-align:right;
+  background:rgba(255,255,255,.1);border-radius:8px;padding:6px 14px}
+.hdr-date strong{display:block;font-size:13px;color:#fff}
 
-  body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-  }
+/* ── Body layout ── */
+.body-wrap{display:flex;flex:1;overflow:hidden}
 
-  /* ── Header ── */
-  .header {
-    background: linear-gradient(135deg, #1a2f4e 0%, #0f4c8a 100%);
-    color: #fff;
-    padding: 18px 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 2px 12px rgba(0,0,0,.25);
-  }
-  .header-left { display: flex; align-items: center; gap: 14px; }
-  .header-icon {
-    width: 40px; height: 40px;
-    background: rgba(255,255,255,.15);
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
-  }
-  .header h1 { font-size: 20px; font-weight: 600; letter-spacing: .3px; }
-  .header p  { font-size: 12px; color: rgba(255,255,255,.72); margin-top: 2px; }
-  .header-right { display: flex; align-items: center; gap: 20px; }
-  .header-date {
-    font-size: 12px; color: rgba(255,255,255,.72);
-    background: rgba(255,255,255,.1);
-    border-radius: 8px; padding: 6px 14px; text-align: right;
-  }
-  .header-date strong { display: block; font-size: 14px; color: #fff; }
+/* ── Sidebar slicers ── */
+.sidebar{
+  width:var(--sidebar);min-width:var(--sidebar);background:var(--card);
+  border-right:1px solid var(--border);
+  padding:16px 14px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:20px;
+}
+.slicer-group{}
+.slicer-title{
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;
+  color:var(--navy);margin-bottom:10px;padding-bottom:6px;
+  border-bottom:2px solid var(--blue);display:flex;align-items:center;gap:6px;
+}
+.slicer-title .s-icon{font-size:12px}
 
-  /* ── Layout ── */
-  .main { padding: 24px 28px; max-width: 1440px; margin: 0 auto; }
+/* Chip-style multi-select */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{
+  font-size:11px;padding:4px 10px;border-radius:20px;cursor:pointer;
+  border:1.5px solid var(--border);background:var(--bg);color:var(--sub);
+  transition:all .15s;user-select:none;
+}
+.chip:hover{border-color:var(--blue);color:var(--blue)}
+.chip.active{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+.chip.active.green{background:var(--green);border-color:var(--green)}
+.chip.active.amber{background:var(--amber);border-color:var(--amber)}
+.chip.active.red{background:var(--red);border-color:var(--red)}
 
-  /* ── Section label ── */
-  .section-label {
-    font-size: 11px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 1.2px;
-    color: var(--subtext); margin-bottom: 12px; margin-top: 24px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .section-label::after {
-    content: ''; flex: 1; height: 1px; background: var(--border);
-  }
+/* Range slider */
+.range-wrap{display:flex;flex-direction:column;gap:8px}
+.range-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--sub)}
+.range-row label{min-width:28px;font-weight:600}
+.range-row select{
+  flex:1;font-size:11px;padding:5px 7px;
+  border:1.5px solid var(--border);border-radius:6px;
+  background:#fff;color:var(--text);cursor:pointer;
+  outline:none;
+}
+.range-row select:focus{border-color:var(--blue)}
 
-  /* ── KPI grid ── */
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-  }
+/* Chart type toggle */
+.toggle-row{display:flex;gap:6px}
+.toggle-btn{
+  flex:1;font-size:11px;padding:5px 0;border-radius:6px;
+  border:1.5px solid var(--border);background:var(--bg);color:var(--sub);
+  cursor:pointer;transition:all .15s;text-align:center;font-weight:600;
+}
+.toggle-btn.active{background:var(--navy);border-color:var(--navy);color:#fff}
 
-  .kpi-card {
-    background: var(--card);
-    border-radius: 12px;
-    padding: 18px 20px 16px;
-    box-shadow: var(--shadow);
-    border-top: 3px solid transparent;
-    position: relative;
-    transition: transform .15s, box-shadow .15s;
-    cursor: default;
-  }
-  .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.12); }
-  .kpi-card.green  { border-top-color: var(--green); }
-  .kpi-card.red    { border-top-color: var(--red); }
-  .kpi-card.amber  { border-top-color: var(--amber); }
+/* Reset button */
+.reset-btn{
+  width:100%;padding:7px;border-radius:7px;
+  background:var(--red-lt);color:var(--red);
+  border:1.5px solid var(--red);font-size:11px;font-weight:700;
+  cursor:pointer;transition:all .15s;
+}
+.reset-btn:hover{background:var(--red);color:#fff}
 
-  .kpi-header { display: flex; justify-content: space-between; align-items: flex-start; }
-  .kpi-name {
-    font-size: 12px; color: var(--subtext); font-weight: 600;
-    text-transform: uppercase; letter-spacing: .6px; line-height: 1.4;
-    max-width: 72%;
-  }
-  .kpi-badge {
-    font-size: 10px; font-weight: 700; border-radius: 20px;
-    padding: 3px 9px; white-space: nowrap;
-  }
-  .badge-green { background: var(--green-lt); color: var(--green); }
-  .badge-red   { background: var(--red-lt);   color: var(--red); }
-  .badge-amber { background: var(--amber-lt); color: var(--amber); }
+/* Active filter summary */
+.filter-summary{
+  font-size:10px;color:var(--sub);background:var(--blue-lt);
+  border-radius:6px;padding:6px 8px;line-height:1.5;
+}
+.filter-summary strong{color:var(--blue);font-weight:700}
 
-  .kpi-value {
-    font-size: 32px; font-weight: 700; margin: 10px 0 6px;
-    line-height: 1; letter-spacing: -1px;
-  }
-  .kpi-card.green .kpi-value { color: var(--green); }
-  .kpi-card.red   .kpi-value { color: var(--red); }
-  .kpi-card.amber .kpi-value { color: var(--amber); }
+/* ── Main content ── */
+.content{flex:1;overflow-y:auto;padding:20px 22px}
 
-  .kpi-sub {
-    font-size: 11px; color: var(--subtext);
-    display: flex; align-items: center; gap: 4px;
-  }
+/* Section label */
+.sec-lbl{
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;
+  color:var(--sub);margin-bottom:10px;margin-top:20px;
+  display:flex;align-items:center;gap:8px;
+}
+.sec-lbl:first-child{margin-top:0}
+.sec-lbl::after{content:'';flex:1;height:1px;background:var(--border)}
 
-  /* Progress bar */
-  .kpi-bar-wrap {
-    margin-top: 14px;
-    background: var(--border); border-radius: 4px; height: 5px; overflow: hidden;
-  }
-  .kpi-bar {
-    height: 100%; border-radius: 4px; transition: width .6s ease;
-  }
-  .kpi-card.green .kpi-bar { background: var(--green); }
-  .kpi-card.red   .kpi-bar { background: var(--red); }
-  .kpi-card.amber .kpi-bar { background: var(--amber); }
+/* KPI grid */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kpi-card{
+  background:var(--card);border-radius:11px;padding:16px 18px 14px;
+  box-shadow:var(--sh);border-top:3px solid transparent;
+  position:relative;transition:transform .15s,box-shadow .15s;
+}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.12)}
+.kpi-card.green{border-top-color:var(--green)}
+.kpi-card.red{border-top-color:var(--red)}
+.kpi-card.amber{border-top-color:var(--amber)}
+.kpi-card.hidden{display:none}
 
-  .kpi-targets {
-    display: flex; justify-content: space-between;
-    font-size: 10px; color: #a19f9d; margin-top: 5px;
-  }
-  .kpi-target-val { font-weight: 600; }
+.kpi-hdr{display:flex;justify-content:space-between;align-items:flex-start}
+.kpi-name{font-size:11px;color:var(--sub);font-weight:600;text-transform:uppercase;
+  letter-spacing:.5px;line-height:1.4;max-width:75%}
+.kpi-val{font-size:30px;font-weight:700;margin:8px 0 5px;line-height:1;letter-spacing:-1px}
+.kpi-card.green .kpi-val{color:var(--green)}
+.kpi-card.red   .kpi-val{color:var(--red)}
+.kpi-card.amber .kpi-val{color:var(--amber)}
+.badge{font-size:10px;font-weight:700;border-radius:20px;padding:2px 8px;white-space:nowrap}
+.badge-green{background:var(--green-lt);color:var(--green)}
+.badge-red{background:var(--red-lt);color:var(--red)}
+.badge-amber{background:var(--amber-lt);color:var(--amber)}
 
-  /* Tooltip */
-  .kpi-tooltip {
-    position: absolute; top: 12px; right: 12px;
-    width: 16px; height: 16px;
-    background: var(--border); border-radius: 50%;
-    font-size: 10px; display: flex; align-items: center; justify-content: center;
-    color: var(--subtext); cursor: pointer;
-    transition: background .15s;
-  }
-  .kpi-tooltip:hover { background: var(--blue); color: #fff; }
-  .kpi-tooltip .tip {
-    display: none;
-    position: absolute; bottom: 22px; right: 0;
-    background: #1a2f4e; color: #fff;
-    font-size: 10px; border-radius: 6px; padding: 8px 10px;
-    width: 200px; line-height: 1.5; z-index: 10;
-    box-shadow: 0 4px 12px rgba(0,0,0,.2);
-  }
-  .kpi-tooltip:hover .tip { display: block; }
+.kpi-bar-wrap{margin-top:12px;background:var(--border);border-radius:4px;height:4px;overflow:hidden}
+.kpi-bar{height:100%;border-radius:4px;transition:width .5s}
+.kpi-card.green .kpi-bar{background:var(--green)}
+.kpi-card.red   .kpi-bar{background:var(--red)}
+.kpi-card.amber .kpi-bar{background:var(--amber)}
+.kpi-targets{display:flex;justify-content:space-between;font-size:9px;color:#a19f9d;margin-top:4px}
 
-  /* ── Charts row ── */
-  .charts-row {
-    display: grid;
-    grid-template-columns: 38% 1fr;
-    gap: 16px;
-    margin-top: 4px;
-  }
+/* Tooltip */
+.kpi-tip-btn{position:absolute;top:10px;right:10px;width:15px;height:15px;
+  background:var(--border);border-radius:50%;font-size:9px;
+  display:flex;align-items:center;justify-content:center;color:var(--sub);cursor:pointer}
+.kpi-tip-btn:hover{background:var(--blue);color:#fff}
+.kpi-tip-btn .tip{display:none;position:absolute;bottom:20px;right:0;
+  background:#1a2f4e;color:#fff;font-size:10px;border-radius:6px;padding:7px 9px;
+  width:190px;line-height:1.5;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.kpi-tip-btn:hover .tip{display:block}
 
-  .chart-card {
-    background: var(--card);
-    border-radius: 12px;
-    padding: 20px 22px 18px;
-    box-shadow: var(--shadow);
-  }
-  .chart-title {
-    font-size: 14px; font-weight: 700; color: var(--navy);
-    margin-bottom: 4px;
-  }
-  .chart-subtitle {
-    font-size: 11px; color: var(--subtext); margin-bottom: 18px;
-  }
-  .chart-wrap { position: relative; }
+/* No-results */
+.no-kpi{display:none;color:var(--sub);font-size:13px;padding:20px;text-align:center;
+  background:var(--card);border-radius:11px;box-shadow:var(--sh)}
 
-  /* ── Summary stats ── */
-  .summary-row {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
-    margin-bottom: 18px;
-  }
-  .stat-box {
-    background: var(--bg); border-radius: 8px; padding: 12px 14px;
-    border-left: 3px solid var(--blue);
-  }
-  .stat-box.green { border-left-color: var(--green); }
-  .stat-box.red   { border-left-color: var(--red); }
-  .stat-val { font-size: 18px; font-weight: 700; color: var(--navy); }
-  .stat-lbl { font-size: 10px; color: var(--subtext); margin-top: 2px; font-weight: 600; }
+/* Charts row */
+.charts-row{display:grid;grid-template-columns:38% 1fr;gap:14px;margin-top:4px}
+.chart-card{background:var(--card);border-radius:11px;padding:18px 20px 16px;box-shadow:var(--sh)}
+.chart-ttl{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:3px}
+.chart-sub{font-size:11px;color:var(--sub);margin-bottom:14px}
 
-  /* ── Aging table ── */
-  .aging-table {
-    width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 16px;
-  }
-  .aging-table th {
-    text-align: left; font-size: 10px; text-transform: uppercase;
-    letter-spacing: .8px; color: var(--subtext); padding: 6px 0;
-    border-bottom: 2px solid var(--border);
-  }
-  .aging-table td { padding: 10px 0; border-bottom: 1px solid var(--border); }
-  .aging-table tr:last-child td { border-bottom: none; }
-  .aging-bar-cell { width: 50%; }
-  .aging-inline-bar {
-    height: 8px; border-radius: 4px; background: var(--blue);
-    display: inline-block;
-  }
-  .aging-pct { font-size: 11px; color: var(--subtext); margin-left: 8px; }
-  .aging-amt { font-weight: 700; color: var(--navy); font-size: 13px; }
+/* stat boxes */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat-row-4{grid-template-columns:repeat(4,1fr)}
+.stat-box{background:var(--bg);border-radius:7px;padding:10px 12px;border-left:3px solid var(--blue)}
+.stat-box.green{border-left-color:var(--green)}
+.stat-box.red{border-left-color:var(--red)}
+.stat-v{font-size:16px;font-weight:700;color:var(--navy)}
+.stat-l{font-size:9px;color:var(--sub);margin-top:1px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
 
-  /* ── Legend ── */
-  .legend { display: flex; gap: 18px; margin-bottom: 14px; }
-  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--subtext); }
-  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+/* Aging table */
+.ag-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:14px}
+.ag-table th{text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.7px;
+  color:var(--sub);padding:5px 0;border-bottom:2px solid var(--border)}
+.ag-table td{padding:9px 0;border-bottom:1px solid var(--border)}
+.ag-table tr:last-child td{border-bottom:none}
+.ag-bar{height:7px;border-radius:3px;display:inline-block}
+.ag-pct{font-size:10px;color:var(--sub);margin-left:6px}
 
-  /* ── Footer ── */
-  .footer {
-    text-align: center; font-size: 11px; color: var(--subtext);
-    padding: 20px; margin-top: 12px;
-  }
+/* Legend */
+.legend{display:flex;gap:16px;margin-bottom:12px}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--sub)}
+.leg-dot{width:10px;height:10px;border-radius:50%}
 
-  /* ── Responsive ── */
-  @media (max-width: 1100px) {
-    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-    .charts-row { grid-template-columns: 1fr; }
-  }
-  @media (max-width: 600px) {
-    .kpi-grid { grid-template-columns: 1fr; }
-    .main { padding: 16px; }
-  }
+/* Footer */
+.footer{text-align:center;font-size:10px;color:var(--sub);padding:14px;background:var(--card);
+  border-top:1px solid var(--border)}
+
+@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.charts-row{grid-template-columns:1fr}}
+@media(max-width:700px){.kpi-grid{grid-template-columns:1fr}.sidebar{display:none}}
 </style>
 </head>
 <body>
 
-<!-- ══ Header ══════════════════════════════════════════════════════════════ -->
-<header class="header">
-  <div class="header-left">
-    <div class="header-icon">💼</div>
+<!-- Header -->
+<header class="hdr">
+  <div class="hdr-l">
+    <div class="hdr-icon">💼</div>
     <div>
       <h1>Financial Operations Dashboard</h1>
       <p>Shipment · Collections · Aging Analysis · KPI Monitoring</p>
     </div>
   </div>
-  <div class="header-right">
-    <div class="header-date">
-      <strong id="live-date">—</strong>
-      Last refreshed today
-    </div>
-  </div>
+  <div class="hdr-date"><strong id="live-date">—</strong>Last refreshed today</div>
 </header>
 
-<!-- ══ Main ════════════════════════════════════════════════════════════════ -->
-<div class="main">
+<div class="body-wrap">
 
-  <!-- KPI Cards -->
-  <div class="section-label">Key Performance Indicators</div>
-  <div class="kpi-grid" id="kpi-grid"></div>
+  <!-- ══ Slicer Sidebar ══════════════════════════════════════════════════════ -->
+  <aside class="sidebar">
 
-  <!-- Charts -->
-  <div class="section-label" style="margin-top:28px;">Aging Analysis &amp; Collection Performance</div>
-  <div class="charts-row">
-
-    <!-- Aging Analysis -->
-    <div class="chart-card">
-      <div class="chart-title">📋 Accounts Receivable Aging</div>
-      <div class="chart-subtitle">Outstanding balance by days overdue</div>
-
-      <!-- Summary -->
-      <div class="summary-row">
-        <div class="stat-box">
-          <div class="stat-val">$36.6M</div>
-          <div class="stat-lbl">Total Outstanding</div>
-        </div>
-        <div class="stat-box green">
-          <div class="stat-val">35.1%</div>
-          <div class="stat-lbl">Current %</div>
-        </div>
-        <div class="stat-box red">
-          <div class="stat-val">$6.34M</div>
-          <div class="stat-lbl">61–90 Days</div>
-        </div>
-      </div>
-
-      <!-- Inline bar table -->
-      <table class="aging-table">
-        <thead>
-          <tr>
-            <th>Bucket</th>
-            <th class="aging-bar-cell">Distribution</th>
-            <th style="text-align:right">Amount</th>
-          </tr>
-        </thead>
-        <tbody id="aging-tbody"></tbody>
-      </table>
-
-      <!-- Chart -->
-      <div class="chart-wrap" style="height:200px; margin-top:20px;">
-        <canvas id="agingChart"></canvas>
+    <!-- KPI Status slicer -->
+    <div class="slicer-group">
+      <div class="slicer-title"><span class="s-icon">🎯</span>KPI Status</div>
+      <div class="chips" id="status-chips">
+        <div class="chip active" data-val="all">All</div>
+        <div class="chip active green" data-val="green">✓ On Track</div>
+        <div class="chip active amber" data-val="amber">⚠ Watch</div>
+        <div class="chip active red" data-val="red">✕ Off Track</div>
       </div>
     </div>
 
-    <!-- Collection Performance -->
-    <div class="chart-card">
-      <div class="chart-title">📈 Collection Performance</div>
-      <div class="chart-subtitle">Monthly collected vs outstanding — Nov 2024 to Jun 2026</div>
+    <!-- KPI Name slicer -->
+    <div class="slicer-group">
+      <div class="slicer-title"><span class="s-icon">📌</span>KPI Name</div>
+      <div class="chips" id="kpi-chips"></div>
+    </div>
 
-      <div class="legend">
-        <div class="legend-item">
-          <div class="legend-dot" style="background:#0078d4"></div> Collected
+    <!-- Month range slicer -->
+    <div class="slicer-group">
+      <div class="slicer-title"><span class="s-icon">📅</span>Month Range</div>
+      <div class="range-wrap">
+        <div class="range-row">
+          <label>From</label>
+          <select id="month-from"></select>
         </div>
-        <div class="legend-item">
-          <div class="legend-dot" style="background:#c50f1f"></div> Outstanding
+        <div class="range-row">
+          <label>To</label>
+          <select id="month-to"></select>
         </div>
-      </div>
-
-      <!-- Summary stats -->
-      <div class="summary-row" style="grid-template-columns:repeat(4,1fr)">
-        <div class="stat-box">
-          <div class="stat-val" id="s-latest-col">—</div>
-          <div class="stat-lbl">Latest Month Collected</div>
-        </div>
-        <div class="stat-box red">
-          <div class="stat-val" id="s-latest-out">—</div>
-          <div class="stat-lbl">Latest Outstanding</div>
-        </div>
-        <div class="stat-box green">
-          <div class="stat-val" id="s-growth">—</div>
-          <div class="stat-lbl">Collection Growth</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-val" id="s-col-rate">—</div>
-          <div class="stat-lbl">Avg Collection Rate</div>
-        </div>
-      </div>
-
-      <div class="chart-wrap" style="height:300px;">
-        <canvas id="collectionChart"></canvas>
       </div>
     </div>
 
+    <!-- Year slicer -->
+    <div class="slicer-group">
+      <div class="slicer-title"><span class="s-icon">🗓</span>Year</div>
+      <div class="chips" id="year-chips">
+        <div class="chip active" data-val="all">All</div>
+        <div class="chip active" data-val="2024">2024</div>
+        <div class="chip active" data-val="2025">2025</div>
+        <div class="chip active" data-val="2026">2026</div>
+      </div>
+    </div>
+
+    <!-- Chart type slicer -->
+    <div class="slicer-group">
+      <div class="slicer-title"><span class="s-icon">📊</span>Chart Type</div>
+      <div class="toggle-row">
+        <div class="toggle-btn active" data-type="line">Line</div>
+        <div class="toggle-btn" data-type="bar">Bar</div>
+        <div class="toggle-btn" data-type="area">Area</div>
+      </div>
+    </div>
+
+    <!-- Aging bucket slicer -->
+    <div class="slicer-group">
+      <div class="slicer-title"><span class="s-icon">🗂</span>Aging Bucket</div>
+      <div class="chips" id="aging-chips">
+        <div class="chip active" data-val="Current">Current</div>
+        <div class="chip active" data-val="1–30 Days">1–30d</div>
+        <div class="chip active" data-val="31–60 Days">31–60d</div>
+        <div class="chip active" data-val="61–90 Days">61–90d</div>
+      </div>
+    </div>
+
+    <!-- Active filter summary -->
+    <div class="filter-summary" id="filter-summary">
+      <strong>Filters active:</strong> None — showing all data
+    </div>
+
+    <!-- Reset -->
+    <button class="reset-btn" id="reset-btn">↺ Reset All Filters</button>
+
+  </aside>
+
+  <!-- ══ Main Content ════════════════════════════════════════════════════════ -->
+  <div class="content">
+
+    <div class="sec-lbl">Key Performance Indicators</div>
+    <div class="kpi-grid" id="kpi-grid"></div>
+    <div class="no-kpi" id="no-kpi">No KPIs match the selected filters.</div>
+
+    <div class="sec-lbl" style="margin-top:24px">Aging Analysis &amp; Collection Performance</div>
+    <div class="charts-row">
+
+      <!-- Aging -->
+      <div class="chart-card">
+        <div class="chart-ttl">📋 Accounts Receivable Aging</div>
+        <div class="chart-sub" id="aging-sub">Outstanding balance by days overdue</div>
+        <div class="stat-row" id="aging-stats"></div>
+        <table class="ag-table">
+          <thead><tr>
+            <th>Bucket</th><th style="width:50%">Distribution</th><th style="text-align:right">Amount</th>
+          </tr></thead>
+          <tbody id="aging-tbody"></tbody>
+        </table>
+        <div style="position:relative;height:180px;margin-top:16px">
+          <canvas id="agingChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Collection -->
+      <div class="chart-card">
+        <div class="chart-ttl">📈 Collection Performance</div>
+        <div class="chart-sub" id="col-sub">Monthly collected vs outstanding</div>
+        <div class="legend">
+          <div class="leg-item"><div class="leg-dot" style="background:#0078d4"></div>Collected</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#c50f1f"></div>Outstanding</div>
+        </div>
+        <div class="stat-row stat-row-4" id="col-stats"></div>
+        <div style="position:relative;height:290px;margin-top:8px">
+          <canvas id="collectionChart"></canvas>
+        </div>
+      </div>
+
+    </div>
   </div>
-
 </div>
 
 <div class="footer">
-  Financial Operations Dashboard &nbsp;·&nbsp; Data sourced from Financial_Dashboard_Data_2.xlsx
-  &nbsp;·&nbsp; Generated <span id="gen-date"></span>
+  Financial Operations Dashboard &nbsp;·&nbsp; Data: Financial_Dashboard_Data_2.xlsx
+  &nbsp;·&nbsp; <span id="gen-date"></span>
 </div>
 
-<!-- ══ Scripts ═════════════════════════════════════════════════════════════ -->
 <script>
-// ── Data ─────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════════════════════════════════
 const KPI_DATA = [
-  {
-    name: "Total Shipment Value",
-    value: 847.2, uom: "$", min: 100, max: 5000, accepted: 1500,
-    higherIsBetter: true,
-    tip: "Total value of all shipments processed in the current period."
-  },
-  {
-    name: "On-Time Delivery",
-    value: 98.7, uom: "%", min: 0, max: 100, accepted: 98,
-    higherIsBetter: true,
-    tip: "Percentage of shipments delivered on or before the scheduled date."
-  },
-  {
-    name: "Chain of Custody Compliance",
-    value: 100, uom: "%", min: 0, max: 100, accepted: 98,
-    higherIsBetter: true,
-    tip: "Tracks whether every handoff of a shipment has been properly recorded from origin to destination."
-  },
-  {
-    name: "POD Availability",
-    value: 99.9, uom: "%", min: 0, max: 100, accepted: 98,
-    higherIsBetter: true,
-    tip: "Proof of Delivery — percentage of shipments with confirmed delivery documentation."
-  },
-  {
-    name: "Lost Shipment Rate",
-    value: 0.04, uom: "%", min: 0, max: 100, accepted: 0.05,
-    higherIsBetter: false,
-    tip: "Percentage of shipments that were lost or unaccounted for during transit."
-  },
-  {
-    name: "Revenue Leakage",
-    value: 0.8, uom: "%", min: 0, max: 100, accepted: 0.5,
-    higherIsBetter: false,
-    tip: "Vault Utilization measures how much of your secure storage capacity is currently being used."
-  },
-  {
-    name: "Vault Utilization",
-    value: 84, uom: "%", min: 0, max: 100, accepted: 50,
-    higherIsBetter: true,
-    tip: "Percentage of secure vault storage capacity currently in active use."
-  },
-  {
-    name: "Delivery Exceptions",
-    value: 1.1, uom: "%", min: 0, max: 100, accepted: 2,
-    higherIsBetter: false,
-    tip: "A Delivery Exception is any shipment that doesn't follow the normal delivery process and requires intervention."
-  }
+  { name:"Total Shipment Value",        value:847.2, uom:"$", min:100,  max:5000, accepted:1500, higherIsBetter:true,  tip:"Total value of all shipments processed in the current period." },
+  { name:"On-Time Delivery",            value:98.7,  uom:"%", min:0,    max:100,  accepted:98,   higherIsBetter:true,  tip:"Percentage of shipments delivered on or before the scheduled date." },
+  { name:"Chain of Custody Compliance", value:100,   uom:"%", min:0,    max:100,  accepted:98,   higherIsBetter:true,  tip:"Tracks whether every handoff of a shipment has been properly recorded." },
+  { name:"POD Availability",            value:99.9,  uom:"%", min:0,    max:100,  accepted:98,   higherIsBetter:true,  tip:"Proof of Delivery — shipments with confirmed delivery documentation." },
+  { name:"Lost Shipment Rate",          value:0.04,  uom:"%", min:0,    max:100,  accepted:0.05, higherIsBetter:false, tip:"Percentage of shipments lost or unaccounted for during transit." },
+  { name:"Revenue Leakage",             value:0.8,   uom:"%", min:0,    max:100,  accepted:0.5,  higherIsBetter:false, tip:"Revenue lost due to billing errors, under-invoicing, or process gaps." },
+  { name:"Vault Utilization",           value:84,    uom:"%", min:0,    max:100,  accepted:50,   higherIsBetter:true,  tip:"Percentage of secure vault storage capacity currently in active use." },
+  { name:"Delivery Exceptions",         value:1.1,   uom:"%", min:0,    max:100,  accepted:2,    higherIsBetter:false, tip:"Shipments that deviate from the normal delivery process and need intervention." },
 ];
 
 const AGING_DATA = [
-  { bucket: "Current",     amount: 12850000 },
-  { bucket: "1–30 Days",   amount: 9420000  },
-  { bucket: "31–60 Days",  amount: 7980000  },
-  { bucket: "61–90 Days",  amount: 6340000  },
+  { bucket:"Current",    amount:12850000 },
+  { bucket:"1–30 Days",  amount:9420000  },
+  { bucket:"31–60 Days", amount:7980000  },
+  { bucket:"61–90 Days", amount:6340000  },
 ];
 
 const COLLECTION_DATA = [
-  { month: "Nov-24", collected: 11620000, outstanding: 2580000 },
-  { month: "Dec-24", collected: 12100000, outstanding: 2720000 },
-  { month: "Jan-25", collected: 12450000, outstanding: 2650000 },
-  { month: "Feb-25", collected: 12820000, outstanding: 2790000 },
-  { month: "Mar-25", collected: 13250000, outstanding: 2720000 },
-  { month: "Apr-25", collected: 13680000, outstanding: 2860000 },
-  { month: "May-25", collected: 14050000, outstanding: 2940000 },
-  { month: "Jun-25", collected: 14480000, outstanding: 3020000 },
-  { month: "Jul-25", collected: 14920000, outstanding: 3150000 },
-  { month: "Aug-25", collected: 15350000, outstanding: 3080000 },
-  { month: "Sep-25", collected: 15820000, outstanding: 3240000 },
-  { month: "Oct-25", collected: 16280000, outstanding: 3180000 },
-  { month: "Nov-25", collected: 16740000, outstanding: 3360000 },
-  { month: "Dec-25", collected: 17250000, outstanding: 3420000 },
-  { month: "Jan-26", collected: 17820000, outstanding: 3550000 },
-  { month: "Feb-26", collected: 18350000, outstanding: 3480000 },
-  { month: "Mar-26", collected: 18920000, outstanding: 3640000 },
-  { month: "Apr-26", collected: 19480000, outstanding: 3720000 },
-  { month: "May-26", collected: 20050000, outstanding: 3810000 },
-  { month: "Jun-26", collected: 20620000, outstanding: 3950000 },
+  {month:"Nov-24",collected:11620000,outstanding:2580000},
+  {month:"Dec-24",collected:12100000,outstanding:2720000},
+  {month:"Jan-25",collected:12450000,outstanding:2650000},
+  {month:"Feb-25",collected:12820000,outstanding:2790000},
+  {month:"Mar-25",collected:13250000,outstanding:2720000},
+  {month:"Apr-25",collected:13680000,outstanding:2860000},
+  {month:"May-25",collected:14050000,outstanding:2940000},
+  {month:"Jun-25",collected:14480000,outstanding:3020000},
+  {month:"Jul-25",collected:14920000,outstanding:3150000},
+  {month:"Aug-25",collected:15350000,outstanding:3080000},
+  {month:"Sep-25",collected:15820000,outstanding:3240000},
+  {month:"Oct-25",collected:16280000,outstanding:3180000},
+  {month:"Nov-25",collected:16740000,outstanding:3360000},
+  {month:"Dec-25",collected:17250000,outstanding:3420000},
+  {month:"Jan-26",collected:17820000,outstanding:3550000},
+  {month:"Feb-26",collected:18350000,outstanding:3480000},
+  {month:"Mar-26",collected:18920000,outstanding:3640000},
+  {month:"Apr-26",collected:19480000,outstanding:3720000},
+  {month:"May-26",collected:20050000,outstanding:3810000},
+  {month:"Jun-26",collected:20620000,outstanding:3950000},
 ];
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const fmt = (n, uom) => {
-  if (uom === "$") return `$${n.toLocaleString()}`;
-  return `${n}${uom}`;
-};
-const fmtM = v => {
-  if (v >= 1e6) return `$${(v/1e6).toFixed(1)}M`;
-  if (v >= 1e3) return `$${(v/1e3).toFixed(0)}K`;
-  return `$${v}`;
-};
+const BUCKET_COLORS = ["#0078d4","#5c9fd4","#107c10","#c50f1f"];
 
-function getStatus(kpi) {
-  const { value, accepted, higherIsBetter } = kpi;
-  if (higherIsBetter) {
-    return value >= accepted ? "green" : (value >= accepted * 0.9 ? "amber" : "red");
-  } else {
-    return value <= accepted ? "green" : (value <= accepted * 1.5 ? "amber" : "red");
-  }
+// ═══════════════════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════════════════
+const fmtM = v => v>=1e6?`$${(v/1e6).toFixed(1)}M`:v>=1e3?`$${(v/1e3).toFixed(0)}K`:`$${v}`;
+const fmt  = (n,u) => u==="$"?`$${n.toLocaleString()}`:`${n}${u}`;
+
+function getStatus(kpi){
+  const {value:v,accepted:a,higherIsBetter:h} = kpi;
+  if(h) return v>=a?"green":v>=a*.9?"amber":"red";
+  return v<=a?"green":v<=a*1.5?"amber":"red";
 }
+function barPct(kpi){ return Math.min(100,Math.max(0,((kpi.value-kpi.min)/(kpi.max-kpi.min))*100)); }
+function monthYear(m){ return m.slice(-2); }
 
-function getBarPct(kpi) {
-  const { value, min, max } = kpi;
-  return Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
-}
+// ═══════════════════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════════════════
+const state = {
+  statusFilter: new Set(["green","amber","red"]),
+  kpiFilter:    new Set(KPI_DATA.map(k=>k.name)),
+  monthFrom:    0,
+  monthTo:      COLLECTION_DATA.length - 1,
+  yearFilter:   new Set(["2024","2025","2026"]),
+  agingFilter:  new Set(AGING_DATA.map(d=>d.bucket)),
+  chartType:    "line",
+};
 
-// ── KPI Cards ─────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+//  BUILD KPI CARDS (once)
+// ═══════════════════════════════════════════════════════════════════════════
 const kpiGrid = document.getElementById("kpi-grid");
-KPI_DATA.forEach(kpi => {
-  const status = getStatus(kpi);
-  const barPct = getBarPct(kpi);
-  const acceptedPct = getBarPct({ ...kpi, value: kpi.accepted });
-  const badgeLabel = status === "green" ? "✓ On Track" : status === "amber" ? "⚠ Watch" : "✕ Off Track";
-
+KPI_DATA.forEach(kpi=>{
+  const st = getStatus(kpi);
+  const bl = st==="green"?"✓ On Track":st==="amber"?"⚠ Watch":"✕ Off Track";
   const card = document.createElement("div");
-  card.className = `kpi-card ${status}`;
-  card.innerHTML = `
-    <div class="kpi-header">
+  card.className=`kpi-card ${st}`;
+  card.dataset.status=st;
+  card.dataset.name=kpi.name;
+  card.innerHTML=`
+    <div class="kpi-hdr">
       <div class="kpi-name">${kpi.name}</div>
-      ${kpi.tip ? `<div class="kpi-tooltip">i<span class="tip">${kpi.tip}</span></div>` : ''}
+      ${kpi.tip?`<div class="kpi-tip-btn">i<span class="tip">${kpi.tip}</span></div>`:''}
     </div>
-    <div class="kpi-value">${fmt(kpi.value, kpi.uom)}</div>
-    <div class="kpi-sub">
-      <span class="kpi-badge badge-${status}">${badgeLabel}</span>
-    </div>
-    <div class="kpi-bar-wrap">
-      <div class="kpi-bar" style="width:${barPct}%"></div>
-    </div>
+    <div class="kpi-val">${fmt(kpi.value,kpi.uom)}</div>
+    <div><span class="badge badge-${st}">${bl}</span></div>
+    <div class="kpi-bar-wrap"><div class="kpi-bar" style="width:${barPct(kpi)}%"></div></div>
     <div class="kpi-targets">
-      <span>Min: ${fmt(kpi.min, kpi.uom)}</span>
-      <span class="kpi-target-val">Target: ${fmt(kpi.accepted, kpi.uom)}</span>
-      <span>Max: ${fmt(kpi.max, kpi.uom)}</span>
-    </div>
-  `;
+      <span>Min: ${fmt(kpi.min,kpi.uom)}</span>
+      <span style="font-weight:600">Target: ${fmt(kpi.accepted,kpi.uom)}</span>
+      <span>Max: ${fmt(kpi.max,kpi.uom)}</span>
+    </div>`;
   kpiGrid.appendChild(card);
 });
 
-// ── Aging Table ───────────────────────────────────────────────────────────────
-const total = AGING_DATA.reduce((s, d) => s + d.amount, 0);
-const BUCKET_COLORS = ["#0078d4", "#5c9fd4", "#107c10", "#c50f1f"];
-const agingTbody = document.getElementById("aging-tbody");
-AGING_DATA.forEach((d, i) => {
-  const pct = (d.amount / total * 100).toFixed(1);
-  const barW = (d.amount / AGING_DATA[0].amount * 100).toFixed(1);
-  const tr = document.createElement("tr");
-  tr.innerHTML = `
-    <td style="font-weight:600;color:var(--navy);padding-right:10px">${d.bucket}</td>
-    <td class="aging-bar-cell">
-      <div style="display:flex;align-items:center">
-        <div class="aging-inline-bar" style="width:${barW}%;background:${BUCKET_COLORS[i]}"></div>
-        <span class="aging-pct">${pct}%</span>
-      </div>
-    </td>
-    <td style="text-align:right" class="aging-amt">${fmtM(d.amount)}</td>
-  `;
-  agingTbody.appendChild(tr);
+// ═══════════════════════════════════════════════════════════════════════════
+//  BUILD KPI NAME CHIPS
+// ═══════════════════════════════════════════════════════════════════════════
+const kpiChips = document.getElementById("kpi-chips");
+KPI_DATA.forEach(kpi=>{
+  const c=document.createElement("div");
+  c.className="chip active";c.dataset.val=kpi.name;
+  c.textContent=kpi.name.split(" ").slice(0,2).join(" ");
+  c.title=kpi.name;
+  kpiChips.appendChild(c);
 });
 
-// ── Aging Chart ───────────────────────────────────────────────────────────────
-new Chart(document.getElementById("agingChart"), {
-  type: "bar",
-  data: {
-    labels: AGING_DATA.map(d => d.bucket),
-    datasets: [{
-      label: "Amount ($)",
-      data: AGING_DATA.map(d => d.amount),
-      backgroundColor: BUCKET_COLORS,
-      borderRadius: 6,
-      borderSkipped: false,
-    }]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          label: ctx => ` ${fmtM(ctx.raw)}`
-        }
-      }
-    },
-    scales: {
-      x: {
-        grid: { display: false },
-        ticks: { font: { size: 11 }, color: "#605e5c" }
-      },
-      y: {
-        grid: { color: "#f0f2f5" },
-        ticks: {
-          font: { size: 10 }, color: "#605e5c",
-          callback: v => fmtM(v)
-        },
-        border: { display: false }
-      }
+// ═══════════════════════════════════════════════════════════════════════════
+//  BUILD MONTH DROPDOWNS
+// ═══════════════════════════════════════════════════════════════════════════
+const fromSel=document.getElementById("month-from");
+const toSel=document.getElementById("month-to");
+COLLECTION_DATA.forEach((d,i)=>{
+  const o1=document.createElement("option");o1.value=i;o1.textContent=d.month;fromSel.appendChild(o1);
+  const o2=document.createElement("option");o2.value=i;o2.textContent=d.month;toSel.appendChild(o2);
+});
+toSel.value=COLLECTION_DATA.length-1;
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  CHARTS (initialised once, updated via .update())
+// ═══════════════════════════════════════════════════════════════════════════
+const agingChart = new Chart(document.getElementById("agingChart"),{
+  type:"bar",
+  data:{labels:[],datasets:[{label:"Amount",data:[],backgroundColor:[],borderRadius:5,borderSkipped:false}]},
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${fmtM(c.raw)}`}}},
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:10},color:"#605e5c"}},
+      y:{grid:{color:"#f0f2f5"},ticks:{font:{size:9},color:"#605e5c",callback:v=>fmtM(v)},border:{display:false}}
     }
   }
 });
 
-// ── Collection Performance Chart ──────────────────────────────────────────────
-const latest = COLLECTION_DATA[COLLECTION_DATA.length - 1];
-const first  = COLLECTION_DATA[0];
-const growth = ((latest.collected - first.collected) / first.collected * 100).toFixed(1);
-const avgRate = (COLLECTION_DATA.reduce((s, d) => {
-  return s + (d.collected / (d.collected + d.outstanding));
-}, 0) / COLLECTION_DATA.length * 100).toFixed(1);
-
-document.getElementById("s-latest-col").textContent = fmtM(latest.collected);
-document.getElementById("s-latest-out").textContent = fmtM(latest.outstanding);
-document.getElementById("s-growth").textContent     = `+${growth}%`;
-document.getElementById("s-col-rate").textContent   = `${avgRate}%`;
-
-new Chart(document.getElementById("collectionChart"), {
-  type: "line",
-  data: {
-    labels: COLLECTION_DATA.map(d => d.month),
-    datasets: [
-      {
-        label: "Collected ($)",
-        data: COLLECTION_DATA.map(d => d.collected),
-        borderColor: "#0078d4",
-        backgroundColor: "rgba(0,120,212,.08)",
-        borderWidth: 2.5,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 3,
-        pointHoverRadius: 6,
-        pointBackgroundColor: "#0078d4",
-      },
-      {
-        label: "Outstanding ($)",
-        data: COLLECTION_DATA.map(d => d.outstanding),
-        borderColor: "#c50f1f",
-        backgroundColor: "rgba(197,15,31,.06)",
-        borderWidth: 2,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 3,
-        pointHoverRadius: 6,
-        pointBackgroundColor: "#c50f1f",
-      }
-    ]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    interaction: { mode: "index", intersect: false },
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          label: ctx => ` ${ctx.dataset.label}: ${fmtM(ctx.raw)}`
-        }
-      }
-    },
-    scales: {
-      x: {
-        grid: { display: false },
-        ticks: {
-          font: { size: 10 }, color: "#605e5c",
-          maxRotation: 45, minRotation: 0,
-          maxTicksLimit: 10
-        }
-      },
-      y: {
-        grid: { color: "#f0f2f5" },
-        ticks: {
-          font: { size: 10 }, color: "#605e5c",
-          callback: v => fmtM(v)
-        },
-        border: { display: false }
-      }
+const collectionChart = new Chart(document.getElementById("collectionChart"),{
+  type:"line",
+  data:{labels:[],datasets:[
+    {label:"Collected ($)",data:[],borderColor:"#0078d4",backgroundColor:"rgba(0,120,212,.08)",
+     borderWidth:2.5,fill:true,tension:0.4,pointRadius:3,pointHoverRadius:6,pointBackgroundColor:"#0078d4"},
+    {label:"Outstanding ($)",data:[],borderColor:"#c50f1f",backgroundColor:"rgba(197,15,31,.06)",
+     borderWidth:2,fill:true,tension:0.4,pointRadius:3,pointHoverRadius:6,pointBackgroundColor:"#c50f1f"},
+  ]},
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    interaction:{mode:"index",intersect:false},
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmtM(c.raw)}`}}},
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:10},color:"#605e5c",maxRotation:45,maxTicksLimit:12}},
+      y:{grid:{color:"#f0f2f5"},ticks:{font:{size:10},color:"#605e5c",callback:v=>fmtM(v)},border:{display:false}}
     }
   }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  RENDER — called after any filter change
+// ═══════════════════════════════════════════════════════════════════════════
+function render(){
+  renderKPIs();
+  renderAging();
+  renderCollection();
+  renderFilterSummary();
+}
+
+function renderKPIs(){
+  let visible=0;
+  document.querySelectorAll(".kpi-card").forEach(c=>{
+    const show = state.statusFilter.has(c.dataset.status) && state.kpiFilter.has(c.dataset.name);
+    c.classList.toggle("hidden",!show);
+    if(show) visible++;
+  });
+  const noKpi=document.getElementById("no-kpi");
+  noKpi.style.display = visible===0?"block":"none";
+}
+
+function renderAging(){
+  const filtered = AGING_DATA.filter(d=>state.agingFilter.has(d.bucket));
+  const total    = filtered.reduce((s,d)=>s+d.amount,0);
+  const max      = filtered.length?filtered[0].amount:1;
+
+  // summary stats
+  const statsEl=document.getElementById("aging-stats");
+  statsEl.innerHTML=`
+    <div class="stat-box"><div class="stat-v">${fmtM(total)}</div><div class="stat-l">Total Outstanding</div></div>
+    <div class="stat-box green"><div class="stat-v">${filtered.length&&filtered[0].bucket==="Current"?(filtered[0].amount/total*100).toFixed(1)+"%":"—"}</div><div class="stat-l">Current %</div></div>
+    <div class="stat-box red"><div class="stat-v">${filtered.length?fmtM(filtered[filtered.length-1].amount):"—"}</div><div class="stat-l">${filtered.length?filtered[filtered.length-1].bucket+" Overdue":"—"}</div></div>`;
+
+  // table
+  const tbody=document.getElementById("aging-tbody");
+  tbody.innerHTML="";
+  filtered.forEach((d,i)=>{
+    const pct=(total?d.amount/total*100:0).toFixed(1);
+    const bw=(d.amount/max*100).toFixed(1);
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td style="font-weight:600;color:var(--navy);padding-right:8px;white-space:nowrap">${d.bucket}</td>
+      <td><div style="display:flex;align-items:center">
+        <div class="ag-bar" style="width:${bw}%;background:${BUCKET_COLORS[AGING_DATA.findIndex(x=>x.bucket===d.bucket)]}"></div>
+        <span class="ag-pct">${pct}%</span></div></td>
+      <td style="text-align:right;font-weight:700;color:var(--navy)">${fmtM(d.amount)}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // chart
+  agingChart.data.labels = filtered.map(d=>d.bucket);
+  agingChart.data.datasets[0].data = filtered.map(d=>d.amount);
+  agingChart.data.datasets[0].backgroundColor = filtered.map(d=>BUCKET_COLORS[AGING_DATA.findIndex(x=>x.bucket===d.bucket)]);
+  agingChart.update("active");
+
+  document.getElementById("aging-sub").textContent =
+    filtered.length===AGING_DATA.length?"Outstanding balance by days overdue":
+    `Showing: ${filtered.map(d=>d.bucket).join(", ")}`;
+}
+
+function renderCollection(){
+  // month range
+  let slice = COLLECTION_DATA.slice(state.monthFrom, state.monthTo+1);
+
+  // year filter
+  if(!state.yearFilter.has("2024")||!state.yearFilter.has("2025")||!state.yearFilter.has("2026")){
+    slice = slice.filter(d=>{
+      const yr = "20"+d.month.slice(-2);
+      return state.yearFilter.has(yr);
+    });
+  }
+
+  if(!slice.length) slice = [{month:"(no data)",collected:0,outstanding:0}];
+
+  const latest = slice[slice.length-1];
+  const first  = slice[0];
+  const growth = first.collected?((latest.collected-first.collected)/first.collected*100).toFixed(1):"0";
+  const avgRate = (slice.reduce((s,d)=>s+(d.collected/(d.collected+d.outstanding)),0)/slice.length*100).toFixed(1);
+
+  document.getElementById("col-stats").innerHTML=`
+    <div class="stat-box"><div class="stat-v">${fmtM(latest.collected)}</div><div class="stat-l">Latest Collected</div></div>
+    <div class="stat-box red"><div class="stat-v">${fmtM(latest.outstanding)}</div><div class="stat-l">Latest Outstanding</div></div>
+    <div class="stat-box green"><div class="stat-v">+${growth}%</div><div class="stat-l">Period Growth</div></div>
+    <div class="stat-box"><div class="stat-v">${avgRate}%</div><div class="stat-l">Avg Collection Rate</div></div>`;
+
+  document.getElementById("col-sub").textContent =
+    `${slice[0].month} → ${slice[slice.length-1].month} · ${slice.length} months`;
+
+  // chart type
+  const fill  = state.chartType!=="bar";
+  const type  = state.chartType==="bar"?"bar":"line";
+  const tens  = state.chartType==="area"?0.4:state.chartType==="line"?0.4:0;
+  const bgC   = state.chartType==="bar"?"rgba(0,120,212,.7)":"rgba(0,120,212,.08)";
+  const bgO   = state.chartType==="bar"?"rgba(197,15,31,.7)":"rgba(197,15,31,.06)";
+
+  if(collectionChart.config.type!==type){
+    collectionChart.config.type=type;
+  }
+  collectionChart.data.labels = slice.map(d=>d.month);
+  const ds = collectionChart.data.datasets;
+  ds[0].data=slice.map(d=>d.collected);   ds[0].fill=fill; ds[0].tension=tens; ds[0].backgroundColor=bgC;
+  ds[1].data=slice.map(d=>d.outstanding); ds[1].fill=fill; ds[1].tension=tens; ds[1].backgroundColor=bgO;
+  collectionChart.update("active");
+}
+
+function renderFilterSummary(){
+  const parts=[];
+  if(state.statusFilter.size<3) parts.push(`Status: ${[...state.statusFilter].join(", ")}`);
+  if(state.kpiFilter.size<KPI_DATA.length) parts.push(`KPIs: ${state.kpiFilter.size} selected`);
+  if(state.monthFrom>0||state.monthTo<COLLECTION_DATA.length-1)
+    parts.push(`Months: ${COLLECTION_DATA[state.monthFrom].month}–${COLLECTION_DATA[state.monthTo].month}`);
+  if(state.yearFilter.size<3) parts.push(`Years: ${[...state.yearFilter].join(", ")}`);
+  if(state.agingFilter.size<AGING_DATA.length) parts.push(`Aging: ${state.agingFilter.size} buckets`);
+
+  const el=document.getElementById("filter-summary");
+  el.innerHTML = parts.length
+    ? `<strong>Active filters:</strong><br>${parts.join("<br>")}`
+    : `<strong>Filters active:</strong> None — showing all data`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  SLICER WIRE-UP
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Multi-select chips helper
+function wireChips(containerId, stateSet, allChipVal, onChange){
+  const container = document.getElementById(containerId);
+  container.querySelectorAll(".chip").forEach(chip=>{
+    chip.addEventListener("click",()=>{
+      const val = chip.dataset.val;
+      if(val==="all"){
+        // toggle all
+        const allActive = container.querySelectorAll(".chip.active").length === container.querySelectorAll(".chip").length;
+        container.querySelectorAll(".chip").forEach(c=>{
+          if(allActive){ c.classList.remove("active"); stateSet.clear(); }
+          else{ c.classList.add("active"); stateSet.add(c.dataset.val); }
+        });
+        // also toggle the 'all' chip itself
+        if(allActive) chip.classList.remove("active"); else chip.classList.add("active");
+      } else {
+        chip.classList.toggle("active");
+        if(chip.classList.contains("active")) stateSet.add(val);
+        else stateSet.delete(val);
+        // sync 'all' chip
+        if(allChipVal){
+          const allChip = container.querySelector(`[data-val="${allChipVal}"]`);
+          if(allChip){
+            const total  = container.querySelectorAll(".chip:not([data-val='all'])").length;
+            const active = container.querySelectorAll(".chip.active:not([data-val='all'])").length;
+            allChip.classList.toggle("active", active===total);
+          }
+        }
+      }
+      onChange();
+    });
+  });
+}
+
+// Status chips
+wireChips("status-chips", state.statusFilter, "all", ()=>{ render(); });
+
+// KPI name chips
+wireChips("kpi-chips", state.kpiFilter, null, ()=>{ render(); });
+// init kpiFilter with all names (chips start active)
+state.kpiFilter = new Set(KPI_DATA.map(k=>k.name));
+
+// Month range
+fromSel.addEventListener("change",()=>{
+  state.monthFrom = parseInt(fromSel.value);
+  if(state.monthFrom > state.monthTo){ state.monthTo=state.monthFrom; toSel.value=state.monthTo; }
+  render();
+});
+toSel.addEventListener("change",()=>{
+  state.monthTo = parseInt(toSel.value);
+  if(state.monthTo < state.monthFrom){ state.monthFrom=state.monthTo; fromSel.value=state.monthFrom; }
+  render();
+});
+
+// Year chips
+wireChips("year-chips", state.yearFilter, "all", ()=>{ render(); });
+
+// Chart type toggle
+document.querySelectorAll(".toggle-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".toggle-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    state.chartType = btn.dataset.type;
+    render();
+  });
+});
+
+// Aging bucket chips
+wireChips("aging-chips", state.agingFilter, null, ()=>{ render(); });
+
+// Reset
+document.getElementById("reset-btn").addEventListener("click",()=>{
+  // status
+  state.statusFilter = new Set(["green","amber","red"]);
+  document.getElementById("status-chips").querySelectorAll(".chip").forEach(c=>c.classList.add("active"));
+  // kpi
+  state.kpiFilter = new Set(KPI_DATA.map(k=>k.name));
+  document.getElementById("kpi-chips").querySelectorAll(".chip").forEach(c=>c.classList.add("active"));
+  // months
+  state.monthFrom=0; state.monthTo=COLLECTION_DATA.length-1;
+  fromSel.value=0; toSel.value=COLLECTION_DATA.length-1;
+  // years
+  state.yearFilter=new Set(["2024","2025","2026"]);
+  document.getElementById("year-chips").querySelectorAll(".chip").forEach(c=>c.classList.add("active"));
+  // aging
+  state.agingFilter=new Set(AGING_DATA.map(d=>d.bucket));
+  document.getElementById("aging-chips").querySelectorAll(".chip").forEach(c=>c.classList.add("active"));
+  // chart type
+  state.chartType="line";
+  document.querySelectorAll(".toggle-btn").forEach((b,i)=>b.classList.toggle("active",i===0));
+  render();
 });
 
 // ── Date ─────────────────────────────────────────────────────────────────────
 const now = new Date();
-const opts = { weekday: "short", year: "numeric", month: "short", day: "numeric" };
-document.getElementById("live-date").textContent = now.toLocaleDateString("en-GB", opts);
-document.getElementById("gen-date").textContent  = now.toLocaleDateString("en-GB", opts);
+const opts = {weekday:"short",year:"numeric",month:"short",day:"numeric"};
+document.getElementById("live-date").textContent = now.toLocaleDateString("en-GB",opts);
+document.getElementById("gen-date").textContent  = now.toLocaleDateString("en-GB",opts);
+
+// ── Initial render ────────────────────────────────────────────────────────────
+render();
 </script>
 </body>
 </html>
