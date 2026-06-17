@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Financial Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #12131a;
+    color: #fff;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    min-height: 100vh;
+    padding: 0;
+  }
+  /* ── NAV TABS ── */
+  .tabs {
+    display: flex;
+    background: #0d0e14;
+    border-bottom: 2px solid #1e2028;
+    padding: 0 24px;
+  }
+  .tab-btn {
+    padding: 14px 28px;
+    background: none;
+    border: none;
+    color: #9ca3af;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: color .2s, border-color .2s;
+    letter-spacing: .3px;
+  }
+  .tab-btn.active { color: #fff; border-bottom-color: #6366f1; }
+  .tab-btn:hover:not(.active) { color: #d1d5db; }
+
+  /* ── PAGES ── */
+  .page { display: none; padding: 20px 24px 24px; }
+  .page.active { display: block; }
+
+  /* ── HEADER ── */
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .page-header h1 { font-size: 20px; font-weight: 700; }
+  .page-header p  { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+  .badge {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .3px;
+  }
+  .badge-purple { background: #6b21a8; color: #fff; }
+  .badge-green  { background: #15803d; color: #fff; }
+
+  /* ── MAIN GRID: chart + slicer side by side ── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 16px;
+    align-items: start;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: #1a1b23;
+    border-radius: 10px;
+    padding: 20px;
+    position: relative;
+  }
+  .card-title  { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .card-sub    { font-size: 11px; color: #9ca3af; margin-bottom: 16px; }
+  .chart-wrap  { position: relative; width: 100%; }
+
+  /* ── SLICER PANEL ── */
+  .slicer-panel {
+    background: #1a1b23;
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .slicer-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    margin-bottom: 10px;
+  }
+  .slicer-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #d1d5db;
+    transition: background .15s;
+    user-select: none;
+  }
+  .slicer-item:hover { background: #252634; }
+  .slicer-item.selected { background: #252634; color: #fff; font-weight: 600; }
+  .slicer-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 2px solid currentColor;
+  }
+  .slicer-item.selected .slicer-dot { background: currentColor; }
+
+  /* KPI row */
+  .kpi-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .kpi-box {
+    background: #1a1b23;
+    border-radius: 8px;
+    padding: 12px 16px;
+    flex: 1;
+    text-align: center;
+  }
+  .kpi-label { font-size: 10px; color: #9ca3af; margin-bottom: 4px; }
+  .kpi-value { font-size: 18px; font-weight: 700; }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 20px;
+    margin-top: 12px;
+    padding-left: 4px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #d1d5db;
+  }
+  .legend-line {
+    width: 28px; height: 3px;
+    border-radius: 2px;
+  }
+
+  /* Aging legend */
+  .aging-legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+    padding-left: 4px;
+  }
+  .aging-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    color: #9ca3af;
+  }
+  .aging-dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .aging-legend-item strong { color: #fff; font-size: 12px; }
+
+  hr.divider {
+    border: none;
+    border-top: 1px solid #252634;
+    margin: 14px 0;
+  }
+
+  /* Reset button */
+  .btn-reset {
+    width: 100%;
+    margin-top: 12px;
+    padding: 7px;
+    background: #252634;
+    color: #9ca3af;
+    border: none;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-reset:hover { background: #2e3045; color: #fff; }
+</style>
+</head>
+<body>
+
+<!-- ── TABS ── -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchPage('aging')">Aging Analysis</button>
+  <button class="tab-btn"        onclick="switchPage('collection')">Collection Performance</button>
+</div>
+
+<!-- ═══════════════════ PAGE 1: AGING ANALYSIS ═══════════════════ -->
+<div id="page-aging" class="page active">
+  <div class="page-header">
+    <div>
+      <h1>Aging Analysis</h1>
+      <p>Outstanding receivables by age bucket</p>
+    </div>
+    <span class="badge badge-purple" id="aging-total-badge">$12.96M Total</span>
+  </div>
+
+  <div class="main-grid">
+    <!-- Chart card -->
+    <div class="card">
+      <div class="chart-wrap">
+        <canvas id="agingChart" height="340"></canvas>
+      </div>
+      <div class="aging-legend" id="agingLegend"></div>
+    </div>
+
+    <!-- Slicer -->
+    <div>
+      <div class="slicer-panel">
+        <div class="slicer-title">Filter by Days</div>
+        <div id="agingSlicer"></div>
+        <button class="btn-reset" onclick="resetAgingSlicer()">⟳ Select All</button>
+      </div>
+      <div class="kpi-box" style="margin-top:12px; text-align:center;">
+        <div class="kpi-label">Total Receivables</div>
+        <div class="kpi-value" id="aging-kpi-total" style="color:#a78bfa;">$12.96M</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 2: COLLECTION PERFORMANCE ═══════════════════ -->
+<div id="page-collection" class="page">
+  <div class="page-header">
+    <div>
+      <h1>Collection Performance</h1>
+      <p>Monthly collected + payment recovery trend</p>
+    </div>
+    <span class="badge badge-green">↑ On track</span>
+  </div>
+
+  <div class="main-grid">
+    <!-- Chart card -->
+    <div class="card">
+      <div class="chart-wrap">
+        <canvas id="collectionChart" height="340"></canvas>
+      </div>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-line" style="background:#d4d000;"></div>
+          Collected
+        </div>
+        <div class="legend-item">
+          <div class="legend-line" style="background:#22c55e;"></div>
+          Payment Recovery
+        </div>
+      </div>
+    </div>
+
+    <!-- Slicer -->
+    <div>
+      <div class="slicer-panel">
+        <div class="slicer-title">Filter by Month</div>
+        <div id="collectionSlicer"></div>
+        <button class="btn-reset" onclick="resetCollectionSlicer()">⟳ Select All</button>
+      </div>
+      <div class="kpi-box" style="margin-top:12px;">
+        <div class="kpi-label">Total Collected</div>
+        <div class="kpi-value" id="col-kpi-collected" style="color:#d4d000;">$55.7M</div>
+      </div>
+      <div class="kpi-box" style="margin-top:10px;">
+        <div class="kpi-label">Payment Recovery</div>
+        <div class="kpi-value" id="col-kpi-recovery" style="color:#22c55e;">$13.3M</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════ DATA ═══════════════════
+const AGING_DATA = [
+  { bucket: 'Current',    amount: 4150000, color: '#22c55e' },
+  { bucket: '1-30 Days',  amount: 2140000, color: '#f59e0b' },
+  { bucket: '31-60 Days', amount: 3150000, color: '#f97316' },
+  { bucket: '61-90 Days', amount: 2880000, color: '#ef4444' },
+  { bucket: '90+ Days',   amount:  640000, color: '#dc2626' },
+];
+
+const COLLECTION_DATA = [
+  { month: 'Jan', collected: 8800000, recovery: 2000000 },
+  { month: 'Feb', collected: 8300000, recovery: 1900000 },
+  { month: 'Mar', collected: 9100000, recovery: 2400000 },
+  { month: 'Apr', collected: 8900000, recovery: 2300000 },
+  { month: 'May', collected: 9400000, recovery: 2200000 },
+  { month: 'Jun', collected: 5200000, recovery: 1500000 },
+];
+
+// ═══════════════════ STATE ═══════════════════
+let agingSelected   = new Set(AGING_DATA.map(d => d.bucket));
+let monthSelected   = new Set(COLLECTION_DATA.map(d => d.month));
+let agingChart, collectionChart;
+
+// ═══════════════════ HELPERS ═══════════════════
+function fmt(v) {
+  if (v >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'M';
+  if (v >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K';
+  return '$' + v.toFixed(0);
+}
+
+function fmtShort(v) {
+  if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+  return '$' + (v / 1e3).toFixed(0) + 'K';
+}
+
+const CHART_DEFAULTS = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false }, tooltip: { enabled: true } },
+  scales: {
+    x: {
+      grid: { color: '#252634' },
+      ticks: { color: '#9ca3af', font: { size: 11 } },
+    },
+    y: {
+      grid: { color: '#252634' },
+      ticks: {
+        color: '#9ca3af', font: { size: 11 },
+        callback: v => fmtShort(v),
+      },
+      beginAtZero: true,
+    }
+  }
+};
+
+// ═══════════════════ TAB SWITCH ═══════════════════
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ═══════════════════ AGING ANALYSIS ═══════════════════
+function buildAgingSlicer() {
+  const container = document.getElementById('agingSlicer');
+  container.innerHTML = '';
+  AGING_DATA.forEach(d => {
+    const item = document.createElement('div');
+    item.className = 'slicer-item' + (agingSelected.has(d.bucket) ? ' selected' : '');
+    item.style.color = d.color;
+    item.innerHTML = `<span class="slicer-dot"></span>${d.bucket}`;
+    item.onclick = () => toggleAging(d.bucket);
+    container.appendChild(item);
+  });
+}
+
+function toggleAging(bucket) {
+  if (agingSelected.has(bucket)) {
+    if (agingSelected.size === 1) return; // keep at least 1
+    agingSelected.delete(bucket);
+  } else {
+    agingSelected.add(bucket);
+  }
+  buildAgingSlicer();
+  updateAgingChart();
+}
+
+function resetAgingSlicer() {
+  agingSelected = new Set(AGING_DATA.map(d => d.bucket));
+  buildAgingSlicer();
+  updateAgingChart();
+}
+
+function updateAgingChart() {
+  const filtered = AGING_DATA.filter(d => agingSelected.has(d.bucket));
+  const total = filtered.reduce((s, d) => s + d.amount, 0);
+
+  agingChart.data.labels   = filtered.map(d => d.bucket);
+  agingChart.data.datasets[0].data            = filtered.map(d => d.amount);
+  agingChart.data.datasets[0].backgroundColor = filtered.map(d => d.color);
+  agingChart.data.datasets[0].hoverBackgroundColor = filtered.map(d => d.color + 'cc');
+  agingChart.update();
+
+  document.getElementById('aging-kpi-total').textContent = fmt(total);
+  document.getElementById('aging-total-badge').textContent = fmt(total) + ' Total';
+
+  // Legend
+  const leg = document.getElementById('agingLegend');
+  leg.innerHTML = filtered.map(d =>
+    `<div class="aging-legend-item">
+      <div class="aging-dot" style="background:${d.color}"></div>
+      ${d.bucket} &nbsp;<strong>${fmt(d.amount)}</strong>
+    </div>`
+  ).join('');
+}
+
+function initAgingChart() {
+  const ctx = document.getElementById('agingChart').getContext('2d');
+  agingChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: AGING_DATA.map(d => d.bucket),
+      datasets: [{
+        data: AGING_DATA.map(d => d.amount),
+        backgroundColor: AGING_DATA.map(d => d.color),
+        hoverBackgroundColor: AGING_DATA.map(d => d.color + 'cc'),
+        borderRadius: 4,
+        borderSkipped: false,
+        barPercentage: 0.55,
+      }]
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => '  ' + fmt(ctx.raw)
+          }
+        }
+      },
+    }
+  });
+
+  buildAgingSlicer();
+  updateAgingChart();
+}
+
+// ═══════════════════ COLLECTION PERFORMANCE ═══════════════════
+function buildCollectionSlicer() {
+  const container = document.getElementById('collectionSlicer');
+  container.innerHTML = '';
+  COLLECTION_DATA.forEach(d => {
+    const item = document.createElement('div');
+    item.className = 'slicer-item' + (monthSelected.has(d.month) ? ' selected' : '');
+    item.style.color = '#6366f1';
+    item.innerHTML = `<span class="slicer-dot"></span>${d.month}`;
+    item.onclick = () => toggleMonth(d.month);
+    container.appendChild(item);
+  });
+}
+
+function toggleMonth(month) {
+  if (monthSelected.has(month)) {
+    if (monthSelected.size === 1) return;
+    monthSelected.delete(month);
+  } else {
+    monthSelected.add(month);
+  }
+  buildCollectionSlicer();
+  updateCollectionChart();
+}
+
+function resetCollectionSlicer() {
+  monthSelected = new Set(COLLECTION_DATA.map(d => d.month));
+  buildCollectionSlicer();
+  updateCollectionChart();
+}
+
+function updateCollectionChart() {
+  const filtered = COLLECTION_DATA.filter(d => monthSelected.has(d.month));
+  const totalC = filtered.reduce((s, d) => s + d.collected, 0);
+  const totalR = filtered.reduce((s, d) => s + d.recovery, 0);
+
+  collectionChart.data.labels = filtered.map(d => d.month);
+  collectionChart.data.datasets[0].data = filtered.map(d => d.collected);
+  collectionChart.data.datasets[1].data = filtered.map(d => d.recovery);
+  collectionChart.update();
+
+  document.getElementById('col-kpi-collected').textContent = fmt(totalC);
+  document.getElementById('col-kpi-recovery').textContent  = fmt(totalR);
+}
+
+function initCollectionChart() {
+  const ctx = document.getElementById('collectionChart').getContext('2d');
+  collectionChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: COLLECTION_DATA.map(d => d.month),
+      datasets: [
+        {
+          label: 'Collected',
+          data: COLLECTION_DATA.map(d => d.collected),
+          borderColor: '#d4d000',
+          backgroundColor: 'rgba(212,208,0,0.12)',
+          pointBackgroundColor: '#d4d000',
+          pointBorderColor: '#d4d000',
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 2.5,
+          tension: 0.35,
+          fill: true,
+        },
+        {
+          label: 'Payment Recovery',
+          data: COLLECTION_DATA.map(d => d.recovery),
+          borderColor: '#22c55e',
+          backgroundColor: 'rgba(34,197,94,0.10)',
+          pointBackgroundColor: '#22c55e',
+          pointBorderColor: '#22c55e',
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 2.5,
+          tension: 0.35,
+          fill: true,
+        }
+      ]
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            label: ctx => `  ${ctx.dataset.label}: ${fmt(ctx.raw)}`
+          }
+        }
+      },
+      interaction: { mode: 'index', intersect: false }
+    }
+  });
+
+  buildCollectionSlicer();
+  updateCollectionChart();
+}
+
+// ═══════════════════ INIT ═══════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  initAgingChart();
+  initCollectionChart();
+});
+</script>
+</body>
+</html>
