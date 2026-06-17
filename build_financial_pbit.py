@@ -34,12 +34,10 @@ DIAGRAM = {
 # ── TMSL ─────────────────────────────────────────────────────────────────────
 TMSL = {
   "name": "FinancialDashboard",
-  "compatibilityLevel": 1567,
+  "compatibilityLevel": 1500,
   "model": {
     "culture": "en-US",
-    "collation": "Latin1_General_100_BIN2_UTF8",
     "defaultPowerBIDataSourceVersion": "powerBI_V3",
-    "sourceQueryCulture": "en-US",
 
     "expressions": [{
       "name": EP,
@@ -326,7 +324,7 @@ RETURN DIVIDE(curVal - prevVal, prevVal, 0)""",
     "annotations": [
       {"name": "PBI_QueryOrder", "value": '["KPIs","AgingAnalysis","CollectionPerformance"]'},
       {"name": "__PBI_TimeIntelligenceEnabled", "value": "0"},
-      {"name": "PBIDesktopVersion",             "value": "2.136.1202.0 (24.12)"}
+      {"name": "PBIDesktopVersion",             "value": "2.112.1161.0 (22.11)"}
     ]
   }
 }
