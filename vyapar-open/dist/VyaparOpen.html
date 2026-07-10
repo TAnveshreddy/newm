@@ -1,0 +1,2041 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VyaparOpen — Free Business Manager (Billing · Inventory · GST)</title>
+  <meta name="description" content="Free, open-source Vyapar alternative. GST billing, inventory, parties, payments, expenses and reports. 100% offline — your data never leaves your device.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232a78d6'/><text x='50' y='72' font-size='60' font-weight='bold' text-anchor='middle' fill='white' font-family='sans-serif'>V</text></svg>">
+  <style>
+/* VyaparOpen — style.css */
+:root {
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --baseline: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.10);
+  --primary: #2a78d6;
+  --primary-strong: #1c5cab;
+  --good: #006300;
+  --bad: #d03b3b;
+  --warn-bg: #fdf3d7;
+  --warn-ink: #7a5800;
+  --ok-bg: #e2f3e2;
+  --ok-ink: #006300;
+  --bad-bg: #fbe4e4;
+  --bad-ink: #a02c2c;
+  --info-bg: #e3edfa;
+  --info-ink: #1c5cab;
+  --sidebar-bg: #14202e;
+  --sidebar-ink: #c8d3e0;
+  --shadow: 0 1px 3px rgba(11, 11, 11, 0.07);
+}
+:root[data-theme="dark"] {
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --ink: #ffffff;
+  --ink-2: #c3c2b7;
+  --muted: #898781;
+  --grid: #2c2c2a;
+  --baseline: #383835;
+  --border: rgba(255, 255, 255, 0.10);
+  --primary: #3987e5;
+  --primary-strong: #6da7ec;
+  --good: #0ca30c;
+  --bad: #e66767;
+  --warn-bg: #3a2f10;
+  --warn-ink: #f0c66a;
+  --ok-bg: #12300f;
+  --ok-ink: #7ed67e;
+  --bad-bg: #3a1414;
+  --bad-ink: #f0a3a3;
+  --info-bg: #14283f;
+  --info-ink: #86b6ef;
+  --sidebar-bg: #10161d;
+  --sidebar-ink: #aab6c4;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--page);
+  color: var(--ink);
+}
+body.modal-open { overflow: hidden; }
+
+#app { display: flex; min-height: 100vh; }
+
+/* ---------- sidebar ---------- */
+.sidebar {
+  width: 220px; flex: 0 0 220px;
+  background: var(--sidebar-bg); color: var(--sidebar-ink);
+  display: flex; flex-direction: column;
+  position: sticky; top: 0; height: 100vh;
+}
+.brand { display: flex; gap: 10px; align-items: center; padding: 16px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.logo {
+  width: 36px; height: 36px; border-radius: 9px; flex: 0 0 36px;
+  background: var(--primary); color: #fff; font-weight: 800; font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+}
+.brand-name { font-weight: 700; color: #fff; }
+.brand-biz { font-size: 11.5px; opacity: 0.75; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar nav { flex: 1; padding: 8px 0; overflow-y: auto; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 16px; cursor: pointer; font-size: 13.5px;
+  border-left: 3px solid transparent; user-select: none;
+}
+.nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+.nav-item.active { background: rgba(255,255,255,0.09); color: #fff; border-left-color: var(--primary); font-weight: 600; }
+.nav-item .ico { width: 20px; text-align: center; }
+.sidebar-foot { padding: 12px 16px; font-size: 11px; opacity: 0.55; border-top: 1px solid rgba(255,255,255,0.08); }
+
+/* ---------- main ---------- */
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topbar {
+  display: none; align-items: center; gap: 10px;
+  background: var(--surface); border-bottom: 1px solid var(--grid); padding: 8px 12px;
+  position: sticky; top: 0; z-index: 20;
+}
+.topbar-title { font-weight: 700; flex: 1; }
+.hamburger { background: none; border: 1px solid var(--grid); border-radius: 8px; font-size: 18px; padding: 3px 10px; color: var(--ink); cursor: pointer; }
+main#view { padding: 20px 24px 60px; max-width: 1200px; width: 100%; margin: 0 auto; }
+
+.page-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
+.page-head h2 { margin: 0; font-size: 21px; }
+.crumb { color: var(--primary); cursor: pointer; text-decoration: none; }
+.crumb:hover { text-decoration: underline; }
+.head-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* ---------- cards & stats ---------- */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px; box-shadow: var(--shadow); margin-bottom: 16px;
+}
+.cards .card { margin-bottom: 0; }
+.card-title { margin: 0 0 12px; font-size: 15px; }
+.stat-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.stat-value { font-size: 22px; font-weight: 700; }
+.stat-mid { font-size: 17px; font-weight: 600; }
+.pos { color: var(--good); }
+.neg { color: var(--bad); }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.welcome h3 { margin: 0 0 6px; }
+.welcome p { margin: 0; color: var(--ink-2); }
+
+/* ---------- tables ---------- */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th {
+  text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.4px;
+  color: var(--muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--baseline);
+  white-space: nowrap;
+}
+td { padding: 9px 10px; border-bottom: 1px solid var(--grid); vertical-align: middle; }
+tfoot td { border-top: 2px solid var(--baseline); border-bottom: none; }
+th.r, td.r { text-align: right; }
+tr.rowlink { cursor: pointer; }
+tr.rowlink:hover td { background: color-mix(in srgb, var(--primary) 6%, transparent); }
+.sub { font-size: 11.5px; color: var(--muted); }
+.empty { text-align: center; color: var(--muted); padding: 26px 10px !important; }
+.actions { white-space: nowrap; }
+
+.badge {
+  display: inline-block; padding: 2px 9px; border-radius: 999px;
+  font-size: 11px; font-weight: 700;
+}
+.badge.ok { background: var(--ok-bg); color: var(--ok-ink); }
+.badge.warn { background: var(--warn-bg); color: var(--warn-ink); }
+.badge.bad { background: var(--bad-bg); color: var(--bad-ink); }
+.badge.info { background: var(--info-bg); color: var(--info-ink); }
+.tag {
+  display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11.5px;
+  background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary-strong);
+  text-transform: capitalize;
+}
+
+/* ---------- buttons & inputs ---------- */
+.btn {
+  border: 1px solid transparent; border-radius: 9px; padding: 8px 15px;
+  font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.btn.primary { background: var(--primary); color: #fff; }
+.btn.primary:hover { background: var(--primary-strong); }
+.btn.ghost { background: var(--surface); border-color: var(--baseline); color: var(--ink); }
+.btn.ghost:hover { border-color: var(--primary); color: var(--primary); }
+.btn.danger { background: var(--bad); color: #fff; }
+.btn.danger-ghost { background: none; border-color: transparent; color: var(--bad); }
+.btn.danger-ghost:hover { background: var(--bad-bg); }
+.btn.tiny { padding: 3px 9px; font-size: 12px; border-radius: 7px; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+input, select, textarea {
+  font: inherit; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--baseline); border-radius: 8px; padding: 7px 10px; width: 100%;
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid color-mix(in srgb, var(--primary) 45%, transparent); border-color: var(--primary); }
+input.r { text-align: right; }
+.search { width: 220px; }
+label { display: block; font-size: 12.5px; color: var(--ink-2); font-weight: 600; }
+label input, label select, label textarea { margin-top: 4px; font-weight: 400; }
+.switch-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; font-size: 13.5px; font-weight: 500; }
+.switch-row input { width: auto; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-grid-4 { grid-template-columns: 2fr 1fr 1fr 1fr; }
+.span2 { grid-column: span 2; }
+.notes { margin-top: 12px; }
+
+/* ---------- modal ---------- */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(11, 11, 11, 0.45);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 5vh 14px; z-index: 100; overflow-y: auto;
+}
+.modal {
+  background: var(--surface); border-radius: 14px; width: 560px; max-width: 100%;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25); border: 1px solid var(--border);
+}
+.modal-wide { width: 900px; }
+.modal-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--grid); }
+.modal-head h3 { margin: 0; font-size: 16px; }
+.modal-head .x { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--muted); line-height: 1; }
+.modal-body { padding: 16px 18px; }
+.modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 13px 18px; border-top: 1px solid var(--grid); }
+
+/* lines table in txn form */
+.lines-table input, .lines-table select { padding: 5px 7px; min-width: 60px; }
+.lines-table td { padding: 5px 4px; }
+.lines-table .amt { font-weight: 600; white-space: nowrap; }
+
+.totals-panel {
+  margin: 14px 0 0 auto; max-width: 340px;
+  border-top: 2px solid var(--baseline); padding-top: 8px;
+}
+.totals-panel.pnl { margin: 0 auto; max-width: 460px; border-top: none; }
+.totals-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 13.5px; color: var(--ink-2); gap: 10px; }
+.totals-row.grand { font-size: 16px; font-weight: 800; color: var(--ink); border-top: 1px solid var(--grid); margin-top: 4px; padding-top: 8px; }
+.totals-row.due { font-weight: 700; color: var(--bad); }
+
+/* ---------- reports ---------- */
+.rtabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.rtab {
+  border: 1px solid var(--baseline); background: var(--surface); color: var(--ink-2);
+  padding: 6px 12px; border-radius: 999px; cursor: pointer; font: inherit; font-size: 12.5px; font-weight: 600;
+}
+.rtab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.rfilters { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-bottom: 14px; }
+.rfilters label { display: flex; align-items: center; gap: 6px; }
+.rfilters input, .rfilters select { width: auto; }
+.presets { display: flex; gap: 6px; }
+
+/* ---------- chart ---------- */
+.chart { width: 100%; height: auto; display: block; }
+.chart .bar { fill: var(--primary); }
+.chart .bar-g:hover .bar { fill: var(--primary-strong); }
+.chart .grid { stroke: var(--grid); stroke-width: 1; }
+.chart .baseline { stroke: var(--baseline); stroke-width: 1; }
+.chart .axis-label { fill: var(--muted); font-size: 11px; }
+
+/* ---------- toast ---------- */
+#toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--ink); color: var(--page); padding: 10px 20px; border-radius: 999px;
+  font-size: 13.5px; font-weight: 600; opacity: 0; transition: all 0.25s; z-index: 200;
+  pointer-events: none; max-width: 90vw;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.error { background: var(--bad); color: #fff; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 860px) {
+  .sidebar {
+    position: fixed; z-index: 60; height: 100vh; left: -240px; transition: left 0.2s;
+  }
+  .sidebar.open { left: 0; box-shadow: 0 0 0 100vmax rgba(0,0,0,0.35); }
+  .topbar { display: flex; }
+  main#view { padding: 14px 12px 60px; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .form-grid, .form-grid-4 { grid-template-columns: 1fr; }
+  .span2 { grid-column: span 1; }
+  .search { width: 140px; }
+}
+
+</style>
+</head>
+<body>
+  <div id="app"></div>
+  <noscript>VyaparOpen needs JavaScript enabled to run. Everything runs locally in your browser.</noscript>
+  <script>
+/* VyaparOpen — utils.js : formatting, DOM helpers, toasts, modals, CSV, SVG charts */
+'use strict';
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function num(v) {
+  const n = parseFloat(v);
+  return isNaN(n) ? 0 : n;
+}
+
+function round2(n) {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
+/* Indian-style currency formatting: ₹ 1,23,456.78 */
+function fmtMoney(n, withSymbol) {
+  n = round2(num(n));
+  const s = Math.abs(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return (n < 0 ? '-' : '') + (withSymbol === false ? '' : '₹ ') + s;
+}
+
+function fmtQty(n) {
+  n = num(n);
+  return Number.isInteger(n) ? String(n) : n.toLocaleString('en-IN', { maximumFractionDigits: 3 });
+}
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return d + '/' + m + '/' + y;
+}
+
+function monthName(m) {
+  return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][m];
+}
+
+function addDays(iso, days) {
+  const d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function inRange(dateStr, from, to) {
+  if (from && dateStr < from) return false;
+  if (to && dateStr > to) return false;
+  return true;
+}
+
+function el(id) { return document.getElementById(id); }
+
+function h(html) {
+  const t = document.createElement('template');
+  t.innerHTML = html.trim();
+  return t.content.firstChild;
+}
+
+/* ---------- toast ---------- */
+let _toastTimer = null;
+function toast(msg, kind) {
+  let t = el('toast');
+  if (!t) {
+    t = h('<div id="toast"></div>');
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.className = 'show' + (kind === 'error' ? ' error' : '');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { t.className = ''; }, 2600);
+}
+
+/* ---------- modal ---------- */
+function openModal(html, wide) {
+  closeModal();
+  const overlay = h(
+    '<div class="modal-overlay" id="modalOverlay">' +
+    '<div class="modal' + (wide ? ' modal-wide' : '') + '" role="dialog">' + html + '</div></div>'
+  );
+  overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) closeModal(); });
+  document.body.appendChild(overlay);
+  document.body.classList.add('modal-open');
+  const first = overlay.querySelector('input,select,textarea');
+  if (first) setTimeout(() => first.focus(), 50);
+}
+
+function closeModal() {
+  const o = el('modalOverlay');
+  if (o) o.remove();
+  document.body.classList.remove('modal-open');
+}
+
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+function confirmDialog(msg, onYes) {
+  openModal(
+    '<div class="modal-head"><h3>Please confirm</h3></div>' +
+    '<div class="modal-body"><p>' + esc(msg) + '</p></div>' +
+    '<div class="modal-foot">' +
+    '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn danger" id="confirmYes">Delete</button></div>'
+  );
+  el('confirmYes').addEventListener('click', () => { closeModal(); onYes(); });
+}
+
+/* ---------- file download / CSV ---------- */
+function downloadFile(name, content, mime) {
+  const blob = new Blob([content], { type: mime || 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+function toCSV(rows) {
+  return rows.map(r => r.map(c => {
+    c = String(c == null ? '' : c);
+    return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c;
+  }).join(',')).join('\n');
+}
+
+function exportTableCSV(name, headers, rows) {
+  downloadFile(name, toCSV([headers].concat(rows)), 'text/csv;charset=utf-8');
+  toast('Exported ' + name);
+}
+
+/* ---------- SVG charts (no external libs) ----------
+   Colors follow the app palette custom properties (see style.css):
+   --series-1 for the single sales series; text uses ink tokens. */
+
+function svgBarChart(data, opts) {
+  // data: [{label, value}], opts: {height, valueFmt}
+  const H = (opts && opts.height) || 220;
+  const W = 720, padL = 56, padR = 12, padT = 14, padB = 30;
+  const iw = W - padL - padR, ih = H - padT - padB;
+  const max = Math.max(1, ...data.map(d => d.value));
+  const step = iw / Math.max(1, data.length);
+  const barW = Math.max(4, Math.min(34, step - 4));
+  const fmt = (opts && opts.valueFmt) || (v => fmtMoney(v));
+  let s = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="Bar chart">';
+  // gridlines (4 hairlines) + y labels
+  for (let i = 0; i <= 4; i++) {
+    const y = padT + ih - (ih * i / 4);
+    const v = max * i / 4;
+    s += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" class="grid"/>';
+    s += '<text x="' + (padL - 8) + '" y="' + (y + 4) + '" class="axis-label" text-anchor="end">' + shortMoney(v) + '</text>';
+  }
+  // bars
+  data.forEach((d, i) => {
+    const x = padL + i * step + (step - barW) / 2;
+    const bh = Math.round(ih * d.value / max);
+    const y = padT + ih - bh;
+    s += '<g class="bar-g"><title>' + esc(d.label) + ': ' + esc(fmt(d.value)) + '</title>';
+    if (d.value > 0) {
+      s += '<rect x="' + x + '" y="' + y + '" width="' + barW + '" height="' + bh + '" rx="3" class="bar"/>';
+    }
+    s += '<rect x="' + (padL + i * step) + '" y="' + padT + '" width="' + step + '" height="' + ih + '" fill="transparent"/></g>';
+    // x labels — show at most ~10
+    const every = Math.ceil(data.length / 10);
+    if (i % every === 0) {
+      s += '<text x="' + (x + barW / 2) + '" y="' + (H - 8) + '" class="axis-label" text-anchor="middle">' + esc(d.label) + '</text>';
+    }
+  });
+  s += '<line x1="' + padL + '" y1="' + (padT + ih) + '" x2="' + (W - padR) + '" y2="' + (padT + ih) + '" class="baseline"/>';
+  s += '</svg>';
+  return s;
+}
+
+function shortMoney(v) {
+  v = num(v);
+  if (Math.abs(v) >= 10000000) return (v / 10000000).toFixed(1).replace(/\.0$/, '') + 'Cr';
+  if (Math.abs(v) >= 100000) return (v / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
+  if (Math.abs(v) >= 1000) return (v / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return String(Math.round(v));
+}
+
+/* number → words (Indian system) for invoice printing */
+function amountInWords(n) {
+  n = Math.round(num(n) * 100) / 100;
+  const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve',
+    'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+  function two(x) { return x < 20 ? ones[x] : tens[Math.floor(x / 10)] + (x % 10 ? ' ' + ones[x % 10] : ''); }
+  function words(x) {
+    if (x === 0) return 'Zero';
+    let out = '';
+    if (x >= 10000000) { out += words(Math.floor(x / 10000000)) + ' Crore '; x %= 10000000; }
+    if (x >= 100000) { out += two(Math.floor(x / 100000)) + ' Lakh '; x %= 100000; }
+    if (x >= 1000) { out += two(Math.floor(x / 1000)) + ' Thousand '; x %= 1000; }
+    if (x >= 100) { out += ones[Math.floor(x / 100)] + ' Hundred '; x %= 100; }
+    if (x > 0) out += two(x) + ' ';
+    return out.trim();
+  }
+  const rup = Math.floor(n), pai = Math.round((n - rup) * 100);
+  let s = words(rup) + ' Rupees';
+  if (pai > 0) s += ' and ' + words(pai) + ' Paise';
+  return s + ' Only';
+}
+
+
+/* VyaparOpen — store.js : persistence + business calculations */
+'use strict';
+
+const STORE_KEY = 'vyaparopen_data_v1';
+
+const TXN_TYPES = {
+  SALE:            { label: 'Sale Invoice',   prefix: 'INV',  party: 'customer', stock: -1, balance: +1 },
+  SALE_RETURN:     { label: 'Credit Note',    prefix: 'CRN',  party: 'customer', stock: +1, balance: -1 },
+  ESTIMATE:        { label: 'Estimate',       prefix: 'EST',  party: 'customer', stock: 0,  balance: 0 },
+  PURCHASE:        { label: 'Purchase Bill',  prefix: 'PUR',  party: 'supplier', stock: +1, balance: -1 },
+  PURCHASE_RETURN: { label: 'Debit Note',     prefix: 'DBN',  party: 'supplier', stock: -1, balance: +1 },
+  PAYMENT_IN:      { label: 'Payment In',     prefix: 'RCPT', party: 'customer', stock: 0,  balance: -1 },
+  PAYMENT_OUT:     { label: 'Payment Out',    prefix: 'PAY',  party: 'supplier', stock: 0,  balance: +1 },
+  EXPENSE:         { label: 'Expense',        prefix: 'EXP',  party: 'supplier', stock: 0,  balance: 0 }
+};
+
+const PAY_MODES = ['Cash', 'UPI', 'Bank Transfer', 'Card', 'Cheque', 'Credit'];
+const UNITS = ['PCS', 'KG', 'GM', 'LTR', 'ML', 'MTR', 'BOX', 'DOZEN', 'BAG', 'BOTTLE', 'PACKET', 'PAIR', 'SET', 'HOUR', 'DAY', 'SERVICE'];
+const GST_RATES = [0, 0.25, 3, 5, 12, 18, 28];
+const EXPENSE_CATEGORIES = ['Rent', 'Salary', 'Electricity', 'Transport', 'Telephone & Internet', 'Tea & Refreshments', 'Repairs', 'Marketing', 'Stationery', 'Fuel', 'Insurance', 'Other'];
+
+function defaultState() {
+  return {
+    version: 1,
+    settings: {
+      businessName: 'My Business',
+      tagline: '',
+      address: '',
+      phone: '',
+      email: '',
+      gstin: '',
+      taxEnabled: true,
+      theme: 'light',
+      terms: 'Thanks for doing business with us!',
+      upiId: '',
+      signatureName: ''
+    },
+    counters: { SALE: 1, SALE_RETURN: 1, ESTIMATE: 1, PURCHASE: 1, PURCHASE_RETURN: 1, PAYMENT_IN: 1, PAYMENT_OUT: 1, EXPENSE: 1 },
+    parties: [],
+    items: [],
+    txns: [],
+    adjustments: []
+  };
+}
+
+let state = load();
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      // merge over defaults so new fields appear after upgrades
+      const d = defaultState();
+      s.settings = Object.assign(d.settings, s.settings || {});
+      s.counters = Object.assign(d.counters, s.counters || {});
+      s.parties = s.parties || []; s.items = s.items || [];
+      s.txns = s.txns || []; s.adjustments = s.adjustments || [];
+      return s;
+    }
+  } catch (e) { console.error('load failed', e); }
+  return defaultState();
+}
+
+function save() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+  } catch (e) {
+    toast('Could not save data: ' + e.message, 'error');
+  }
+}
+
+function nextNumber(type) {
+  return TXN_TYPES[type].prefix + '-' + String(state.counters[type]).padStart(4, '0');
+}
+
+function bumpCounter(type) {
+  state.counters[type]++;
+}
+
+/* ---------- lookups ---------- */
+function getParty(id) { return state.parties.find(p => p.id === id) || null; }
+function getItem(id) { return state.items.find(i => i.id === id) || null; }
+function getTxn(id) { return state.txns.find(t => t.id === id) || null; }
+function partyName(id) {
+  const p = getParty(id);
+  return p ? p.name : 'Cash Sale';
+}
+
+/* ---------- balances ----------
+   Party balance sign convention: positive = party owes us (receivable),
+   negative = we owe the party (payable). */
+function partyOpening(p) {
+  const v = num(p.openingBalance);
+  return p.openingType === 'pay' ? -v : v;
+}
+
+function txnDue(t) {
+  const cfg = TXN_TYPES[t.type];
+  if (cfg.balance === 0) return 0;
+  if (t.type === 'PAYMENT_IN') return -num(t.total);
+  if (t.type === 'PAYMENT_OUT') return num(t.total);
+  return cfg.balance * (num(t.total) - num(t.paid));
+}
+
+function partyBalance(partyId) {
+  const p = getParty(partyId);
+  if (!p) return 0;
+  let bal = partyOpening(p);
+  for (const t of state.txns) {
+    if (t.partyId === partyId) bal += txnDue(t);
+  }
+  return round2(bal);
+}
+
+function totalsReceivablePayable() {
+  let recv = 0, pay = 0;
+  for (const p of state.parties) {
+    const b = partyBalance(p.id);
+    if (b > 0) recv += b; else pay += -b;
+  }
+  return { receivable: round2(recv), payable: round2(pay) };
+}
+
+/* ---------- stock ---------- */
+function itemStock(itemId) {
+  const it = getItem(itemId);
+  if (!it || it.type === 'service') return 0;
+  let qty = num(it.openingStock);
+  for (const t of state.txns) {
+    const dir = TXN_TYPES[t.type].stock;
+    if (!dir || !t.lines) continue;
+    for (const l of t.lines) {
+      if (l.itemId === itemId) qty += dir * num(l.qty);
+    }
+  }
+  for (const a of state.adjustments) {
+    if (a.itemId === itemId) qty += num(a.delta);
+  }
+  return round2(qty);
+}
+
+function stockValue() {
+  let v = 0;
+  for (const it of state.items) {
+    if (it.type === 'service') continue;
+    v += Math.max(0, itemStock(it.id)) * num(it.purchasePrice || it.salePrice);
+  }
+  return round2(v);
+}
+
+function lowStockItems() {
+  return state.items.filter(it => it.type !== 'service' && num(it.minStock) > 0 && itemStock(it.id) <= num(it.minStock));
+}
+
+/* ---------- txn helpers ---------- */
+function txnStatus(t) {
+  const cfg = TXN_TYPES[t.type];
+  if (t.type === 'ESTIMATE') return t.convertedTo ? 'Converted' : 'Open';
+  if (cfg.balance === 0 || t.type === 'PAYMENT_IN' || t.type === 'PAYMENT_OUT') return 'Paid';
+  const due = num(t.total) - num(t.paid);
+  if (due <= 0.005) return 'Paid';
+  if (num(t.paid) > 0) return 'Partial';
+  return 'Unpaid';
+}
+
+/* GST split: if both GSTINs exist and state codes (first 2 digits) differ → IGST, else CGST+SGST */
+function taxSplitFor(t) {
+  const p = t.partyId ? getParty(t.partyId) : null;
+  const biz = (state.settings.gstin || '').slice(0, 2);
+  const par = (p && p.gstin ? p.gstin : '').slice(0, 2);
+  if (biz && par && biz !== par) return 'IGST';
+  return 'CGST_SGST';
+}
+
+/* compute line + txn totals from a draft txn's lines & discount */
+function computeTotals(lines, discountPct, taxEnabled) {
+  let subtotal = 0, taxAmount = 0;
+  for (const l of lines) {
+    const gross = num(l.qty) * num(l.rate);
+    const lineDisc = gross * num(l.disc || 0) / 100;
+    const taxable = gross - lineDisc;
+    const tax = taxEnabled ? taxable * num(l.taxRate || 0) / 100 : 0;
+    l.amount = round2(taxable);
+    l.tax = round2(tax);
+    subtotal += taxable;
+    taxAmount += tax;
+  }
+  const discount = subtotal * num(discountPct || 0) / 100;
+  // overall discount applied on taxable value proportionally reduces tax too
+  const taxAfter = subtotal > 0 ? taxAmount * (1 - num(discountPct || 0) / 100) : 0;
+  const raw = subtotal - discount + taxAfter;
+  const total = Math.round(raw);
+  return {
+    subtotal: round2(subtotal),
+    discount: round2(discount),
+    taxAmount: round2(taxAfter),
+    roundOff: round2(total - raw),
+    total: round2(total)
+  };
+}
+
+function deleteTxn(id) {
+  state.txns = state.txns.filter(t => t.id !== id);
+  save();
+}
+
+/* ---------- backup / restore ---------- */
+function exportBackup() {
+  downloadFile('vyaparopen-backup-' + todayStr() + '.json', JSON.stringify(state, null, 2), 'application/json');
+  toast('Backup downloaded');
+}
+
+function importBackup(file, done) {
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const s = JSON.parse(r.result);
+      if (!s || !s.settings || !Array.isArray(s.txns)) throw new Error('Not a VyaparOpen backup file');
+      state = s;
+      // re-merge defaults for forward compatibility
+      const d = defaultState();
+      state.settings = Object.assign(d.settings, state.settings);
+      state.counters = Object.assign(d.counters, state.counters || {});
+      state.parties = state.parties || []; state.items = state.items || [];
+      state.txns = state.txns || []; state.adjustments = state.adjustments || [];
+      save();
+      done(true);
+    } catch (e) {
+      done(false, e.message);
+    }
+  };
+  r.readAsText(file);
+}
+
+/* ---------- demo data ---------- */
+function loadDemoData() {
+  const s = defaultState();
+  s.settings.businessName = 'Shree Ganesh Traders';
+  s.settings.address = '12, MG Road, Bengaluru, Karnataka - 560001';
+  s.settings.phone = '9876543210';
+  s.settings.email = 'shreeganesh@example.com';
+  s.settings.gstin = '29ABCDE1234F1Z5';
+
+  const cust1 = { id: uid(), name: 'Rahul Enterprises', phone: '9812345670', email: '', gstin: '29AAAPL1234C1ZV', address: 'Jayanagar, Bengaluru', type: 'customer', openingBalance: 0, openingType: 'receive', createdAt: Date.now() };
+  const cust2 = { id: uid(), name: 'Sneha Retail Mart', phone: '9898989898', email: '', gstin: '', address: 'Indiranagar, Bengaluru', type: 'customer', openingBalance: 2500, openingType: 'receive', createdAt: Date.now() };
+  const supp1 = { id: uid(), name: 'Mahalaxmi Wholesalers', phone: '9765432109', email: '', gstin: '27AABCM9999Q1Z2', address: 'Crawford Market, Mumbai', type: 'supplier', openingBalance: 0, openingType: 'pay', createdAt: Date.now() };
+  s.parties = [cust1, cust2, supp1];
+
+  const it1 = { id: uid(), name: 'Basmati Rice 5kg', hsn: '1006', category: 'Grocery', unit: 'BAG', salePrice: 550, purchasePrice: 470, taxRate: 5, openingStock: 40, minStock: 10, type: 'product', createdAt: Date.now() };
+  const it2 = { id: uid(), name: 'Sunflower Oil 1L', hsn: '1512', category: 'Grocery', unit: 'BOTTLE', salePrice: 160, purchasePrice: 138, taxRate: 5, openingStock: 60, minStock: 12, type: 'product', createdAt: Date.now() };
+  const it3 = { id: uid(), name: 'Detergent Powder 1kg', hsn: '3402', category: 'Home Care', unit: 'PACKET', salePrice: 120, purchasePrice: 95, taxRate: 18, openingStock: 25, minStock: 8, type: 'product', createdAt: Date.now() };
+  const it4 = { id: uid(), name: 'Home Delivery Charge', hsn: '9965', category: 'Services', unit: 'SERVICE', salePrice: 50, purchasePrice: 0, taxRate: 18, openingStock: 0, minStock: 0, type: 'service', createdAt: Date.now() };
+  s.items = [it1, it2, it3, it4];
+
+  function mkLines(specs) {
+    return specs.map(([it, qty, rate]) => ({ itemId: it.id, name: it.name, hsn: it.hsn, unit: it.unit, qty: qty, rate: rate, disc: 0, taxRate: it.taxRate }));
+  }
+  function mkTxn(type, daysAgo, partyId, lines, paid, mode) {
+    const totals = computeTotals(lines, 0, true);
+    const t = Object.assign({
+      id: uid(), type: type, number: nextNumberFor(s, type), date: addDays(todayStr(), -daysAgo),
+      partyId: partyId, lines: lines, discountPct: 0,
+      paid: paid == null ? totals.total : paid, mode: mode || 'Cash', notes: '', createdAt: Date.now()
+    }, totals);
+    s.counters[type]++;
+    return t;
+  }
+  function nextNumberFor(st, type) {
+    return TXN_TYPES[type].prefix + '-' + String(st.counters[type]).padStart(4, '0');
+  }
+
+  s.txns.push(mkTxn('PURCHASE', 20, supp1.id, mkLines([[it1, 30, 470], [it2, 50, 138]]), 10000, 'Bank Transfer'));
+  s.txns.push(mkTxn('SALE', 15, cust1.id, mkLines([[it1, 10, 550], [it2, 12, 160]]), 5000, 'UPI'));
+  s.txns.push(mkTxn('SALE', 9, cust2.id, mkLines([[it2, 6, 160], [it3, 4, 120]]), null, 'Cash'));
+  s.txns.push(mkTxn('SALE', 4, cust1.id, mkLines([[it3, 10, 120], [it4, 1, 50]]), 0, 'Credit'));
+  s.txns.push(mkTxn('SALE', 1, cust2.id, mkLines([[it1, 2, 550]]), null, 'UPI'));
+  const pay = { id: uid(), type: 'PAYMENT_IN', number: nextNumberFor(s, 'PAYMENT_IN'), date: addDays(todayStr(), -2), partyId: cust1.id, total: 2000, paid: 2000, mode: 'UPI', notes: 'Part payment', createdAt: Date.now() };
+  s.counters.PAYMENT_IN++;
+  s.txns.push(pay);
+  const exp = { id: uid(), type: 'EXPENSE', number: nextNumberFor(s, 'EXPENSE'), date: addDays(todayStr(), -3), partyId: null, category: 'Rent', total: 8000, paid: 8000, mode: 'Bank Transfer', notes: 'Shop rent', createdAt: Date.now() };
+  s.counters.EXPENSE++;
+  s.txns.push(exp);
+
+  state = s;
+  save();
+}
+
+
+/* VyaparOpen — parties.js : customers & suppliers */
+'use strict';
+
+function renderParties() {
+  const q = (window._partySearch || '').toLowerCase();
+  const list = state.parties
+    .filter(p => !q || p.name.toLowerCase().includes(q) || (p.phone || '').includes(q))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const totals = totalsReceivablePayable();
+
+  let rows = list.map(p => {
+    const bal = partyBalance(p.id);
+    const cls = bal > 0 ? 'pos' : bal < 0 ? 'neg' : '';
+    const dir = bal > 0 ? 'You will get' : bal < 0 ? 'You will pay' : '—';
+    return '<tr class="rowlink" onclick="openPartyLedger(\'' + p.id + '\')">' +
+      '<td><strong>' + esc(p.name) + '</strong><div class="sub">' + esc(p.phone || '') + '</div></td>' +
+      '<td><span class="tag">' + esc(p.type) + '</span></td>' +
+      '<td>' + esc(p.gstin || '—') + '</td>' +
+      '<td class="r ' + cls + '">' + fmtMoney(Math.abs(bal)) + '<div class="sub">' + dir + '</div></td>' +
+      '<td class="r actions" onclick="event.stopPropagation()">' +
+      '<button class="btn tiny ghost" onclick="openPartyForm(\'' + p.id + '\')">Edit</button> ' +
+      '<button class="btn tiny danger-ghost" onclick="deleteParty(\'' + p.id + '\')">Delete</button></td></tr>';
+  }).join('');
+  if (!rows) rows = '<tr><td colspan="5" class="empty">No parties yet. Add your first customer or supplier.</td></tr>';
+
+  el('view').innerHTML =
+    '<div class="page-head"><h2>Parties</h2>' +
+    '<div class="head-actions">' +
+    '<input class="search" placeholder="Search name or phone…" value="' + esc(window._partySearch || '') + '" oninput="_partySearch=this.value;renderParties()">' +
+    '<button class="btn primary" onclick="openPartyForm()">+ Add Party</button></div></div>' +
+    '<div class="cards">' +
+    '<div class="card stat"><div class="stat-label">To Collect (Receivable)</div><div class="stat-value pos">' + fmtMoney(totals.receivable) + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">To Pay (Payable)</div><div class="stat-value neg">' + fmtMoney(totals.payable) + '</div></div>' +
+    '</div>' +
+    '<div class="card"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Type</th><th>GSTIN</th><th class="r">Balance</th><th class="r">Actions</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+}
+
+function openPartyForm(id) {
+  const p = id ? getParty(id) : null;
+  openModal(
+    '<div class="modal-head"><h3>' + (p ? 'Edit Party' : 'Add Party') + '</h3><button class="x" onclick="closeModal()">×</button></div>' +
+    '<div class="modal-body"><div class="form-grid">' +
+    '<label>Party Name *<input id="pf_name" value="' + esc(p ? p.name : '') + '" required></label>' +
+    '<label>Phone<input id="pf_phone" value="' + esc(p ? p.phone : '') + '"></label>' +
+    '<label>Email<input id="pf_email" type="email" value="' + esc(p ? p.email : '') + '"></label>' +
+    '<label>GSTIN<input id="pf_gstin" maxlength="15" style="text-transform:uppercase" value="' + esc(p ? p.gstin : '') + '"></label>' +
+    '<label>Party Type<select id="pf_type">' +
+    ['customer', 'supplier', 'both'].map(t => '<option value="' + t + '"' + (p && p.type === t ? ' selected' : '') + '>' + t[0].toUpperCase() + t.slice(1) + '</option>').join('') +
+    '</select></label>' +
+    '<label class="span2">Billing Address<textarea id="pf_addr" rows="2">' + esc(p ? p.address : '') + '</textarea></label>' +
+    '<label>Opening Balance<input id="pf_open" type="number" step="0.01" min="0" value="' + (p ? num(p.openingBalance) : 0) + '"></label>' +
+    '<label>Opening Type<select id="pf_opentype">' +
+    '<option value="receive"' + (p && p.openingType === 'receive' ? ' selected' : '') + '>To Receive (they owe you)</option>' +
+    '<option value="pay"' + (p && p.openingType === 'pay' ? ' selected' : '') + '>To Pay (you owe them)</option>' +
+    '</select></label>' +
+    '</div></div>' +
+    '<div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn primary" onclick="saveParty(\'' + (id || '') + '\')">Save</button></div>'
+  );
+}
+
+function saveParty(id) {
+  const name = el('pf_name').value.trim();
+  if (!name) { toast('Party name is required', 'error'); return; }
+  const gstin = el('pf_gstin').value.trim().toUpperCase();
+  if (gstin && gstin.length !== 15) { toast('GSTIN must be 15 characters', 'error'); return; }
+  const data = {
+    name: name,
+    phone: el('pf_phone').value.trim(),
+    email: el('pf_email').value.trim(),
+    gstin: gstin,
+    type: el('pf_type').value,
+    address: el('pf_addr').value.trim(),
+    openingBalance: num(el('pf_open').value),
+    openingType: el('pf_opentype').value
+  };
+  if (id) {
+    Object.assign(getParty(id), data);
+  } else {
+    state.parties.push(Object.assign({ id: uid(), createdAt: Date.now() }, data));
+  }
+  save();
+  closeModal();
+  toast('Party saved');
+  route();
+}
+
+function deleteParty(id) {
+  const used = state.txns.some(t => t.partyId === id);
+  if (used) { toast('Cannot delete: this party has transactions. Delete those first.', 'error'); return; }
+  confirmDialog('Delete this party permanently?', () => {
+    state.parties = state.parties.filter(p => p.id !== id);
+    save();
+    toast('Party deleted');
+    renderParties();
+  });
+}
+
+/* ---------- party ledger / statement ---------- */
+function openPartyLedger(id) {
+  const p = getParty(id);
+  if (!p) return;
+  const entries = state.txns
+    .filter(t => t.partyId === id)
+    .sort((a, b) => a.date === b.date ? a.createdAt - b.createdAt : (a.date < b.date ? -1 : 1));
+
+  let bal = partyOpening(p);
+  let rows = '<tr><td>' + fmtDate('') + '</td><td>Opening Balance</td><td></td><td class="r"></td><td class="r"></td>' +
+    '<td class="r"><strong>' + fmtMoney(Math.abs(bal)) + ' ' + (bal >= 0 ? 'Dr' : 'Cr') + '</strong></td></tr>';
+  for (const t of entries) {
+    const eff = txnDue(t);
+    bal += eff;
+    const debit = eff > 0 ? eff : (TXN_TYPES[t.type].balance > 0 ? num(t.total) : 0);
+    rows += '<tr class="rowlink" onclick="viewTxn(\'' + t.id + '\')">' +
+      '<td>' + fmtDate(t.date) + '</td>' +
+      '<td>' + TXN_TYPES[t.type].label + '</td>' +
+      '<td>' + esc(t.number) + '</td>' +
+      '<td class="r">' + fmtMoney(t.total) + '</td>' +
+      '<td class="r">' + (num(t.paid) && TXN_TYPES[t.type].balance !== 0 && t.type.indexOf('PAYMENT') !== 0 ? fmtMoney(t.paid) : '—') + '</td>' +
+      '<td class="r">' + fmtMoney(Math.abs(bal)) + ' ' + (bal >= 0 ? 'Dr' : 'Cr') + '</td></tr>';
+  }
+  const finalBal = partyBalance(id);
+  el('view').innerHTML =
+    '<div class="page-head"><h2><a class="crumb" onclick="go(\'parties\')">Parties</a> › ' + esc(p.name) + '</h2>' +
+    '<div class="head-actions">' +
+    '<button class="btn ghost" onclick="openPartyForm(\'' + id + '\')">Edit Party</button>' +
+    '<button class="btn primary" onclick="openTxnForm(\'PAYMENT_IN\',null,\'' + id + '\')">+ Payment In</button>' +
+    '<button class="btn primary" onclick="openTxnForm(\'SALE\',null,\'' + id + '\')">+ Sale</button></div></div>' +
+    '<div class="cards">' +
+    '<div class="card stat"><div class="stat-label">Phone</div><div class="stat-mid">' + esc(p.phone || '—') + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">GSTIN</div><div class="stat-mid">' + esc(p.gstin || '—') + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">' + (finalBal >= 0 ? 'You will get' : 'You will pay') + '</div>' +
+    '<div class="stat-value ' + (finalBal >= 0 ? 'pos' : 'neg') + '">' + fmtMoney(Math.abs(finalBal)) + '</div></div></div>' +
+    '<div class="card"><h3 class="card-title">Statement (Ledger)</h3><div class="table-wrap"><table><thead><tr>' +
+    '<th>Date</th><th>Type</th><th>Number</th><th class="r">Total</th><th class="r">Paid/Recd</th><th class="r">Balance</th></tr></thead><tbody>' +
+    rows + '</tbody></table></div></div>';
+}
+
+
+/* VyaparOpen — items.js : inventory / products & services */
+'use strict';
+
+function renderItems() {
+  const q = (window._itemSearch || '').toLowerCase();
+  const list = state.items
+    .filter(i => !q || i.name.toLowerCase().includes(q) || (i.category || '').toLowerCase().includes(q))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const low = lowStockItems();
+
+  let rows = list.map(it => {
+    const stock = itemStock(it.id);
+    const isLow = it.type !== 'service' && num(it.minStock) > 0 && stock <= num(it.minStock);
+    return '<tr class="rowlink" onclick="openItemDetail(\'' + it.id + '\')">' +
+      '<td><strong>' + esc(it.name) + '</strong><div class="sub">' + esc(it.category || '') + (it.hsn ? ' · HSN ' + esc(it.hsn) : '') + '</div></td>' +
+      '<td><span class="tag">' + (it.type === 'service' ? 'Service' : 'Product') + '</span></td>' +
+      '<td class="r">' + fmtMoney(it.salePrice) + '</td>' +
+      '<td class="r">' + fmtMoney(it.purchasePrice) + '</td>' +
+      '<td class="r">' + num(it.taxRate) + '%</td>' +
+      '<td class="r">' + (it.type === 'service' ? '—' :
+        (isLow ? '<span class="badge warn" title="Low stock">▲ ' : '<span>') + fmtQty(stock) + ' ' + esc(it.unit) + '</span>') + '</td>' +
+      '<td class="r actions" onclick="event.stopPropagation()">' +
+      '<button class="btn tiny ghost" onclick="openItemForm(\'' + it.id + '\')">Edit</button> ' +
+      '<button class="btn tiny ghost" onclick="openStockAdjust(\'' + it.id + '\')"' + (it.type === 'service' ? ' disabled' : '') + '>Adjust</button> ' +
+      '<button class="btn tiny danger-ghost" onclick="deleteItem(\'' + it.id + '\')">Delete</button></td></tr>';
+  }).join('');
+  if (!rows) rows = '<tr><td colspan="7" class="empty">No items yet. Add products or services you sell.</td></tr>';
+
+  el('view').innerHTML =
+    '<div class="page-head"><h2>Items</h2>' +
+    '<div class="head-actions">' +
+    '<input class="search" placeholder="Search items…" value="' + esc(window._itemSearch || '') + '" oninput="_itemSearch=this.value;renderItems()">' +
+    '<button class="btn primary" onclick="openItemForm()">+ Add Item</button></div></div>' +
+    '<div class="cards">' +
+    '<div class="card stat"><div class="stat-label">Stock Value (at purchase price)</div><div class="stat-value">' + fmtMoney(stockValue()) + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">Low Stock Items</div><div class="stat-value ' + (low.length ? 'neg' : '') + '">' + low.length + '</div></div>' +
+    '</div>' +
+    '<div class="card"><div class="table-wrap"><table><thead><tr><th>Item</th><th>Type</th><th class="r">Sale Price</th><th class="r">Purchase Price</th><th class="r">GST</th><th class="r">Stock</th><th class="r">Actions</th></tr></thead><tbody>' +
+    rows + '</tbody></table></div></div>';
+}
+
+function openItemForm(id) {
+  const it = id ? getItem(id) : null;
+  openModal(
+    '<div class="modal-head"><h3>' + (it ? 'Edit Item' : 'Add Item') + '</h3><button class="x" onclick="closeModal()">×</button></div>' +
+    '<div class="modal-body"><div class="form-grid">' +
+    '<label class="span2">Item Name *<input id="if_name" value="' + esc(it ? it.name : '') + '"></label>' +
+    '<label>Type<select id="if_type" onchange="el(\'if_stockwrap\').style.display=this.value===\'service\'?\'none\':\'\'">' +
+    '<option value="product"' + (it && it.type === 'product' ? ' selected' : '') + '>Product</option>' +
+    '<option value="service"' + (it && it.type === 'service' ? ' selected' : '') + '>Service</option></select></label>' +
+    '<label>Category<input id="if_cat" value="' + esc(it ? it.category : '') + '"></label>' +
+    '<label>Unit<select id="if_unit">' + UNITS.map(u => '<option' + (it && it.unit === u ? ' selected' : '') + '>' + u + '</option>').join('') + '</select></label>' +
+    '<label>HSN / SAC Code<input id="if_hsn" value="' + esc(it ? it.hsn : '') + '"></label>' +
+    '<label>Sale Price (₹) *<input id="if_sale" type="number" step="0.01" min="0" value="' + (it ? num(it.salePrice) : '') + '"></label>' +
+    '<label>Purchase Price (₹)<input id="if_pur" type="number" step="0.01" min="0" value="' + (it ? num(it.purchasePrice) : '') + '"></label>' +
+    '<label>GST Rate %<select id="if_tax">' + GST_RATES.map(r => '<option value="' + r + '"' + (it && num(it.taxRate) === r ? ' selected' : (!it && r === 18 ? ' selected' : '')) + '>' + r + '%</option>').join('') + '</select></label>' +
+    '<div class="span2" id="if_stockwrap" style="display:' + (it && it.type === 'service' ? 'none' : 'grid') + ';grid-template-columns:1fr 1fr;gap:12px">' +
+    '<label>Opening Stock<input id="if_open" type="number" step="any" min="0" value="' + (it ? num(it.openingStock) : 0) + '"></label>' +
+    '<label>Low Stock Alert At<input id="if_min" type="number" step="any" min="0" value="' + (it ? num(it.minStock) : 0) + '"></label></div>' +
+    '</div></div>' +
+    '<div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn primary" onclick="saveItem(\'' + (id || '') + '\')">Save</button></div>'
+  );
+}
+
+function saveItem(id) {
+  const name = el('if_name').value.trim();
+  if (!name) { toast('Item name is required', 'error'); return; }
+  const data = {
+    name: name,
+    type: el('if_type').value,
+    category: el('if_cat').value.trim(),
+    unit: el('if_unit').value,
+    hsn: el('if_hsn').value.trim(),
+    salePrice: num(el('if_sale').value),
+    purchasePrice: num(el('if_pur').value),
+    taxRate: num(el('if_tax').value),
+    openingStock: num(el('if_open').value),
+    minStock: num(el('if_min').value)
+  };
+  if (id) Object.assign(getItem(id), data);
+  else state.items.push(Object.assign({ id: uid(), createdAt: Date.now() }, data));
+  save();
+  closeModal();
+  toast('Item saved');
+  route();
+}
+
+function deleteItem(id) {
+  const used = state.txns.some(t => (t.lines || []).some(l => l.itemId === id));
+  if (used) { toast('Cannot delete: item is used in transactions.', 'error'); return; }
+  confirmDialog('Delete this item permanently?', () => {
+    state.items = state.items.filter(i => i.id !== id);
+    state.adjustments = state.adjustments.filter(a => a.itemId !== id);
+    save();
+    toast('Item deleted');
+    renderItems();
+  });
+}
+
+function openStockAdjust(id) {
+  const it = getItem(id);
+  openModal(
+    '<div class="modal-head"><h3>Adjust Stock — ' + esc(it.name) + '</h3><button class="x" onclick="closeModal()">×</button></div>' +
+    '<div class="modal-body"><div class="form-grid">' +
+    '<label>Adjustment<select id="sa_dir"><option value="1">Add stock (+)</option><option value="-1">Reduce stock (−)</option></select></label>' +
+    '<label>Quantity<input id="sa_qty" type="number" step="any" min="0" value="1"></label>' +
+    '<label>Date<input id="sa_date" type="date" value="' + todayStr() + '"></label>' +
+    '<label>Reason<input id="sa_note" placeholder="e.g. damage, recount"></label>' +
+    '</div><p class="sub">Current stock: ' + fmtQty(itemStock(id)) + ' ' + esc(it.unit) + '</p></div>' +
+    '<div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn primary" onclick="saveStockAdjust(\'' + id + '\')">Adjust</button></div>'
+  );
+}
+
+function saveStockAdjust(id) {
+  const qty = num(el('sa_qty').value);
+  if (qty <= 0) { toast('Enter a quantity', 'error'); return; }
+  state.adjustments.push({
+    id: uid(), itemId: id, date: el('sa_date').value || todayStr(),
+    delta: qty * num(el('sa_dir').value), note: el('sa_note').value.trim(), createdAt: Date.now()
+  });
+  save();
+  closeModal();
+  toast('Stock adjusted');
+  route();
+}
+
+function openItemDetail(id) {
+  const it = getItem(id);
+  if (!it) return;
+  const moves = [];
+  for (const t of state.txns) {
+    const dir = TXN_TYPES[t.type].stock;
+    for (const l of (t.lines || [])) {
+      if (l.itemId === id) moves.push({ date: t.date, label: TXN_TYPES[t.type].label + ' ' + t.number, qty: dir * num(l.qty), rate: num(l.rate), txnId: t.id, at: t.createdAt });
+    }
+  }
+  for (const a of state.adjustments) {
+    if (a.itemId === id) moves.push({ date: a.date, label: 'Stock Adjustment' + (a.note ? ' — ' + a.note : ''), qty: num(a.delta), rate: null, at: a.createdAt || 0 });
+  }
+  moves.sort((a, b) => a.date === b.date ? a.at - b.at : (a.date < b.date ? -1 : 1));
+
+  let run = num(it.openingStock);
+  let rows = it.type === 'service' ? '' :
+    '<tr><td></td><td>Opening Stock</td><td class="r"></td><td class="r"></td><td class="r">' + fmtQty(run) + '</td></tr>';
+  for (const m of moves) {
+    run += m.qty;
+    rows += '<tr' + (m.txnId ? ' class="rowlink" onclick="viewTxn(\'' + m.txnId + '\')"' : '') + '>' +
+      '<td>' + fmtDate(m.date) + '</td><td>' + esc(m.label) + '</td>' +
+      '<td class="r ' + (m.qty >= 0 ? 'pos' : 'neg') + '">' + (m.qty >= 0 ? '+' : '') + fmtQty(m.qty) + '</td>' +
+      '<td class="r">' + (m.rate != null ? fmtMoney(m.rate) : '—') + '</td>' +
+      '<td class="r">' + fmtQty(run) + '</td></tr>';
+  }
+  if (!rows) rows = '<tr><td colspan="5" class="empty">No movements yet.</td></tr>';
+
+  el('view').innerHTML =
+    '<div class="page-head"><h2><a class="crumb" onclick="go(\'items\')">Items</a> › ' + esc(it.name) + '</h2>' +
+    '<div class="head-actions"><button class="btn ghost" onclick="openItemForm(\'' + id + '\')">Edit</button>' +
+    (it.type !== 'service' ? '<button class="btn primary" onclick="openStockAdjust(\'' + id + '\')">Adjust Stock</button>' : '') +
+    '</div></div>' +
+    '<div class="cards">' +
+    '<div class="card stat"><div class="stat-label">Sale Price</div><div class="stat-value">' + fmtMoney(it.salePrice) + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">Purchase Price</div><div class="stat-value">' + fmtMoney(it.purchasePrice) + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">Current Stock</div><div class="stat-value">' + (it.type === 'service' ? '—' : fmtQty(itemStock(id)) + ' ' + esc(it.unit)) + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">GST Rate</div><div class="stat-value">' + num(it.taxRate) + '%</div></div></div>' +
+    '<div class="card"><h3 class="card-title">Stock Movement</h3><div class="table-wrap"><table><thead><tr>' +
+    '<th>Date</th><th>Transaction</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Stock After</th></tr></thead><tbody>' +
+    rows + '</tbody></table></div></div>';
+}
+
+
+/* VyaparOpen — txns.js : sales, purchases, returns, estimates, payments, expenses */
+'use strict';
+
+const LIST_DEFS = {
+  sales:     { title: 'Sales',      types: ['SALE'],            add: [['SALE', '+ New Sale']] },
+  estimates: { title: 'Estimates / Quotations', types: ['ESTIMATE'], add: [['ESTIMATE', '+ New Estimate']] },
+  purchases: { title: 'Purchases',  types: ['PURCHASE'],        add: [['PURCHASE', '+ New Purchase']] },
+  returns:   { title: 'Credit / Debit Notes', types: ['SALE_RETURN', 'PURCHASE_RETURN'], add: [['SALE_RETURN', '+ Credit Note (Sale Return)'], ['PURCHASE_RETURN', '+ Debit Note (Purchase Return)']] },
+  payments:  { title: 'Payments',   types: ['PAYMENT_IN', 'PAYMENT_OUT'], add: [['PAYMENT_IN', '+ Payment In'], ['PAYMENT_OUT', '+ Payment Out']] },
+  expenses:  { title: 'Expenses',   types: ['EXPENSE'],         add: [['EXPENSE', '+ New Expense']] }
+};
+
+function renderTxnList(defKey) {
+  const def = LIST_DEFS[defKey];
+  const q = (window._txnSearch || '').toLowerCase();
+  const list = state.txns
+    .filter(t => def.types.includes(t.type))
+    .filter(t => !q || t.number.toLowerCase().includes(q) || partyName(t.partyId).toLowerCase().includes(q))
+    .sort((a, b) => a.date === b.date ? b.createdAt - a.createdAt : (a.date < b.date ? 1 : -1));
+
+  const totalAmt = list.reduce((s, t) => s + num(t.total), 0);
+  const totalDue = list.reduce((s, t) => s + (TXN_TYPES[t.type].balance !== 0 && !t.type.startsWith('PAYMENT') ? Math.max(0, num(t.total) - num(t.paid)) : 0), 0);
+
+  let rows = list.map(t => {
+    const st = txnStatus(t);
+    const badge = st === 'Paid' || st === 'Converted' ? 'ok' : st === 'Partial' ? 'warn' : st === 'Open' ? 'info' : 'bad';
+    return '<tr class="rowlink" onclick="viewTxn(\'' + t.id + '\')">' +
+      '<td>' + fmtDate(t.date) + '</td>' +
+      '<td>' + esc(t.number) + '<div class="sub">' + TXN_TYPES[t.type].label + '</div></td>' +
+      '<td>' + esc(t.type === 'EXPENSE' ? (t.category || 'Expense') : partyName(t.partyId)) + '</td>' +
+      '<td class="r">' + fmtMoney(t.total) + '</td>' +
+      '<td class="r">' + (TXN_TYPES[t.type].balance !== 0 && !t.type.startsWith('PAYMENT') ? fmtMoney(Math.max(0, num(t.total) - num(t.paid))) : '—') + '</td>' +
+      '<td><span class="badge ' + badge + '">' + st + '</span></td>' +
+      '<td class="r actions" onclick="event.stopPropagation()">' +
+      (t.type === 'ESTIMATE' && !t.convertedTo ? '<button class="btn tiny primary" onclick="convertEstimate(\'' + t.id + '\')">To Sale</button> ' : '') +
+      ((t.lines || []).length ? '<button class="btn tiny ghost" onclick="printTxn(\'' + t.id + '\')">Print</button> ' : '') +
+      '<button class="btn tiny ghost" onclick="openTxnForm(\'' + t.type + '\',\'' + t.id + '\')">Edit</button> ' +
+      '<button class="btn tiny danger-ghost" onclick="askDeleteTxn(\'' + t.id + '\')">Delete</button></td></tr>';
+  }).join('');
+  if (!rows) rows = '<tr><td colspan="7" class="empty">No transactions yet.</td></tr>';
+
+  el('view').innerHTML =
+    '<div class="page-head"><h2>' + def.title + '</h2><div class="head-actions">' +
+    '<input class="search" placeholder="Search number or party…" value="' + esc(window._txnSearch || '') + '" oninput="_txnSearch=this.value;renderTxnList(\'' + defKey + '\')">' +
+    def.add.map(a => '<button class="btn primary" onclick="openTxnForm(\'' + a[0] + '\')">' + a[1] + '</button>').join('') +
+    '</div></div>' +
+    '<div class="cards">' +
+    '<div class="card stat"><div class="stat-label">Total Amount</div><div class="stat-value">' + fmtMoney(totalAmt) + '</div></div>' +
+    (defKey === 'sales' || defKey === 'purchases' ? '<div class="card stat"><div class="stat-label">Balance Due</div><div class="stat-value ' + (totalDue ? 'neg' : '') + '">' + fmtMoney(totalDue) + '</div></div>' : '') +
+    '</div>' +
+    '<div class="card"><div class="table-wrap"><table><thead><tr><th>Date</th><th>Number</th><th>Party / Category</th><th class="r">Total</th><th class="r">Balance</th><th>Status</th><th class="r">Actions</th></tr></thead><tbody>' +
+    rows + '</tbody></table></div></div>';
+}
+
+function askDeleteTxn(id) {
+  confirmDialog('Delete this transaction? Stock and balances will be recalculated.', () => {
+    deleteTxn(id);
+    toast('Transaction deleted');
+    route();
+  });
+}
+
+/* =========================================================
+   Transaction form
+   ========================================================= */
+let draft = null;
+
+function isItemType(type) {
+  return ['SALE', 'PURCHASE', 'SALE_RETURN', 'PURCHASE_RETURN', 'ESTIMATE'].includes(type);
+}
+
+function partyOptionsFor(type, selectedId) {
+  const kind = TXN_TYPES[type].party;
+  const list = state.parties.filter(p => p.type === kind || p.type === 'both')
+    .sort((a, b) => a.name.localeCompare(b.name));
+  let opts = '<option value="">— ' + (type === 'SALE' || type === 'ESTIMATE' ? 'Cash Sale (no party)' : 'Select party') + ' —</option>';
+  for (const p of list) {
+    opts += '<option value="' + p.id + '"' + (p.id === selectedId ? ' selected' : '') + '>' + esc(p.name) + '</option>';
+  }
+  return opts;
+}
+
+function openTxnForm(type, id, presetPartyId) {
+  const existing = id ? getTxn(id) : null;
+  draft = existing ? JSON.parse(JSON.stringify(existing)) : {
+    id: null, type: type, number: nextNumber(type), date: todayStr(),
+    partyId: presetPartyId || '', lines: [], discountPct: 0, paid: 0,
+    mode: 'Cash', category: EXPENSE_CATEGORIES[0], notes: '', total: 0
+  };
+  if (isItemType(type) && draft.lines.length === 0) draft.lines.push(blankLine());
+
+  const cfg = TXN_TYPES[type];
+  let body;
+  if (isItemType(type)) {
+    body =
+      '<div class="form-grid form-grid-4">' +
+      '<label>Party<select id="tf_party" onchange="draft.partyId=this.value">' + partyOptionsFor(type, draft.partyId) + '</select></label>' +
+      '<label>Number<input id="tf_number" value="' + esc(draft.number) + '"></label>' +
+      '<label>Date<input id="tf_date" type="date" value="' + esc(draft.date) + '"></label>' +
+      '<label>Payment Mode<select id="tf_mode">' + PAY_MODES.map(m => '<option' + (draft.mode === m ? ' selected' : '') + '>' + m + '</option>').join('') + '</select></label>' +
+      '</div>' +
+      '<div class="table-wrap"><table class="lines-table"><thead><tr>' +
+      '<th style="width:30%">Item</th><th class="r">Qty</th><th>Unit</th><th class="r">Rate (₹)</th><th class="r">Disc %</th><th class="r">GST %</th><th class="r">Amount</th><th></th>' +
+      '</tr></thead><tbody id="tf_lines"></tbody></table></div>' +
+      '<button class="btn ghost" onclick="draft.lines.push(blankLine());renderLines()">+ Add Row</button>' +
+      '<div class="totals-panel" id="tf_totals"></div>' +
+      '<label class="notes">Notes<textarea id="tf_notes" rows="2" oninput="draft.notes=this.value">' + esc(draft.notes || '') + '</textarea></label>';
+  } else if (type === 'EXPENSE') {
+    body =
+      '<div class="form-grid">' +
+      '<label>Category<select id="tf_cat">' + EXPENSE_CATEGORIES.map(c => '<option' + (draft.category === c ? ' selected' : '') + '>' + c + '</option>').join('') + '</select></label>' +
+      '<label>Amount (₹) *<input id="tf_amount" type="number" step="0.01" min="0" value="' + (num(draft.total) || '') + '"></label>' +
+      '<label>Date<input id="tf_date" type="date" value="' + esc(draft.date) + '"></label>' +
+      '<label>Payment Mode<select id="tf_mode">' + PAY_MODES.filter(m => m !== 'Credit').map(m => '<option' + (draft.mode === m ? ' selected' : '') + '>' + m + '</option>').join('') + '</select></label>' +
+      '<label>Number<input id="tf_number" value="' + esc(draft.number) + '"></label>' +
+      '<label class="span2">Notes<textarea id="tf_notes" rows="2">' + esc(draft.notes || '') + '</textarea></label></div>';
+  } else { // PAYMENT_IN / PAYMENT_OUT
+    body =
+      '<div class="form-grid">' +
+      '<label>Party *<select id="tf_party">' + partyOptionsFor(type, draft.partyId) + '</select></label>' +
+      '<label>Amount (₹) *<input id="tf_amount" type="number" step="0.01" min="0" value="' + (num(draft.total) || '') + '"></label>' +
+      '<label>Date<input id="tf_date" type="date" value="' + esc(draft.date) + '"></label>' +
+      '<label>Payment Mode<select id="tf_mode">' + PAY_MODES.filter(m => m !== 'Credit').map(m => '<option' + (draft.mode === m ? ' selected' : '') + '>' + m + '</option>').join('') + '</select></label>' +
+      '<label>Receipt Number<input id="tf_number" value="' + esc(draft.number) + '"></label>' +
+      '<label class="span2">Notes<textarea id="tf_notes" rows="2">' + esc(draft.notes || '') + '</textarea></label></div>' +
+      '<p class="sub" id="tf_partybal"></p>';
+  }
+
+  openModal(
+    '<div class="modal-head"><h3>' + (existing ? 'Edit ' : 'New ') + cfg.label + '</h3><button class="x" onclick="closeModal()">×</button></div>' +
+    '<div class="modal-body">' + body + '</div>' +
+    '<div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn primary" onclick="saveTxn()">' + (existing ? 'Save Changes' : 'Save ' + cfg.label) + '</button></div>',
+    isItemType(type)
+  );
+
+  if (isItemType(type)) { renderLines(); }
+  if (type === 'PAYMENT_IN' || type === 'PAYMENT_OUT') {
+    const sel = el('tf_party');
+    const updBal = () => {
+      const b = sel.value ? partyBalance(sel.value) : 0;
+      el('tf_partybal').textContent = sel.value ? 'Current balance: ' + fmtMoney(Math.abs(b)) + (b >= 0 ? ' to receive' : ' to pay') : '';
+    };
+    sel.addEventListener('change', updBal);
+    updBal();
+  }
+}
+
+function blankLine() {
+  return { itemId: '', name: '', hsn: '', unit: 'PCS', qty: 1, rate: 0, disc: 0, taxRate: 0 };
+}
+
+function itemOptions(selectedId) {
+  let o = '<option value="">— select item —</option>';
+  for (const it of state.items.slice().sort((a, b) => a.name.localeCompare(b.name))) {
+    o += '<option value="' + it.id + '"' + (it.id === selectedId ? ' selected' : '') + '>' + esc(it.name) + '</option>';
+  }
+  return o;
+}
+
+function renderLines() {
+  const tb = el('tf_lines');
+  if (!tb) return;
+  tb.innerHTML = draft.lines.map((l, i) => {
+    const gross = num(l.qty) * num(l.rate);
+    const amt = gross - gross * num(l.disc) / 100;
+    return '<tr>' +
+      '<td><select onchange="lineItemPick(' + i + ',this.value)">' + itemOptions(l.itemId) + '</select></td>' +
+      '<td><input class="r" type="number" step="any" min="0" value="' + num(l.qty) + '" oninput="lineSet(' + i + ',\'qty\',this.value)"></td>' +
+      '<td><input value="' + esc(l.unit) + '" oninput="lineSet(' + i + ',\'unit\',this.value)"></td>' +
+      '<td><input class="r" type="number" step="0.01" min="0" value="' + num(l.rate) + '" oninput="lineSet(' + i + ',\'rate\',this.value)"></td>' +
+      '<td><input class="r" type="number" step="0.01" min="0" max="100" value="' + num(l.disc) + '" oninput="lineSet(' + i + ',\'disc\',this.value)"></td>' +
+      '<td><select onchange="lineSet(' + i + ',\'taxRate\',this.value)">' + GST_RATES.map(r => '<option value="' + r + '"' + (num(l.taxRate) === r ? ' selected' : '') + '>' + r + '%</option>').join('') + '</select></td>' +
+      '<td class="r amt">' + fmtMoney(amt) + '</td>' +
+      '<td><button class="btn tiny danger-ghost" onclick="draft.lines.splice(' + i + ',1);if(!draft.lines.length)draft.lines.push(blankLine());renderLines()">×</button></td></tr>';
+  }).join('');
+  renderTotals();
+}
+
+function lineItemPick(i, itemId) {
+  const l = draft.lines[i];
+  l.itemId = itemId;
+  const it = getItem(itemId);
+  if (it) {
+    l.name = it.name; l.hsn = it.hsn; l.unit = it.unit;
+    l.rate = ['PURCHASE', 'PURCHASE_RETURN'].includes(draft.type) ? num(it.purchasePrice) || num(it.salePrice) : num(it.salePrice);
+    l.taxRate = state.settings.taxEnabled ? num(it.taxRate) : 0;
+  }
+  renderLines();
+}
+
+function lineSet(i, field, value) {
+  draft.lines[i][field] = field === 'unit' ? value : num(value);
+  // update only totals + this row's amount to preserve input focus
+  const row = el('tf_lines').rows[i];
+  if (row) {
+    const l = draft.lines[i];
+    const gross = num(l.qty) * num(l.rate);
+    row.querySelector('.amt').textContent = fmtMoney(gross - gross * num(l.disc) / 100);
+  }
+  renderTotals();
+}
+
+function renderTotals() {
+  const box = el('tf_totals');
+  if (!box) return;
+  const lines = draft.lines.filter(l => l.itemId || num(l.qty) * num(l.rate) > 0);
+  const t = computeTotals(JSON.parse(JSON.stringify(lines)), draft.discountPct, state.settings.taxEnabled);
+  draft._totals = t;
+  const due = Math.max(0, t.total - num(draft.paid));
+  const paidLabel = ['SALE', 'ESTIMATE'].includes(draft.type) ? 'Received' : draft.type === 'SALE_RETURN' ? 'Refunded' : 'Paid';
+  box.innerHTML =
+    '<div class="totals-row"><span>Subtotal (taxable)</span><span>' + fmtMoney(t.subtotal) + '</span></div>' +
+    '<div class="totals-row"><span>Discount <input id="tf_disc" type="number" min="0" max="100" step="0.01" style="width:70px" value="' + num(draft.discountPct) + '" oninput="draft.discountPct=num(this.value);renderTotals()"> %</span><span>− ' + fmtMoney(t.discount) + '</span></div>' +
+    (state.settings.taxEnabled ? '<div class="totals-row"><span>GST</span><span>+ ' + fmtMoney(t.taxAmount) + '</span></div>' : '') +
+    '<div class="totals-row"><span>Round Off</span><span>' + fmtMoney(t.roundOff) + '</span></div>' +
+    '<div class="totals-row grand"><span>Total</span><span>' + fmtMoney(t.total) + '</span></div>' +
+    (draft.type !== 'ESTIMATE' ?
+      '<div class="totals-row"><span>' + paidLabel + ' <button class="btn tiny ghost" onclick="draft.paid=draft._totals.total;renderTotals()">Full</button></span>' +
+      '<span><input id="tf_paid" type="number" min="0" step="0.01" style="width:110px;text-align:right" value="' + num(draft.paid) + '" oninput="draft.paid=num(this.value);renderTotals()"></span></div>' +
+      '<div class="totals-row due"><span>Balance Due</span><span>' + fmtMoney(due) + '</span></div>' : '');
+}
+
+function saveTxn() {
+  const type = draft.type;
+  draft.number = el('tf_number') ? el('tf_number').value.trim() || draft.number : draft.number;
+  draft.date = el('tf_date') ? (el('tf_date').value || todayStr()) : draft.date;
+  draft.mode = el('tf_mode') ? el('tf_mode').value : draft.mode;
+  draft.notes = el('tf_notes') ? el('tf_notes').value.trim() : draft.notes;
+
+  if (isItemType(type)) {
+    draft.partyId = el('tf_party').value || null;
+    draft.lines = draft.lines.filter(l => l.itemId && num(l.qty) > 0);
+    if (draft.lines.length === 0) { toast('Add at least one item line', 'error'); return; }
+    // fill denormalized names
+    for (const l of draft.lines) {
+      const it = getItem(l.itemId);
+      if (it) { l.name = it.name; l.hsn = it.hsn; }
+    }
+    const t = computeTotals(draft.lines, draft.discountPct, state.settings.taxEnabled);
+    Object.assign(draft, t);
+    if (type === 'ESTIMATE') draft.paid = 0;
+    if (num(draft.paid) > t.total) draft.paid = t.total;
+  } else {
+    const amount = num(el('tf_amount').value);
+    if (amount <= 0) { toast('Enter an amount', 'error'); return; }
+    draft.total = amount;
+    draft.paid = amount;
+    draft.lines = [];
+    draft.subtotal = amount; draft.discount = 0; draft.taxAmount = 0; draft.roundOff = 0;
+    if (type === 'EXPENSE') {
+      draft.category = el('tf_cat').value;
+      draft.partyId = null;
+    } else {
+      draft.partyId = el('tf_party').value || null;
+      if (!draft.partyId) { toast('Select a party for the payment', 'error'); return; }
+    }
+  }
+  delete draft._totals;
+
+  if (draft.id) {
+    const idx = state.txns.findIndex(t => t.id === draft.id);
+    if (idx >= 0) state.txns[idx] = draft;
+  } else {
+    draft.id = uid();
+    draft.createdAt = Date.now();
+    state.txns.push(draft);
+    bumpCounter(type);
+  }
+  save();
+  closeModal();
+  toast(TXN_TYPES[type].label + ' saved');
+  const savedId = draft.id;
+  route();
+  if (isItemType(type) && type !== 'ESTIMATE') {
+    // offer print right away
+    setTimeout(() => { if (getTxn(savedId)) viewTxn(savedId); }, 60);
+  }
+}
+
+function convertEstimate(id) {
+  const est = getTxn(id);
+  if (!est || est.convertedTo) return;
+  const sale = JSON.parse(JSON.stringify(est));
+  sale.id = uid();
+  sale.type = 'SALE';
+  sale.number = nextNumber('SALE');
+  sale.date = todayStr();
+  sale.paid = 0;
+  sale.createdAt = Date.now();
+  delete sale.convertedTo;
+  state.txns.push(sale);
+  bumpCounter('SALE');
+  est.convertedTo = sale.id;
+  save();
+  toast('Estimate converted to Sale ' + sale.number);
+  route();
+}
+
+/* =========================================================
+   Transaction detail + print
+   ========================================================= */
+function viewTxn(id) {
+  const t = getTxn(id);
+  if (!t) return;
+  const cfg = TXN_TYPES[t.type];
+  const st = txnStatus(t);
+  let linesHtml = '';
+  if ((t.lines || []).length) {
+    linesHtml = '<div class="table-wrap"><table><thead><tr><th>#</th><th>Item</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">GST</th><th class="r">Amount</th></tr></thead><tbody>' +
+      t.lines.map((l, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(l.name) + '</td><td class="r">' + fmtQty(l.qty) + ' ' + esc(l.unit) + '</td><td class="r">' + fmtMoney(l.rate) + '</td><td class="r">' + num(l.taxRate) + '%</td><td class="r">' + fmtMoney(num(l.amount) + num(l.tax)) + '</td></tr>').join('') +
+      '</tbody></table></div>' +
+      '<div class="totals-panel">' +
+      '<div class="totals-row"><span>Subtotal</span><span>' + fmtMoney(t.subtotal) + '</span></div>' +
+      (num(t.discount) ? '<div class="totals-row"><span>Discount</span><span>− ' + fmtMoney(t.discount) + '</span></div>' : '') +
+      (num(t.taxAmount) ? '<div class="totals-row"><span>GST</span><span>+ ' + fmtMoney(t.taxAmount) + '</span></div>' : '') +
+      '<div class="totals-row grand"><span>Total</span><span>' + fmtMoney(t.total) + '</span></div>' +
+      '<div class="totals-row"><span>Paid / Received</span><span>' + fmtMoney(t.paid) + '</span></div>' +
+      '<div class="totals-row due"><span>Balance</span><span>' + fmtMoney(Math.max(0, num(t.total) - num(t.paid))) + '</span></div></div>';
+  } else {
+    linesHtml = '<p class="stat-value">' + fmtMoney(t.total) + '</p><p class="sub">' + esc(t.mode || '') + (t.category ? ' · ' + esc(t.category) : '') + '</p>';
+  }
+  openModal(
+    '<div class="modal-head"><h3>' + cfg.label + ' ' + esc(t.number) + ' <span class="badge ' + (st === 'Paid' || st === 'Converted' ? 'ok' : st === 'Partial' ? 'warn' : 'bad') + '">' + st + '</span></h3><button class="x" onclick="closeModal()">×</button></div>' +
+    '<div class="modal-body">' +
+    '<p><strong>' + esc(t.type === 'EXPENSE' ? (t.category || 'Expense') : partyName(t.partyId)) + '</strong> · ' + fmtDate(t.date) + (t.mode ? ' · ' + esc(t.mode) : '') + '</p>' +
+    linesHtml +
+    (t.notes ? '<p class="sub">Note: ' + esc(t.notes) + '</p>' : '') +
+    '</div>' +
+    '<div class="modal-foot">' +
+    ((t.lines || []).length ? '<button class="btn ghost" onclick="printTxn(\'' + t.id + '\')">🖨 Print / PDF</button>' : '') +
+    '<button class="btn ghost" onclick="closeModal();openTxnForm(\'' + t.type + '\',\'' + t.id + '\')">Edit</button>' +
+    '<button class="btn primary" onclick="closeModal()">Done</button></div>',
+    true
+  );
+}
+
+function printTxn(id) {
+  const t = getTxn(id);
+  if (!t) return;
+  const s = state.settings;
+  const p = t.partyId ? getParty(t.partyId) : null;
+  const split = taxSplitFor(t);
+  const docTitle = t.type === 'SALE' ? 'TAX INVOICE' : t.type === 'ESTIMATE' ? 'ESTIMATE / QUOTATION' : TXN_TYPES[t.type].label.toUpperCase();
+
+  let rows = t.lines.map((l, i) => {
+    const taxHalf = num(l.tax) / 2;
+    return '<tr><td>' + (i + 1) + '</td><td>' + esc(l.name) + '</td><td>' + esc(l.hsn || '') + '</td>' +
+      '<td class="r">' + fmtQty(l.qty) + ' ' + esc(l.unit) + '</td><td class="r">' + fmtMoney(l.rate, false) + '</td>' +
+      '<td class="r">' + fmtMoney(l.amount, false) + '</td>' +
+      (s.taxEnabled ?
+        (split === 'IGST'
+          ? '<td class="r">' + num(l.taxRate) + '%<br>' + fmtMoney(l.tax, false) + '</td>'
+          : '<td class="r">' + (num(l.taxRate) / 2) + '%<br>' + fmtMoney(taxHalf, false) + '</td><td class="r">' + (num(l.taxRate) / 2) + '%<br>' + fmtMoney(taxHalf, false) + '</td>')
+        : '') +
+      '<td class="r">' + fmtMoney(num(l.amount) + num(l.tax), false) + '</td></tr>';
+  }).join('');
+
+  const taxCols = s.taxEnabled ? (split === 'IGST' ? '<th class="r">IGST</th>' : '<th class="r">CGST</th><th class="r">SGST</th>') : '';
+  const nCols = 7 + (s.taxEnabled ? (split === 'IGST' ? 1 : 2) : 0);
+  const due = Math.max(0, num(t.total) - num(t.paid));
+
+  const html = '<!doctype html><html><head><meta charset="utf-8"><title>' + esc(t.number) + '</title><style>' +
+    'body{font:13px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;color:#0b0b0b;margin:24px;max-width:860px}' +
+    '.head{display:flex;justify-content:space-between;border-bottom:2px solid #0b0b0b;padding-bottom:12px;margin-bottom:12px}' +
+    'h1{font-size:20px;margin:0 0 4px}h2{font-size:14px;letter-spacing:2px;margin:0;text-align:right}' +
+    '.muted{color:#52514e}table{width:100%;border-collapse:collapse;margin:12px 0}' +
+    'th,td{border:1px solid #c3c2b7;padding:6px 8px;text-align:left;vertical-align:top}' +
+    'th{background:#f0efec;font-weight:600}.r{text-align:right}' +
+    '.tot td{font-weight:700;background:#f0efec}.foot{display:flex;justify-content:space-between;margin-top:28px}' +
+    '.sign{text-align:center;margin-top:40px}.words{font-style:italic}' +
+    '@media print{body{margin:8mm}}' +
+    '</style></head><body>' +
+    '<div class="head"><div><h1>' + esc(s.businessName) + '</h1>' +
+    '<div class="muted">' + esc(s.address || '') + (s.phone ? '<br>Phone: ' + esc(s.phone) : '') + (s.email ? ' · ' + esc(s.email) : '') +
+    (s.gstin ? '<br><strong>GSTIN: ' + esc(s.gstin) + '</strong>' : '') + '</div></div>' +
+    '<div><h2>' + docTitle + '</h2><div class="muted" style="text-align:right">No: <strong>' + esc(t.number) + '</strong><br>Date: ' + fmtDate(t.date) + '</div></div></div>' +
+    '<table><tr><td style="width:50%"><strong>Bill To:</strong><br>' +
+    (p ? esc(p.name) + (p.address ? '<br>' + esc(p.address) : '') + (p.phone ? '<br>Phone: ' + esc(p.phone) : '') + (p.gstin ? '<br>GSTIN: ' + esc(p.gstin) : '') : 'Cash Sale') +
+    '</td><td><strong>Payment:</strong> ' + esc(t.mode || '—') + '<br><strong>Status:</strong> ' + txnStatus(t) + '</td></tr></table>' +
+    '<table><thead><tr><th>#</th><th>Item</th><th>HSN</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Taxable</th>' + taxCols + '<th class="r">Amount</th></tr></thead>' +
+    '<tbody>' + rows + '</tbody><tfoot>' +
+    (num(t.discount) ? '<tr><td colspan="' + (nCols - 1) + '" class="r">Discount</td><td class="r">− ' + fmtMoney(t.discount, false) + '</td></tr>' : '') +
+    (num(t.roundOff) ? '<tr><td colspan="' + (nCols - 1) + '" class="r">Round Off</td><td class="r">' + fmtMoney(t.roundOff, false) + '</td></tr>' : '') +
+    '<tr class="tot"><td colspan="' + (nCols - 1) + '" class="r">TOTAL</td><td class="r">₹ ' + fmtMoney(t.total, false) + '</td></tr>' +
+    (t.type !== 'ESTIMATE' ? '<tr><td colspan="' + (nCols - 1) + '" class="r">Received / Paid</td><td class="r">' + fmtMoney(t.paid, false) + '</td></tr>' +
+      '<tr><td colspan="' + (nCols - 1) + '" class="r">Balance Due</td><td class="r">' + fmtMoney(due, false) + '</td></tr>' : '') +
+    '</tfoot></table>' +
+    '<p class="words"><strong>Amount in words:</strong> ' + amountInWords(t.total) + '</p>' +
+    (s.upiId ? '<p class="muted">Pay via UPI: <strong>' + esc(s.upiId) + '</strong></p>' : '') +
+    '<div class="foot"><div class="muted" style="max-width:55%"><strong>Terms:</strong><br>' + esc(s.terms || '') + '</div>' +
+    '<div class="sign">___________________________<br>Authorised Signatory<br><strong>' + esc(s.signatureName || s.businessName) + '</strong></div></div>' +
+    '<script>window.onload=function(){window.print()}<\/script></body></html>';
+
+  const w = window.open('', '_blank');
+  if (!w) { toast('Pop-up blocked — allow pop-ups to print', 'error'); return; }
+  w.document.write(html);
+  w.document.close();
+}
+
+
+/* VyaparOpen — reports.js */
+'use strict';
+
+const REPORTS = [
+  ['sale', 'Sale Report'],
+  ['purchase', 'Purchase Report'],
+  ['daybook', 'Day Book'],
+  ['cashflow', 'Cash Flow'],
+  ['pnl', 'Profit & Loss'],
+  ['party', 'Party Statement'],
+  ['allparties', 'All Parties Balance'],
+  ['stock', 'Stock Summary'],
+  ['itemsales', 'Item Sale Summary'],
+  ['lowstock', 'Low Stock'],
+  ['expense', 'Expense Report'],
+  ['gst', 'GST Summary']
+];
+
+let repState = { key: 'sale', from: addDays(todayStr(), -29), to: todayStr(), partyId: '' };
+
+function renderReports() {
+  const tabs = REPORTS.map(r =>
+    '<button class="rtab' + (repState.key === r[0] ? ' active' : '') + '" onclick="repState.key=\'' + r[0] + '\';renderReports()">' + r[1] + '</button>'
+  ).join('');
+  const needsRange = !['stock', 'lowstock', 'allparties'].includes(repState.key);
+  const needsParty = repState.key === 'party';
+
+  el('view').innerHTML =
+    '<div class="page-head"><h2>Reports</h2></div>' +
+    '<div class="rtabs">' + tabs + '</div>' +
+    '<div class="card"><div class="rfilters">' +
+    (needsRange ?
+      '<label>From <input type="date" value="' + repState.from + '" onchange="repState.from=this.value;renderReports()"></label>' +
+      '<label>To <input type="date" value="' + repState.to + '" onchange="repState.to=this.value;renderReports()"></label>' +
+      '<span class="presets">' +
+      '<button class="btn tiny ghost" onclick="setRange(0)">Today</button>' +
+      '<button class="btn tiny ghost" onclick="setRange(6)">7 days</button>' +
+      '<button class="btn tiny ghost" onclick="setRange(29)">30 days</button>' +
+      '<button class="btn tiny ghost" onclick="setRangeMonth()">This month</button>' +
+      '<button class="btn tiny ghost" onclick="setRangeFY()">This FY</button></span>' : '') +
+    (needsParty ? '<label>Party <select onchange="repState.partyId=this.value;renderReports()">' +
+      '<option value="">— select —</option>' +
+      state.parties.slice().sort((a, b) => a.name.localeCompare(b.name)).map(p => '<option value="' + p.id + '"' + (repState.partyId === p.id ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('') +
+      '</select></label>' : '') +
+    '<button class="btn ghost" style="margin-left:auto" onclick="exportCurrentReport()">⬇ Export CSV</button>' +
+    '</div><div id="repBody"></div></div>';
+
+  el('repBody').innerHTML = buildReport().html;
+}
+
+function setRange(daysBack) { repState.to = todayStr(); repState.from = addDays(todayStr(), -daysBack); renderReports(); }
+function setRangeMonth() {
+  const d = new Date();
+  repState.from = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01';
+  repState.to = todayStr();
+  renderReports();
+}
+function setRangeFY() {
+  const d = new Date();
+  const fyStartYear = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1;
+  repState.from = fyStartYear + '-04-01';
+  repState.to = todayStr();
+  renderReports();
+}
+
+function txnsIn(types, from, to) {
+  return state.txns
+    .filter(t => types.includes(t.type) && inRange(t.date, from, to))
+    .sort((a, b) => a.date === b.date ? a.createdAt - b.createdAt : (a.date < b.date ? -1 : 1));
+}
+
+function tbl(headers, rows, footRow) {
+  let html = '<div class="table-wrap"><table><thead><tr>' +
+    headers.map(hd => '<th class="' + (hd[1] || '') + '">' + hd[0] + '</th>').join('') + '</tr></thead><tbody>';
+  html += rows.length ? rows.map(r => '<tr>' + r.map((c, i) => '<td class="' + (headers[i][1] || '') + '">' + c + '</td>').join('') + '</tr>').join('')
+    : '<tr><td colspan="' + headers.length + '" class="empty">No data for this period.</td></tr>';
+  html += '</tbody>';
+  if (footRow) html += '<tfoot><tr>' + footRow.map((c, i) => '<td class="' + (headers[i] ? headers[i][1] || '' : '') + '"><strong>' + c + '</strong></td>').join('') + '</tr></tfoot>';
+  return html + '</table></div>';
+}
+
+function buildReport() {
+  const k = repState.key, from = repState.from, to = repState.to;
+  let html = '', csv = { name: k + '-report.csv', headers: [], rows: [] };
+
+  if (k === 'sale' || k === 'purchase') {
+    const type = k === 'sale' ? 'SALE' : 'PURCHASE';
+    const list = txnsIn([type], from, to);
+    let tot = 0, paid = 0;
+    const rows = list.map(t => {
+      tot += num(t.total); paid += num(t.paid);
+      return [fmtDate(t.date), esc(t.number), esc(partyName(t.partyId)), fmtMoney(t.total), fmtMoney(t.paid), fmtMoney(Math.max(0, num(t.total) - num(t.paid))), txnStatus(t)];
+    });
+    html = tbl([['Date'], ['Number'], ['Party'], ['Total', 'r'], ['Paid', 'r'], ['Balance', 'r'], ['Status']], rows,
+      ['', '', 'Total', fmtMoney(tot), fmtMoney(paid), fmtMoney(tot - paid), '']);
+    csv.headers = ['Date', 'Number', 'Party', 'Total', 'Paid', 'Balance', 'Status'];
+    csv.rows = list.map(t => [t.date, t.number, partyName(t.partyId), num(t.total), num(t.paid), num(t.total) - num(t.paid), txnStatus(t)]);
+  }
+
+  else if (k === 'daybook') {
+    const list = txnsIn(Object.keys(TXN_TYPES).filter(t => t !== 'ESTIMATE'), from, to);
+    let mIn = 0, mOut = 0;
+    const rows = list.map(t => {
+      const io = moneyInOut(t);
+      mIn += io.in; mOut += io.out;
+      return [fmtDate(t.date), TXN_TYPES[t.type].label, esc(t.number), esc(t.type === 'EXPENSE' ? (t.category || '') : partyName(t.partyId)), fmtMoney(t.total),
+        io.in ? fmtMoney(io.in) : '—', io.out ? fmtMoney(io.out) : '—'];
+    });
+    html = tbl([['Date'], ['Type'], ['Number'], ['Party'], ['Total', 'r'], ['Money In', 'r'], ['Money Out', 'r']], rows,
+      ['', '', '', 'Total', '', fmtMoney(mIn), fmtMoney(mOut)]);
+    csv.headers = ['Date', 'Type', 'Number', 'Party', 'Total', 'MoneyIn', 'MoneyOut'];
+    csv.rows = list.map(t => { const io = moneyInOut(t); return [t.date, TXN_TYPES[t.type].label, t.number, partyName(t.partyId), num(t.total), io.in, io.out]; });
+  }
+
+  else if (k === 'cashflow') {
+    const list = txnsIn(Object.keys(TXN_TYPES).filter(t => t !== 'ESTIMATE'), from, to);
+    let mIn = 0, mOut = 0;
+    for (const t of list) { const io = moneyInOut(t); mIn += io.in; mOut += io.out; }
+    html = '<div class="cards">' +
+      '<div class="card stat"><div class="stat-label">Money In</div><div class="stat-value pos">' + fmtMoney(mIn) + '</div></div>' +
+      '<div class="card stat"><div class="stat-label">Money Out</div><div class="stat-value neg">' + fmtMoney(mOut) + '</div></div>' +
+      '<div class="card stat"><div class="stat-label">Net Cash Flow</div><div class="stat-value ' + (mIn - mOut >= 0 ? 'pos' : 'neg') + '">' + fmtMoney(mIn - mOut) + '</div></div></div>' +
+      '<p class="sub">Money In counts amounts actually received (sales receipts + payments in). Money Out counts amounts actually paid (purchases, payments out, expenses, refunds).</p>';
+    csv.headers = ['Metric', 'Amount'];
+    csv.rows = [['Money In', mIn], ['Money Out', mOut], ['Net', mIn - mOut]];
+  }
+
+  else if (k === 'pnl') {
+    const sum = (types, field) => txnsIn(types, from, to).reduce((s, t) => s + num(t[field || 'total']), 0);
+    const sales = sum(['SALE']), saleRet = sum(['SALE_RETURN']);
+    const purch = sum(['PURCHASE']), purchRet = sum(['PURCHASE_RETURN']);
+    const expenses = sum(['EXPENSE']);
+    const taxOut = txnsIn(['SALE'], from, to).reduce((s, t) => s + num(t.taxAmount), 0) - txnsIn(['SALE_RETURN'], from, to).reduce((s, t) => s + num(t.taxAmount), 0);
+    const taxIn = txnsIn(['PURCHASE'], from, to).reduce((s, t) => s + num(t.taxAmount), 0) - txnsIn(['PURCHASE_RETURN'], from, to).reduce((s, t) => s + num(t.taxAmount), 0);
+    const netSales = sales - saleRet - taxOut;
+    const netPurch = purch - purchRet - taxIn;
+    const gross = netSales - netPurch;
+    const net = gross - expenses;
+    const row = (l, v, strong, cls) => '<div class="totals-row' + (strong ? ' grand' : '') + '"><span>' + l + '</span><span class="' + (cls || '') + '">' + fmtMoney(v) + '</span></div>';
+    html = '<div class="totals-panel pnl">' +
+      row('Sales (excl. GST)', sales - taxOut) +
+      row('Less: Sale Returns', -(saleRet ? saleRet - (saleRet ? txnsIn(['SALE_RETURN'], from, to).reduce((s, t) => s + num(t.taxAmount), 0) : 0) : 0)) +
+      row('Net Sales', netSales, true) +
+      row('Purchases (excl. GST)', netPurch) +
+      row('Gross Profit', gross, true, gross >= 0 ? 'pos' : 'neg') +
+      row('Less: Expenses', -expenses) +
+      row('Net Profit', net, true, net >= 0 ? 'pos' : 'neg') +
+      '</div><p class="sub">Simplified P&amp;L: purchases in the period are treated as cost of goods (no opening/closing stock valuation).</p>';
+    csv.headers = ['Line', 'Amount'];
+    csv.rows = [['Net Sales', netSales], ['Purchases', netPurch], ['Gross Profit', gross], ['Expenses', expenses], ['Net Profit', net]];
+  }
+
+  else if (k === 'party') {
+    if (!repState.partyId) { html = '<p class="empty">Select a party above to view their statement.</p>'; }
+    else {
+      const p = getParty(repState.partyId);
+      const list = txnsIn(Object.keys(TXN_TYPES), null, null).filter(t => t.partyId === p.id);
+      let bal = partyOpening(p);
+      const pre = list.filter(t => from && t.date < from);
+      for (const t of pre) bal += txnDue(t);
+      const rows = [['', 'Opening Balance (' + fmtDate(from) + ')', '', '', fmtMoney(Math.abs(bal)) + (bal >= 0 ? ' Dr' : ' Cr')]];
+      const inList = list.filter(t => inRange(t.date, from, to));
+      for (const t of inList) {
+        bal += txnDue(t);
+        rows.push([fmtDate(t.date), TXN_TYPES[t.type].label, esc(t.number), fmtMoney(t.total), fmtMoney(Math.abs(bal)) + (bal >= 0 ? ' Dr' : ' Cr')]);
+      }
+      html = '<h3 class="card-title">' + esc(p.name) + ' — closing balance ' + fmtMoney(Math.abs(bal)) + (bal >= 0 ? ' (to receive)' : ' (to pay)') + '</h3>' +
+        tbl([['Date'], ['Type'], ['Number'], ['Amount', 'r'], ['Balance', 'r']], rows);
+      csv.headers = ['Date', 'Type', 'Number', 'Amount', 'Balance'];
+      csv.rows = rows.map(r => r.map(c => String(c).replace(/<[^>]+>/g, '')));
+    }
+  }
+
+  else if (k === 'allparties') {
+    let recv = 0, pay = 0;
+    const rows = state.parties.slice().sort((a, b) => a.name.localeCompare(b.name)).map(p => {
+      const b = partyBalance(p.id);
+      if (b > 0) recv += b; else pay -= b;
+      return [esc(p.name), esc(p.phone || ''), esc(p.type), fmtMoney(Math.abs(b)), b > 0 ? 'To Receive' : b < 0 ? 'To Pay' : '—'];
+    });
+    html = tbl([['Party'], ['Phone'], ['Type'], ['Balance', 'r'], ['Direction']], rows,
+      ['Total', '', '', fmtMoney(recv) + ' Dr / ' + fmtMoney(pay) + ' Cr', '']);
+    csv.headers = ['Party', 'Phone', 'Type', 'Balance', 'Direction'];
+    csv.rows = state.parties.map(p => { const b = partyBalance(p.id); return [p.name, p.phone, p.type, Math.abs(b), b >= 0 ? 'Receive' : 'Pay']; });
+  }
+
+  else if (k === 'stock' || k === 'lowstock') {
+    const items = k === 'lowstock' ? lowStockItems() : state.items.filter(i => i.type !== 'service');
+    let totVal = 0;
+    const rows = items.map(it => {
+      const stq = itemStock(it.id);
+      const val = Math.max(0, stq) * num(it.purchasePrice || it.salePrice);
+      totVal += val;
+      return [esc(it.name), esc(it.category || ''), fmtQty(stq) + ' ' + esc(it.unit), fmtQty(it.minStock), fmtMoney(it.purchasePrice), fmtMoney(val)];
+    });
+    html = tbl([['Item'], ['Category'], ['Stock', 'r'], ['Min Level', 'r'], ['Purchase Price', 'r'], ['Stock Value', 'r']], rows,
+      ['Total', '', '', '', '', fmtMoney(totVal)]);
+    csv.headers = ['Item', 'Category', 'Stock', 'MinLevel', 'PurchasePrice', 'StockValue'];
+    csv.rows = items.map(it => [it.name, it.category, itemStock(it.id), it.minStock, it.purchasePrice, Math.max(0, itemStock(it.id)) * num(it.purchasePrice || it.salePrice)]);
+  }
+
+  else if (k === 'itemsales') {
+    const map = {};
+    for (const t of txnsIn(['SALE'], from, to)) {
+      for (const l of (t.lines || [])) {
+        const key = l.itemId || l.name;
+        if (!map[key]) map[key] = { name: l.name, qty: 0, amount: 0 };
+        map[key].qty += num(l.qty);
+        map[key].amount += num(l.amount) + num(l.tax);
+      }
+    }
+    const arr = Object.values(map).sort((a, b) => b.amount - a.amount);
+    let tq = 0, ta = 0;
+    const rows = arr.map(x => { tq += x.qty; ta += x.amount; return [esc(x.name), fmtQty(x.qty), fmtMoney(x.amount)]; });
+    html = tbl([['Item'], ['Qty Sold', 'r'], ['Sale Amount', 'r']], rows, ['Total', fmtQty(tq), fmtMoney(ta)]);
+    csv.headers = ['Item', 'QtySold', 'SaleAmount'];
+    csv.rows = arr.map(x => [x.name, x.qty, round2(x.amount)]);
+  }
+
+  else if (k === 'expense') {
+    const list = txnsIn(['EXPENSE'], from, to);
+    const byCat = {};
+    let tot = 0;
+    for (const t of list) { byCat[t.category || 'Other'] = (byCat[t.category || 'Other'] || 0) + num(t.total); tot += num(t.total); }
+    const rows = list.map(t => [fmtDate(t.date), esc(t.number), esc(t.category || ''), esc(t.notes || ''), fmtMoney(t.total)]);
+    html = '<div class="cards">' +
+      Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 4).map(c =>
+        '<div class="card stat"><div class="stat-label">' + esc(c[0]) + '</div><div class="stat-mid">' + fmtMoney(c[1]) + '</div></div>').join('') +
+      '</div>' + tbl([['Date'], ['Number'], ['Category'], ['Notes'], ['Amount', 'r']], rows, ['', '', '', 'Total', fmtMoney(tot)]);
+    csv.headers = ['Date', 'Number', 'Category', 'Notes', 'Amount'];
+    csv.rows = list.map(t => [t.date, t.number, t.category, t.notes, num(t.total)]);
+  }
+
+  else if (k === 'gst') {
+    function taxByRate(types) {
+      const m = {};
+      for (const t of txnsIn(types, from, to)) {
+        for (const l of (t.lines || [])) {
+          const r = num(l.taxRate);
+          if (!m[r]) m[r] = { taxable: 0, tax: 0 };
+          m[r].taxable += num(l.amount);
+          m[r].tax += num(l.tax);
+        }
+      }
+      return m;
+    }
+    const out = taxByRate(['SALE']), outRet = taxByRate(['SALE_RETURN']);
+    const inn = taxByRate(['PURCHASE']), innRet = taxByRate(['PURCHASE_RETURN']);
+    const rates = [...new Set([].concat(Object.keys(out), Object.keys(inn), Object.keys(outRet), Object.keys(innRet)))].map(Number).sort((a, b) => a - b);
+    let outputTax = 0, inputTax = 0;
+    const rows = rates.map(r => {
+      const o = (out[r] ? out[r].tax : 0) - (outRet[r] ? outRet[r].tax : 0);
+      const i = (inn[r] ? inn[r].tax : 0) - (innRet[r] ? innRet[r].tax : 0);
+      outputTax += o; inputTax += i;
+      return [r + '%',
+        fmtMoney((out[r] ? out[r].taxable : 0) - (outRet[r] ? outRet[r].taxable : 0)), fmtMoney(o),
+        fmtMoney((inn[r] ? inn[r].taxable : 0) - (innRet[r] ? innRet[r].taxable : 0)), fmtMoney(i)];
+    });
+    html = '<div class="cards">' +
+      '<div class="card stat"><div class="stat-label">Output GST (on sales)</div><div class="stat-mid">' + fmtMoney(outputTax) + '</div></div>' +
+      '<div class="card stat"><div class="stat-label">Input GST (on purchases)</div><div class="stat-mid">' + fmtMoney(inputTax) + '</div></div>' +
+      '<div class="card stat"><div class="stat-label">Net GST Payable</div><div class="stat-value ' + (outputTax - inputTax > 0 ? 'neg' : 'pos') + '">' + fmtMoney(outputTax - inputTax) + '</div></div></div>' +
+      tbl([['GST Rate'], ['Sales Taxable', 'r'], ['Output Tax', 'r'], ['Purchase Taxable', 'r'], ['Input Tax', 'r']], rows,
+        ['Total', '', fmtMoney(outputTax), '', fmtMoney(inputTax)]) +
+      '<p class="sub">Net of credit/debit notes. Use this as a working summary for GSTR filing — verify with your CA.</p>';
+    csv.headers = ['Rate', 'SalesTaxable', 'OutputTax', 'PurchaseTaxable', 'InputTax'];
+    csv.rows = rows.map(r => r.map(c => String(c).replace('₹ ', '')));
+  }
+
+  window._lastReportCSV = csv;
+  return { html: html };
+}
+
+function moneyInOut(t) {
+  switch (t.type) {
+    case 'SALE': return { in: num(t.paid), out: 0 };
+    case 'PAYMENT_IN': return { in: num(t.total), out: 0 };
+    case 'SALE_RETURN': return { in: 0, out: num(t.paid) };
+    case 'PURCHASE': return { in: 0, out: num(t.paid) };
+    case 'PURCHASE_RETURN': return { in: num(t.paid), out: 0 };
+    case 'PAYMENT_OUT': return { in: 0, out: num(t.total) };
+    case 'EXPENSE': return { in: 0, out: num(t.total) };
+    default: return { in: 0, out: 0 };
+  }
+}
+
+function exportCurrentReport() {
+  const c = window._lastReportCSV;
+  if (!c || !c.headers.length) { toast('Nothing to export', 'error'); return; }
+  exportTableCSV(c.name, c.headers, c.rows);
+}
+
+
+/* VyaparOpen — dashboard.js */
+'use strict';
+
+function renderDashboard() {
+  const totals = totalsReceivablePayable();
+  const from30 = addDays(todayStr(), -29);
+
+  // sales by day (last 30 days) for the chart
+  const byDay = {};
+  for (let i = 0; i < 30; i++) byDay[addDays(from30, i)] = 0;
+  let sales30 = 0;
+  for (const t of state.txns) {
+    if (t.type === 'SALE' && inRange(t.date, from30, todayStr())) {
+      byDay[t.date] = (byDay[t.date] || 0) + num(t.total);
+      sales30 += num(t.total);
+    }
+  }
+  const chartData = Object.keys(byDay).sort().map(d => ({ label: d.slice(8) + '/' + d.slice(5, 7), value: byDay[d] }));
+
+  // this month figures
+  const d = new Date();
+  const mStart = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01';
+  const sum = (type) => state.txns.filter(t => t.type === type && inRange(t.date, mStart, todayStr())).reduce((s, t) => s + num(t.total), 0);
+  const mSales = sum('SALE'), mPurch = sum('PURCHASE'), mExp = sum('EXPENSE');
+
+  const low = lowStockItems();
+  const recent = state.txns.slice().sort((a, b) => b.createdAt - a.createdAt).slice(0, 8);
+  const recentRows = recent.map(t =>
+    '<tr class="rowlink" onclick="viewTxn(\'' + t.id + '\')">' +
+    '<td>' + fmtDate(t.date) + '</td><td>' + TXN_TYPES[t.type].label + '<div class="sub">' + esc(t.number) + '</div></td>' +
+    '<td>' + esc(t.type === 'EXPENSE' ? (t.category || '') : partyName(t.partyId)) + '</td>' +
+    '<td class="r">' + fmtMoney(t.total) + '</td>' +
+    '<td><span class="badge ' + (txnStatus(t) === 'Paid' || txnStatus(t) === 'Converted' ? 'ok' : txnStatus(t) === 'Partial' ? 'warn' : 'bad') + '">' + txnStatus(t) + '</span></td></tr>'
+  ).join('') || '<tr><td colspan="5" class="empty">No transactions yet — create your first sale!</td></tr>';
+
+  const lowRows = low.slice(0, 6).map(it =>
+    '<tr class="rowlink" onclick="openItemDetail(\'' + it.id + '\')"><td>' + esc(it.name) + '</td>' +
+    '<td class="r neg">' + fmtQty(itemStock(it.id)) + ' ' + esc(it.unit) + '</td>' +
+    '<td class="r">' + fmtQty(it.minStock) + '</td></tr>'
+  ).join('');
+
+  const empty = state.txns.length === 0 && state.parties.length === 0 && state.items.length === 0;
+
+  el('view').innerHTML =
+    '<div class="page-head"><h2>Dashboard</h2><div class="head-actions">' +
+    '<button class="btn primary" onclick="openTxnForm(\'SALE\')">+ New Sale</button>' +
+    '<button class="btn ghost" onclick="openTxnForm(\'PURCHASE\')">+ Purchase</button>' +
+    '<button class="btn ghost" onclick="openTxnForm(\'PAYMENT_IN\')">+ Payment In</button>' +
+    '<button class="btn ghost" onclick="openTxnForm(\'EXPENSE\')">+ Expense</button></div></div>' +
+    (empty ?
+      '<div class="card welcome"><h3>👋 Welcome to VyaparOpen!</h3>' +
+      '<p>Your free, open-source business manager — invoicing, inventory, payments &amp; GST reports. All data stays on this device.</p>' +
+      '<div class="head-actions" style="margin-top:12px">' +
+      '<button class="btn primary" onclick="go(\'settings\')">1. Set up your business profile</button>' +
+      '<button class="btn ghost" onclick="openItemForm()">2. Add items</button>' +
+      '<button class="btn ghost" onclick="openPartyForm()">3. Add parties</button>' +
+      '<button class="btn ghost" onclick="confirmDemo()">Or load demo data</button></div></div>' : '') +
+    '<div class="cards">' +
+    '<div class="card stat"><div class="stat-label">To Collect</div><div class="stat-value pos">' + fmtMoney(totals.receivable) + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">To Pay</div><div class="stat-value neg">' + fmtMoney(totals.payable) + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">Stock Value</div><div class="stat-value">' + fmtMoney(stockValue()) + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">Sales This Month</div><div class="stat-value">' + fmtMoney(mSales) + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">Purchases This Month</div><div class="stat-mid">' + fmtMoney(mPurch) + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">Expenses This Month</div><div class="stat-mid">' + fmtMoney(mExp) + '</div></div>' +
+    '</div>' +
+    '<div class="card"><h3 class="card-title">Sales — last 30 days <span class="sub">(total ' + fmtMoney(sales30) + ')</span></h3>' +
+    svgBarChart(chartData, { height: 220 }) + '</div>' +
+    '<div class="grid-2">' +
+    '<div class="card"><h3 class="card-title">Recent Transactions</h3><div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Party</th><th class="r">Amount</th><th>Status</th></tr></thead><tbody>' +
+    recentRows + '</tbody></table></div></div>' +
+    '<div class="card"><h3 class="card-title">Low Stock ' + (low.length ? '<span class="badge bad">' + low.length + '</span>' : '') + '</h3>' +
+    (lowRows ? '<div class="table-wrap"><table><thead><tr><th>Item</th><th class="r">Stock</th><th class="r">Min</th></tr></thead><tbody>' + lowRows + '</tbody></table></div>'
+      : '<p class="empty">All stocked up 🎉</p>') +
+    '</div></div>';
+}
+
+function confirmDemo() {
+  openModal(
+    '<div class="modal-head"><h3>Load demo data?</h3></div>' +
+    '<div class="modal-body"><p>This loads a sample business (parties, items and transactions) so you can explore the app. Existing data will be replaced.</p></div>' +
+    '<div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn primary" onclick="closeModal();loadDemoData();route();toast(\'Demo data loaded\')">Load Demo</button></div>'
+  );
+}
+
+
+/* VyaparOpen — settings.js : business profile, preferences, backup/restore */
+'use strict';
+
+function renderSettings() {
+  const s = state.settings;
+  el('view').innerHTML =
+    '<div class="page-head"><h2>Settings</h2></div>' +
+    '<div class="grid-2">' +
+    '<div class="card"><h3 class="card-title">Business Profile (shown on invoices)</h3><div class="form-grid">' +
+    '<label class="span2">Business Name<input id="st_name" value="' + esc(s.businessName) + '"></label>' +
+    '<label class="span2">Address<textarea id="st_addr" rows="2">' + esc(s.address) + '</textarea></label>' +
+    '<label>Phone<input id="st_phone" value="' + esc(s.phone) + '"></label>' +
+    '<label>Email<input id="st_email" value="' + esc(s.email) + '"></label>' +
+    '<label>GSTIN<input id="st_gstin" maxlength="15" style="text-transform:uppercase" value="' + esc(s.gstin) + '"></label>' +
+    '<label>UPI ID (for invoice)<input id="st_upi" value="' + esc(s.upiId) + '"></label>' +
+    '<label>Signatory Name<input id="st_sign" value="' + esc(s.signatureName) + '"></label>' +
+    '<label class="span2">Invoice Terms<textarea id="st_terms" rows="2">' + esc(s.terms) + '</textarea></label>' +
+    '</div><div style="margin-top:12px"><button class="btn primary" onclick="saveSettings()">Save Profile</button></div></div>' +
+
+    '<div>' +
+    '<div class="card"><h3 class="card-title">Preferences</h3>' +
+    '<label class="switch-row"><input type="checkbox" id="st_tax"' + (s.taxEnabled ? ' checked' : '') + ' onchange="state.settings.taxEnabled=this.checked;save();toast(\'Saved\')"> Enable GST on transactions</label>' +
+    '<label class="switch-row"><input type="checkbox" id="st_dark"' + (s.theme === 'dark' ? ' checked' : '') + ' onchange="state.settings.theme=this.checked?\'dark\':\'light\';save();applyTheme()"> Dark theme</label>' +
+    '</div>' +
+
+    '<div class="card"><h3 class="card-title">Backup &amp; Restore</h3>' +
+    '<p class="sub">All data is stored only in this browser (localStorage). Take regular backups — clearing browser data will erase everything.</p>' +
+    '<div class="head-actions" style="margin-top:10px;flex-wrap:wrap">' +
+    '<button class="btn primary" onclick="exportBackup()">⬇ Download Backup (JSON)</button>' +
+    '<button class="btn ghost" onclick="el(\'st_file\').click()">⬆ Restore from Backup</button>' +
+    '<input type="file" id="st_file" accept=".json,application/json" style="display:none" onchange="restoreFile(this)">' +
+    '</div></div>' +
+
+    '<div class="card"><h3 class="card-title">Danger Zone</h3>' +
+    '<div class="head-actions" style="flex-wrap:wrap">' +
+    '<button class="btn ghost" onclick="confirmDemo()">Load Demo Data</button>' +
+    '<button class="btn danger" onclick="wipeAll()">Erase All Data</button></div></div>' +
+
+    '<div class="card"><h3 class="card-title">About</h3>' +
+    '<p class="sub"><strong>VyaparOpen</strong> — free &amp; open-source business management (billing · inventory · GST). ' +
+    'Works fully offline; no account, no server, no tracking. MIT licensed.</p></div>' +
+    '</div></div>';
+}
+
+function saveSettings() {
+  const s = state.settings;
+  s.businessName = el('st_name').value.trim() || 'My Business';
+  s.address = el('st_addr').value.trim();
+  s.phone = el('st_phone').value.trim();
+  s.email = el('st_email').value.trim();
+  s.gstin = el('st_gstin').value.trim().toUpperCase();
+  s.upiId = el('st_upi').value.trim();
+  s.signatureName = el('st_sign').value.trim();
+  s.terms = el('st_terms').value.trim();
+  save();
+  el('bizName').textContent = s.businessName;
+  toast('Settings saved');
+}
+
+function restoreFile(input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  importBackup(f, (ok, err) => {
+    if (ok) { applyTheme(); route(); toast('Backup restored'); }
+    else toast('Restore failed: ' + err, 'error');
+    input.value = '';
+  });
+}
+
+function wipeAll() {
+  confirmDialog('Erase ALL data (parties, items, transactions, settings)? This cannot be undone. Download a backup first!', () => {
+    state = defaultState();
+    save();
+    applyTheme();
+    route();
+    toast('All data erased');
+  });
+}
+
+
+/* VyaparOpen — app.js : navigation + boot */
+'use strict';
+
+const NAV = [
+  ['dashboard', '🏠', 'Dashboard'],
+  ['parties', '👥', 'Parties'],
+  ['items', '📦', 'Items'],
+  ['sales', '🧾', 'Sales'],
+  ['estimates', '📋', 'Estimates'],
+  ['purchases', '🛒', 'Purchases'],
+  ['returns', '↩️', 'Cr/Dr Notes'],
+  ['payments', '💰', 'Payments'],
+  ['expenses', '💸', 'Expenses'],
+  ['reports', '📊', 'Reports'],
+  ['settings', '⚙️', 'Settings']
+];
+
+let currentPage = 'dashboard';
+
+function go(page) {
+  currentPage = page;
+  window._txnSearch = '';
+  location.hash = page;
+  route();
+}
+
+function route() {
+  closeModal();
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === currentPage));
+  switch (currentPage) {
+    case 'dashboard': renderDashboard(); break;
+    case 'parties': renderParties(); break;
+    case 'items': renderItems(); break;
+    case 'sales': renderTxnList('sales'); break;
+    case 'estimates': renderTxnList('estimates'); break;
+    case 'purchases': renderTxnList('purchases'); break;
+    case 'returns': renderTxnList('returns'); break;
+    case 'payments': renderTxnList('payments'); break;
+    case 'expenses': renderTxnList('expenses'); break;
+    case 'reports': renderReports(); break;
+    case 'settings': renderSettings(); break;
+    default: renderDashboard();
+  }
+  const sb = el('sidebar');
+  if (sb) sb.classList.remove('open');
+}
+
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', state.settings.theme === 'dark' ? 'dark' : 'light');
+}
+
+function boot() {
+  const app = el('app');
+  app.innerHTML =
+    '<aside class="sidebar" id="sidebar">' +
+    '<div class="brand"><div class="logo">V</div><div><div class="brand-name">VyaparOpen</div>' +
+    '<div class="brand-biz" id="bizName">' + esc(state.settings.businessName) + '</div></div></div>' +
+    '<nav>' + NAV.map(n =>
+      '<a class="nav-item" data-page="' + n[0] + '" onclick="go(\'' + n[0] + '\')"><span class="ico">' + n[1] + '</span>' + n[2] + '</a>'
+    ).join('') + '</nav>' +
+    '<div class="sidebar-foot">Free &amp; open source<br>Data stays on your device</div>' +
+    '</aside>' +
+    '<div class="main"><header class="topbar">' +
+    '<button class="hamburger" onclick="el(\'sidebar\').classList.toggle(\'open\')">☰</button>' +
+    '<div class="topbar-title">VyaparOpen</div>' +
+    '<button class="btn ghost tiny" onclick="exportBackup()">⬇ Backup</button>' +
+    '</header><main id="view"></main></div>';
+
+  applyTheme();
+  const hash = location.hash.replace('#', '');
+  if (NAV.some(n => n[0] === hash)) currentPage = hash;
+  route();
+
+  window.addEventListener('hashchange', () => {
+    const p = location.hash.replace('#', '');
+    if (NAV.some(n => n[0] === p) && p !== currentPage) { currentPage = p; route(); }
+  });
+
+  // keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    if (e.altKey && !e.ctrlKey && !e.metaKey) {
+      if (e.key === 'n') { e.preventDefault(); openTxnForm('SALE'); }
+      if (e.key === 'p') { e.preventDefault(); openTxnForm('PURCHASE'); }
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', boot);
+
+  </script>
+</body>
+</html>
