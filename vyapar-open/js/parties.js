@@ -27,6 +27,7 @@ function renderParties() {
     '<div class="page-head"><h2>Parties</h2>' +
     '<div class="head-actions">' +
     '<input class="search" placeholder="Search name or phone…" value="' + esc(window._partySearch || '') + '" oninput="_partySearch=this.value;renderParties()">' +
+    '<button class="btn ghost" onclick="openImportModal(\'parties\')">⬆ Import</button>' +
     '<button class="btn primary" onclick="openPartyForm()">+ Add Party</button></div></div>' +
     '<div class="cards">' +
     '<div class="card stat"><div class="stat-label">To Collect (Receivable)</div><div class="stat-value pos">' + fmtMoney(totals.receivable) + '</div></div>' +

@@ -31,8 +31,19 @@ Works on desktop, laptop and mobile browsers. No internet needed after download.
 | **Expenses** | Categorised expense tracking (rent, salary, transport…) |
 | **Reports (12)** | Sale, Purchase, Day Book, Cash Flow, Profit & Loss, Party Statement, All Party Balances, Stock Summary, Item Sale Summary, Low Stock, Expense, **GST Summary** (output vs input tax by rate) — all exportable to CSV/Excel |
 | **Dashboard** | To-collect / to-pay, stock value, monthly sales & expenses, 30-day sales chart, recent transactions, low-stock alerts |
+| **Excel import** | Bulk-import **Items and Parties from Excel (.xlsx) or CSV** — downloadable templates, automatic column matching, preview before import, duplicate skip/update |
 | **Backup & restore** | One-click JSON backup, restore on any device |
 | **Extras** | Dark theme, mobile-friendly layout, keyboard shortcuts (Alt+N new sale, Alt+P purchase), demo data to explore |
+
+## 📊 Importing your existing data from Excel
+
+Open **Items → ⬆ Import** (or **Parties → ⬆ Import**):
+
+1. Click **Download Template** to get the expected columns (or use your own file — columns are matched by header name, e.g. "Item Name", "Sale Price", "GST %").
+2. Fill it in Excel and upload it back — both **.xlsx** and **.csv** work directly.
+3. Review the preview, tick *Update existing* if you want matching names overwritten, then **Import**.
+
+Rows without a name are skipped; re-importing the same file won't create duplicates.
 
 ## 🔒 Where is my data?
 

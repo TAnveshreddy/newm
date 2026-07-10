@@ -30,6 +30,7 @@ function renderItems() {
     '<div class="page-head"><h2>Items</h2>' +
     '<div class="head-actions">' +
     '<input class="search" placeholder="Search items…" value="' + esc(window._itemSearch || '') + '" oninput="_itemSearch=this.value;renderItems()">' +
+    '<button class="btn ghost" onclick="openImportModal(\'items\')">⬆ Import</button>' +
     '<button class="btn primary" onclick="openItemForm()">+ Add Item</button></div></div>' +
     '<div class="cards">' +
     '<div class="card stat"><div class="stat-label">Stock Value (at purchase price)</div><div class="stat-value">' + fmtMoney(stockValue()) + '</div></div>' +
