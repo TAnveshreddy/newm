@@ -1,6 +1,6 @@
 # Shop Billing App
 
-Simple, open-source daily billing app (like Vyapar) for shops selling
+Open-source daily billing app (like Vyapar) for shops selling
 **sanitary, paints, plumbing, electrical and hardware** items.
 
 Built with **Python (Flask) + SQLite + HTML/CSS/JS** — no paid software, no
@@ -8,17 +8,28 @@ internet needed, all data stays on your computer in one file (`shop.db`).
 
 ## Features
 
-- **New Bill** — customer name, contact number, then per line item:
-  category → product (auto-filled description, unit, price) → quantity.
-  Discount, payment mode (Cash / UPI / Card / Credit), auto bill numbers
-  (`INV-YYYYMMDD-001`), save & print invoice.
-- **Bills** — search past bills by customer name, phone or bill number;
-  filter by date; reprint any invoice.
-- **Products** — add / remove products with category, description, unit, price.
-  Comes pre-loaded with sample items in every category.
-- **Reports** — **daily, monthly, quarterly and yearly** sales reports with
-  date-range filter, sales-by-category, top-10 products, today / this-month /
-  this-year summary cards, and CSV export (opens in Excel).
+- **User login** — multiple users; Admin (everything) and Staff roles.
+  Default login: `admin` / `admin123` — change it from the Users page.
+- **Dashboard** — today / week / month / year sales tiles, last-7-days sales
+  chart, low-stock alerts, top products, recent bills (Vyapar-style).
+- **Billing** — customer name, mobile, address (optional); per item:
+  category → product → description → unit → quantity → price →
+  **discount → GST** → total. Auto bill numbers (`INV-YYYYMMDD-001`),
+  extra whole-bill discount, payment mode (Cash / UPI / Card / Credit).
+- **Invoice printing** — GST tax invoice; Print or Save as PDF from the
+  browser's print dialog.
+- **Customers** — add / edit / search customers; auto-created from bills;
+  shows each customer's bill count and total business.
+- **Products** — selling price, purchase price (for profit), GST rate,
+  unit, opening stock, low-stock alert level. Edit inline.
+- **Inventory** — stock in / stock out with notes, automatic stock-out on
+  every sale, movement history, **low stock alerts**.
+- **Reports** — **daily, weekly, monthly, quarterly, yearly** sales;
+  **category-wise, product-wise, customer-wise**; **profit report**
+  (revenue − cost with margin %). Any report exports to **Excel (.xlsx)**,
+  CSV, or PDF (via Print).
+- **Backup & Restore** — one-click backup file download; restore by upload
+  (a safety copy of current data is kept automatically).
 
 ## How to run (desktop)
 
@@ -30,7 +41,7 @@ internet needed, all data stays on your computer in one file (`shop.db`).
    python app.py
    ```
 
-3. Open **http://localhost:5000** in any browser (Chrome, Edge, Firefox).
+3. Open **http://localhost:5000** and log in with `admin` / `admin123`.
 
 ## How to use on a tablet
 
@@ -41,6 +52,7 @@ or `ip addr` (Linux).
 
 ## Customising
 
-- Shop name / address on the invoice: edit `templates/bill_view.html`.
-- Categories: edit the `CATEGORIES` list at the top of `app.py`.
-- Backup: just copy the `shop.db` file.
+- Shop name / address / GSTIN on the invoice: edit `templates/bill_view.html`.
+- Categories and GST rates: edit `CATEGORIES` / `GST_RATES` at the top of `app.py`.
+- Set a secret key in production: `SHOP_SECRET=<random text> python app.py`.
+- Backup: use the Backup page, or just copy the `shop.db` file.

@@ -4,15 +4,18 @@
 <h1>New Bill</h1>
 
 <section class="card">
-  <div class="grid-3">
+  <div class="grid-4">
     <label>Customer Name *
       <input id="customer_name" list="customer_list" placeholder="Customer name" autocomplete="off">
       <datalist id="customer_list">
-        {% for c in customers %}<option value="{{ c['customer_name'] }}">{{ c['phone'] }}</option>{% endfor %}
+        {% for c in customers %}<option value="{{ c['name'] }}"></option>{% endfor %}
       </datalist>
     </label>
-    <label>Contact Number
+    <label>Mobile Number
       <input id="phone" type="tel" placeholder="Mobile number" maxlength="15">
+    </label>
+    <label>Address (optional)
+      <input id="address" placeholder="Address">
     </label>
     <label>Bill Date
       <input id="bill_date" type="date" value="{{ today }}">
@@ -21,21 +24,25 @@
 </section>
 
 <section class="card">
+  <div class="table-scroll">
   <table id="items" class="items-table">
     <thead>
       <tr>
-        <th style="width:14%">Category</th>
-        <th style="width:20%">Product</th>
-        <th>Description</th>
-        <th style="width:9%">Qty</th>
-        <th style="width:7%">Unit</th>
-        <th style="width:11%">Price ₹</th>
-        <th style="width:12%">Amount ₹</th>
-        <th style="width:4%"></th>
+        <th style="min-width:110px">Category</th>
+        <th style="min-width:160px">Product</th>
+        <th style="min-width:150px">Description</th>
+        <th style="min-width:70px">Qty</th>
+        <th style="min-width:60px">Unit</th>
+        <th style="min-width:90px">Price ₹</th>
+        <th style="min-width:80px">Disc ₹</th>
+        <th style="min-width:75px">GST %</th>
+        <th style="min-width:95px" class="right">Total ₹</th>
+        <th></th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
+  </div>
   <button type="button" class="btn secondary" onclick="addRow()">+ Add Item</button>
 </section>
 
@@ -46,11 +53,13 @@
         <option>Cash</option><option>UPI</option><option>Card</option><option>Credit (Udhaar)</option>
       </select>
     </label>
-    <label>Discount ₹
+    <label>Extra Discount ₹ (on whole bill)
       <input id="discount" type="number" min="0" step="0.01" value="0" oninput="recalc()">
     </label>
     <div class="total-box">
       <div>Subtotal: <span id="subtotal">₹0.00</span></div>
+      <div>Item Discounts: <span id="item_disc">₹0.00</span></div>
+      <div>GST: <span id="gst_total">₹0.00</span></div>
       <div class="grand">Total: <span id="total">₹0.00</span></div>
     </div>
   </div>
@@ -64,6 +73,8 @@
 <script>
 const PRODUCTS = {{ products | tojson }};
 const CATEGORIES = {{ categories | tojson }};
+const GST_RATES = {{ gst_rates | tojson }};
+const CUSTOMERS = {{ customers | tojson }};
 </script>
 <script src="{{ url_for('static', filename='billing.js') }}"></script>
 {% endblock %}

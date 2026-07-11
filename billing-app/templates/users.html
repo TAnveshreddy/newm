@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Users — Shop Billing{% endblock %}
+{% block content %}
+<h1>Users</h1>
+
+<section class="card">
+  <h3>Add User</h3>
+  <form method="post" action="{{ url_for('add_user') }}" class="filter-row wrap">
+    <input name="username" placeholder="Username" required>
+    <input name="password" type="password" placeholder="Password (min 4 chars)" required minlength="4">
+    <select name="role">
+      <option value="staff">Staff (billing only pages)</option>
+      <option value="admin">Admin (everything)</option>
+    </select>
+    <button class="btn" type="submit">Add User</button>
+  </form>
+</section>
+
+<section class="card">
+  <table class="data-table">
+    <thead><tr><th>Username</th><th>Role</th><th>Status</th><th>Reset Password</th><th></th></tr></thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>{{ u['username'] }}{% if u['username'] == session['user'] %} <span class="muted">(you)</span>{% endif %}</td>
+        <td>{{ u['role'] | capitalize }}</td>
+        <td>{{ '✅ Active' if u['active'] else '⛔ Disabled' }}</td>
+        <td>
+          <input form="pw-{{ u['id'] }}" name="password" type="password"
+                 placeholder="New password" minlength="4" style="max-width:170px">
+          <button class="btn small secondary" form="pw-{{ u['id'] }}" type="submit">Set</button>
+        </td>
+        <td>
+          {% if u['username'] != session['user'] %}
+          <button class="btn small {{ 'danger' if u['active'] else '' }}"
+                  form="tg-{{ u['id'] }}" type="submit">
+            {{ 'Disable' if u['active'] else 'Enable' }}</button>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% for u in users %}
+  <form id="pw-{{ u['id'] }}" method="post" action="{{ url_for('reset_password', uid=u['id']) }}"></form>
+  <form id="tg-{{ u['id'] }}" method="post" action="{{ url_for('toggle_user', uid=u['id']) }}"></form>
+  {% endfor %}
+</section>
+{% endblock %}

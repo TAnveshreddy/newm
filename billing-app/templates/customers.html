@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Customers — Shop Billing{% endblock %}
+{% block content %}
+<h1>Customers</h1>
+
+<section class="card">
+  <h3>Add Customer</h3>
+  <form method="post" action="{{ url_for('add_customer') }}" class="filter-row wrap">
+    <input name="name" placeholder="Customer name *" required>
+    <input name="mobile" type="tel" placeholder="Mobile number" maxlength="15">
+    <input name="address" placeholder="Address (optional)" style="min-width:240px">
+    <button class="btn" type="submit">Add</button>
+  </form>
+</section>
+
+<section class="card">
+  <form method="get" class="filter-row">
+    <input name="q" value="{{ q }}" placeholder="Search name or mobile">
+    <button class="btn" type="submit">Search</button>
+    <a class="btn secondary" href="{{ url_for('customers') }}">Clear</a>
+  </form>
+</section>
+
+<section class="card">
+  <table class="data-table">
+    <thead>
+      <tr><th>Name</th><th>Mobile</th><th>Address</th>
+          <th class="right">Bills</th><th class="right">Total ₹</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for c in customers %}
+      <tr>
+        <td><input form="edit-{{ c['id'] }}" name="name" value="{{ c['name'] }}" required></td>
+        <td><input form="edit-{{ c['id'] }}" name="mobile" value="{{ c['mobile'] }}"></td>
+        <td><input form="edit-{{ c['id'] }}" name="address" value="{{ c['address'] }}"></td>
+        <td class="right">{{ c['bills'] }}</td>
+        <td class="right">{{ '%.2f' | format(c['sales']) }}</td>
+        <td class="nowrap">
+          <button class="btn small secondary" form="edit-{{ c['id'] }}" type="submit">Save</button>
+          <button class="btn small danger" form="del-{{ c['id'] }}" type="submit"
+                  onclick="return confirm('Remove {{ c['name'] }}?')">Remove</button>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="empty">No customers yet — they are also added automatically when you make a bill.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% for c in customers %}
+  <form id="edit-{{ c['id'] }}" method="post" action="{{ url_for('edit_customer', cid=c['id']) }}"></form>
+  <form id="del-{{ c['id'] }}" method="post" action="{{ url_for('delete_customer', cid=c['id']) }}"></form>
+  {% endfor %}
+</section>
+{% endblock %}

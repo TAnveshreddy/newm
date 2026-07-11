@@ -5,43 +5,69 @@
 
 <section class="card">
   <h3>Add Product</h3>
-  <form method="post" action="{{ url_for('add_product') }}" class="filter-row wrap">
-    <select name="category" required>
-      {% for c in categories %}<option>{{ c }}</option>{% endfor %}
-    </select>
-    <input name="name" placeholder="Product name" required>
-    <input name="description" placeholder="Description">
-    <input name="unit" placeholder="Unit (pcs, box, litre…)" value="pcs" style="max-width:120px">
-    <input name="price" type="number" min="0" step="0.01" placeholder="Price ₹" required style="max-width:120px">
-    <button class="btn" type="submit">Add</button>
+  <form method="post" action="{{ url_for('add_product') }}" class="product-grid">
+    <label>Category
+      <select name="category" required>
+        {% for c in categories %}<option>{{ c }}</option>{% endfor %}
+      </select></label>
+    <label>Name <input name="name" placeholder="Product name" required></label>
+    <label>Description <input name="description" placeholder="Description"></label>
+    <label>Unit <input name="unit" value="pcs"></label>
+    <label>Selling Price ₹ <input name="price" type="number" min="0" step="0.01" required></label>
+    <label>Purchase Price ₹ <input name="purchase_price" type="number" min="0" step="0.01" value="0"></label>
+    <label>GST %
+      <select name="gst_rate">
+        {% for r in gst_rates %}<option value="{{ r }}">{{ r }}%</option>{% endfor %}
+      </select></label>
+    <label>Opening Stock <input name="stock" type="number" min="0" step="any" value="0"></label>
+    <label>Low-stock Alert at <input name="low_stock" type="number" min="0" step="any" value="5"></label>
+    <div class="self-end"><button class="btn" type="submit">Add Product</button></div>
   </form>
+  <p class="muted small">Purchase price is used for the Profit report. It never appears on invoices.</p>
 </section>
 
 <section class="card">
+  <div class="table-scroll">
   <table class="data-table">
     <thead>
-      <tr><th>Category</th><th>Product</th><th>Description</th>
-          <th>Unit</th><th class="right">Price ₹</th><th></th></tr>
+      <tr><th>Category</th><th>Product</th><th>Description</th><th>Unit</th>
+          <th class="right">Sell ₹</th><th class="right">Buy ₹</th>
+          <th class="right">GST %</th><th class="right">Stock</th>
+          <th class="right">Alert</th><th></th></tr>
     </thead>
     <tbody>
       {% for p in products %}
-      <tr>
-        <td>{{ p['category'] }}</td>
-        <td>{{ p['name'] }}</td>
-        <td>{{ p['description'] }}</td>
-        <td>{{ p['unit'] }}</td>
-        <td class="right">{{ '%.2f' | format(p['price']) }}</td>
+      <tr {% if p['stock'] <= p['low_stock'] %}class="low-row"{% endif %}>
         <td>
-          <form method="post" action="{{ url_for('delete_product', pid=p['id']) }}"
-                onsubmit="return confirm('Remove {{ p['name'] }}?')">
-            <button class="btn small danger" type="submit">Remove</button>
-          </form>
+          <select form="pe-{{ p['id'] }}" name="category">
+            {% for c in categories %}<option {{ 'selected' if c == p['category'] }}>{{ c }}</option>{% endfor %}
+          </select></td>
+        <td><input form="pe-{{ p['id'] }}" name="name" value="{{ p['name'] }}" required></td>
+        <td><input form="pe-{{ p['id'] }}" name="description" value="{{ p['description'] }}"></td>
+        <td><input form="pe-{{ p['id'] }}" name="unit" value="{{ p['unit'] }}" style="min-width:60px"></td>
+        <td><input form="pe-{{ p['id'] }}" name="price" type="number" min="0" step="0.01" value="{{ p['price'] }}" style="min-width:80px"></td>
+        <td><input form="pe-{{ p['id'] }}" name="purchase_price" type="number" min="0" step="0.01" value="{{ p['purchase_price'] }}" style="min-width:80px"></td>
+        <td>
+          <select form="pe-{{ p['id'] }}" name="gst_rate" style="min-width:70px">
+            {% for r in gst_rates %}<option value="{{ r }}" {{ 'selected' if r == p['gst_rate'] }}>{{ r }}%</option>{% endfor %}
+          </select></td>
+        <td><input form="pe-{{ p['id'] }}" name="stock" type="number" step="any" value="{{ p['stock'] }}" style="min-width:70px"></td>
+        <td><input form="pe-{{ p['id'] }}" name="low_stock" type="number" min="0" step="any" value="{{ p['low_stock'] }}" style="min-width:60px"></td>
+        <td class="nowrap">
+          <button class="btn small secondary" form="pe-{{ p['id'] }}" type="submit">Save</button>
+          <button class="btn small danger" form="pd-{{ p['id'] }}" type="submit"
+                  onclick="return confirm('Remove {{ p['name'] }}?')">✕</button>
         </td>
       </tr>
       {% else %}
-      <tr><td colspan="6" class="empty">No products yet — add one above.</td></tr>
+      <tr><td colspan="10" class="empty">No products yet — add one above.</td></tr>
       {% endfor %}
     </tbody>
   </table>
+  </div>
+  {% for p in products %}
+  <form id="pe-{{ p['id'] }}" method="post" action="{{ url_for('edit_product', pid=p['id']) }}"></form>
+  <form id="pd-{{ p['id'] }}" method="post" action="{{ url_for('delete_product', pid=p['id']) }}"></form>
+  {% endfor %}
 </section>
 {% endblock %}

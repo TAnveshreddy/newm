@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Backup — Shop Billing{% endblock %}
+{% block content %}
+<h1>Backup &amp; Restore</h1>
+
+<div class="report-grid">
+  <section class="card">
+    <h3>⬇ Backup</h3>
+    <p>Download a full copy of all your data (bills, customers, products, stock, users).
+       Current database size: <strong>{{ size_kb }} KB</strong>.</p>
+    <p class="muted small">Keep backups on a pen drive or Google Drive. A daily backup is a good habit.</p>
+    <a class="btn" href="{{ url_for('backup_download') }}">Download Backup File</a>
+  </section>
+
+  <section class="card">
+    <h3>⬆ Restore</h3>
+    <p>Upload a backup file to restore it. <strong>This replaces all current data</strong>
+       (a safety copy of the current data is kept next to the app as
+       <code>shop.db.before-restore</code>).</p>
+    <form method="post" action="{{ url_for('backup_restore') }}" enctype="multipart/form-data"
+          onsubmit="return confirm('Restore this backup? Current data will be replaced.')">
+      <input type="file" name="file" accept=".db" required>
+      <div class="actions"><button class="btn danger" type="submit">Restore Backup</button></div>
+    </form>
+  </section>
+</div>
+{% endblock %}

@@ -6,55 +6,69 @@
     <div>
       <h2>My Shop Name</h2>
       <p>Sanitary · Paints · Plumbing · Electrical · Hardware<br>
-         Address line, City — Phone: 00000 00000</p>
+         Address line, City — Phone: 00000 00000<br>
+         GSTIN: 00XXXXX0000X0Z0</p>
     </div>
     <div class="right">
-      <h3>INVOICE</h3>
+      <h3>TAX INVOICE</h3>
       <p><strong>{{ bill['bill_no'] }}</strong><br>Date: {{ bill['bill_date'] }}</p>
     </div>
   </header>
 
   <p><strong>Billed to:</strong> {{ bill['customer_name'] }}
-     {% if bill['phone'] %} — {{ bill['phone'] }}{% endif %}</p>
+     {% if bill['phone'] %} — {{ bill['phone'] }}{% endif %}
+     {% if customer and customer['address'] %}<br><span class="muted">{{ customer['address'] }}</span>{% endif %}</p>
 
+  <div class="table-scroll">
   <table class="data-table">
     <thead>
-      <tr><th>#</th><th>Category</th><th>Item</th><th>Description</th>
+      <tr><th>#</th><th>Item</th><th>Description</th>
           <th class="right">Qty</th><th>Unit</th>
-          <th class="right">Price ₹</th><th class="right">Amount ₹</th></tr>
+          <th class="right">Price ₹</th><th class="right">Disc ₹</th>
+          <th class="right">GST %</th><th class="right">GST ₹</th>
+          <th class="right">Total ₹</th></tr>
     </thead>
     <tbody>
       {% for it in items %}
       <tr>
         <td>{{ loop.index }}</td>
-        <td>{{ it['category'] }}</td>
         <td>{{ it['product_name'] }}</td>
         <td>{{ it['description'] }}</td>
         <td class="right">{{ it['qty'] | round(2) }}</td>
         <td>{{ it['unit'] }}</td>
         <td class="right">{{ '%.2f' | format(it['price']) }}</td>
+        <td class="right">{{ '%.2f' | format(it['discount']) }}</td>
+        <td class="right">{{ it['gst_rate'] | round(1) }}</td>
+        <td class="right">{{ '%.2f' | format(it['gst_amount']) }}</td>
         <td class="right">{{ '%.2f' | format(it['amount']) }}</td>
       </tr>
       {% endfor %}
     </tbody>
     <tfoot>
-      <tr><td colspan="7" class="right">Subtotal</td>
+      <tr><td colspan="9" class="right">Subtotal</td>
           <td class="right">{{ '%.2f' | format(bill['subtotal']) }}</td></tr>
+      {% if bill['item_discount'] %}
+      <tr><td colspan="9" class="right">Item Discounts</td>
+          <td class="right">-{{ '%.2f' | format(bill['item_discount']) }}</td></tr>
+      {% endif %}
+      <tr><td colspan="9" class="right">GST</td>
+          <td class="right">+{{ '%.2f' | format(bill['gst_amount']) }}</td></tr>
       {% if bill['discount'] %}
-      <tr><td colspan="7" class="right">Discount</td>
+      <tr><td colspan="9" class="right">Extra Discount</td>
           <td class="right">-{{ '%.2f' | format(bill['discount']) }}</td></tr>
       {% endif %}
-      <tr class="grand"><td colspan="7" class="right"><strong>Grand Total</strong></td>
+      <tr class="grand"><td colspan="9" class="right"><strong>Grand Total</strong></td>
           <td class="right"><strong>₹{{ '%.2f' | format(bill['total']) }}</strong></td></tr>
-      <tr><td colspan="7" class="right">Payment Mode</td>
+      <tr><td colspan="9" class="right">Payment Mode</td>
           <td class="right">{{ bill['payment_mode'] }}</td></tr>
     </tfoot>
   </table>
+  </div>
 
   <p class="thanks">Thank you for your business!</p>
 
   <div class="actions no-print">
-    <button class="btn" onclick="window.print()">🖨 Print</button>
+    <button class="btn" onclick="window.print()">🖨 Print / Save as PDF</button>
     <a class="btn secondary" href="{{ url_for('new_bill') }}">+ New Bill</a>
     <a class="btn secondary" href="{{ url_for('bills') }}">All Bills</a>
   </div>

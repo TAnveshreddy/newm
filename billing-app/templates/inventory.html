@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Inventory — Shop Billing{% endblock %}
+{% block content %}
+<h1>Inventory</h1>
+
+<section class="card">
+  <h3>Stock In / Stock Out</h3>
+  <form method="post" action="{{ url_for('stock_move') }}" class="filter-row wrap">
+    <select name="product_id" required style="min-width:240px">
+      <option value="">-- select product --</option>
+      {% for p in products %}
+      <option value="{{ p['id'] }}">{{ p['category'] }} — {{ p['name'] }} (stock: {{ p['stock'] | round(2) }} {{ p['unit'] }})</option>
+      {% endfor %}
+    </select>
+    <select name="direction">
+      <option value="in">Stock In (+)</option>
+      <option value="out">Stock Out (−)</option>
+    </select>
+    <input name="qty" type="number" min="0" step="any" placeholder="Quantity" required style="max-width:130px">
+    <input name="note" placeholder="Note (e.g. purchase, damage)" style="min-width:200px">
+    <button class="btn" type="submit">Update Stock</button>
+  </form>
+  <p class="muted small">Selling on a bill reduces stock automatically — use Stock Out only for damage, returns to supplier, etc.</p>
+</section>
+
+<div class="report-grid">
+  <section class="card">
+    <h3>⚠️ Low Stock ({{ low | length }})</h3>
+    <table class="data-table">
+      <thead><tr><th>Product</th><th>Category</th>
+                 <th class="right">Stock</th><th class="right">Alert at</th></tr></thead>
+      <tbody>
+        {% for p in low %}
+        <tr class="low-row">
+          <td>{{ p['name'] }}</td><td>{{ p['category'] }}</td>
+          <td class="right"><strong>{{ p['stock'] | round(2) }} {{ p['unit'] }}</strong></td>
+          <td class="right">{{ p['low_stock'] | round(2) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty">✅ Nothing is low on stock.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h3>Current Stock</h3>
+    <table class="data-table">
+      <thead><tr><th>Product</th><th>Category</th><th class="right">Stock</th></tr></thead>
+      <tbody>
+        {% for p in products %}
+        <tr {% if p['stock'] <= p['low_stock'] %}class="low-row"{% endif %}>
+          <td>{{ p['name'] }}</td><td>{{ p['category'] }}</td>
+          <td class="right">{{ p['stock'] | round(2) }} {{ p['unit'] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h3>Recent Stock Movements</h3>
+    <table class="data-table">
+      <thead><tr><th>When</th><th>Product</th><th class="right">Change</th>
+                 <th>Reason</th><th>Ref / Note</th></tr></thead>
+      <tbody>
+        {% for m in moves %}
+        <tr>
+          <td class="nowrap">{{ m['created_at'][:16] }}</td>
+          <td>{{ m['product_name'] }}</td>
+          <td class="right {{ 'pos' if m['change'] > 0 else 'neg' }}">
+            {{ '%+g' | format(m['change']) }} {{ m['unit'] }}</td>
+          <td>{{ m['reason'] }}</td>
+          <td>{{ m['ref'] or m['note'] }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="empty">No stock movements yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+{% endblock %}
