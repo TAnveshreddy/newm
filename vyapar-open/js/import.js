@@ -131,6 +131,7 @@ const IMPORT_DEFS = {
       { key: 'category', label: 'Category', match: ['category', 'group', 'itemcategory'] },
       { key: 'unit', label: 'Unit', match: ['unit', 'uom', 'baseunit'] },
       { key: 'hsn', label: 'HSN', match: ['hsn', 'hsncode', 'hsnsac', 'sac', 'saccode', 'code', 'itemcode'] },
+      { key: 'description', label: 'Description', match: ['description', 'desc', 'productdescription', 'itemdescription', 'details'] },
       { key: 'salePrice', label: 'Sale Price', num: true, match: ['saleprice', 'sellingprice', 'price', 'rate', 'mrp', 'salerate'] },
       { key: 'purchasePrice', label: 'Purchase Price', num: true, match: ['purchaseprice', 'costprice', 'cost', 'purchaserate', 'buyprice'] },
       { key: 'taxRate', label: 'GST %', num: true, match: ['gst', 'gstrate', 'tax', 'taxrate', 'gstpercent', 'igst'] },
@@ -138,9 +139,9 @@ const IMPORT_DEFS = {
       { key: 'minStock', label: 'Min Stock', num: true, match: ['minstock', 'minimumstock', 'reorderlevel', 'lowstock', 'minqty'] },
       { key: 'type', label: 'Type', match: ['type', 'itemtype'] }
     ],
-    sample: [['Item Name', 'Category', 'Unit', 'HSN', 'Sale Price', 'Purchase Price', 'GST %', 'Opening Stock', 'Min Stock', 'Type'],
-      ['Basmati Rice 5kg', 'Grocery', 'BAG', '1006', '550', '470', '5', '40', '10', 'product'],
-      ['Home Delivery', 'Services', 'SERVICE', '9965', '50', '0', '18', '', '', 'service']]
+    sample: [['Item Name', 'Category', 'Unit', 'HSN', 'Description', 'Sale Price', 'Purchase Price', 'GST %', 'Opening Stock', 'Min Stock', 'Type'],
+      ['Basmati Rice 5kg', 'Grocery', 'BAG', '1006', 'Premium aged basmati', '550', '470', '5', '40', '10', 'product'],
+      ['Home Delivery', 'Services', 'SERVICE', '9965', 'Delivery within city limits', '50', '0', '18', '', '', 'service']]
   },
   parties: {
     title: 'Import Parties',
@@ -276,7 +277,7 @@ function runImport() {
       if (existing) {
         if (updateExisting) { Object.assign(existing, rec); updated++; } else skipped++;
       } else {
-        state.items.push(Object.assign({ id: uid(), createdAt: Date.now(), category: '', hsn: '', salePrice: 0, purchasePrice: 0, taxRate: 0, openingStock: 0, minStock: 0 }, rec));
+        state.items.push(Object.assign({ id: uid(), createdAt: Date.now(), category: '', hsn: '', description: '', salePrice: 0, purchasePrice: 0, taxRate: 0, openingStock: 0, minStock: 0 }, rec));
         added++;
       }
     } else {

@@ -54,6 +54,7 @@ function openItemForm(id) {
     '<label>Category<input id="if_cat" value="' + esc(it ? it.category : '') + '"></label>' +
     '<label>Unit<select id="if_unit">' + UNITS.map(u => '<option' + (it && it.unit === u ? ' selected' : '') + '>' + u + '</option>').join('') + '</select></label>' +
     '<label>HSN / SAC Code<input id="if_hsn" value="' + esc(it ? it.hsn : '') + '"></label>' +
+    '<label class="span2">Product Description<textarea id="if_desc" rows="2" placeholder="Shown on bills & printed invoices">' + esc(it ? (it.description || '') : '') + '</textarea></label>' +
     '<label>Sale Price (₹) *<input id="if_sale" type="number" step="0.01" min="0" value="' + (it ? num(it.salePrice) : '') + '"></label>' +
     '<label>Purchase Price (₹)<input id="if_pur" type="number" step="0.01" min="0" value="' + (it ? num(it.purchasePrice) : '') + '"></label>' +
     '<label>GST Rate %<select id="if_tax">' + GST_RATES.map(r => '<option value="' + r + '"' + (it && num(it.taxRate) === r ? ' selected' : (!it && r === 18 ? ' selected' : '')) + '>' + r + '%</option>').join('') + '</select></label>' +
@@ -75,6 +76,7 @@ function saveItem(id) {
     category: el('if_cat').value.trim(),
     unit: el('if_unit').value,
     hsn: el('if_hsn').value.trim(),
+    description: el('if_desc').value.trim(),
     salePrice: num(el('if_sale').value),
     purchasePrice: num(el('if_pur').value),
     taxRate: num(el('if_tax').value),

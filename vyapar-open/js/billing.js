@@ -17,7 +17,7 @@ function renderBilling() {
     '<div class="form-grid form-grid-4">' +
     '<label>Customer Name<input id="bl_name" list="bl_names" placeholder="Cash sale (optional)" value="' + esc(bill.customerName) + '" oninput="bill.customerName=this.value" onchange="billCustomerPicked()"></label>' +
     '<datalist id="bl_names">' + state.parties.filter(p => p.type !== 'supplier').map(p => '<option value="' + esc(p.name) + '">').join('') + '</datalist>' +
-    '<label>Mobile Number<input id="bl_mobile" placeholder="10-digit mobile" maxlength="10" value="' + esc(bill.mobile) + '" oninput="bill.mobile=this.value" onchange="billMobilePicked()"></label>' +
+    '<label>Contact Number<input id="bl_mobile" placeholder="10-digit mobile" maxlength="10" value="' + esc(bill.mobile) + '" oninput="bill.mobile=this.value" onchange="billMobilePicked()"></label>' +
     '<label>Search Product<input id="bl_search" placeholder="Type to search…" value="' + esc(bill.search) + '" oninput="bill.search=this.value;renderProductPicker()"></label>' +
     '<label>Category<select id="bl_cat" onchange="bill.category=this.value;renderProductPicker()">' +
     '<option value="">All Categories</option>' +
@@ -80,6 +80,7 @@ function billAddItem(itemId) {
   if (existing) existing.qty = num(existing.qty) + 1;
   else bill.lines.push({
     itemId: it.id, name: it.name, hsn: it.hsn, unit: it.unit, qty: 1,
+    description: it.description || '',
     rate: num(it.salePrice), disc: 0,
     taxRate: state.settings.taxEnabled ? num(it.taxRate) : 0,
     cost: num(it.purchasePrice)
@@ -95,7 +96,8 @@ function renderBillLines() {
     const taxable = gross - gross * num(l.disc) / 100;
     const tot = taxable + (state.settings.taxEnabled ? taxable * num(l.taxRate) / 100 : 0);
     return '<tr>' +
-      '<td><strong>' + esc(l.name) + '</strong><div class="sub">' + esc(l.unit) + '</div></td>' +
+      '<td><strong>' + esc(l.name) + '</strong><div class="sub">' + esc(l.unit) + '</div>' +
+      '<input class="line-desc" placeholder="Product description (prints on invoice)" value="' + esc(l.description || '') + '" oninput="bill.lines[' + i + '].description=this.value"></td>' +
       '<td><div class="qty-ctl"><button class="btn tiny ghost" onclick="billQty(' + i + ',-1)">−</button>' +
       '<input class="r" type="number" step="any" min="0" value="' + num(l.qty) + '" oninput="billLineSet(' + i + ',\'qty\',this.value)">' +
       '<button class="btn tiny ghost" onclick="billQty(' + i + ',1)">+</button></div></td>' +

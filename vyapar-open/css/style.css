@@ -229,6 +229,11 @@ label input, label select, label textarea { margin-top: 4px; font-weight: 400; }
 .product-chip.out { opacity: 0.55; }
 .pc-name { font-weight: 600; font-size: 13px; }
 .pc-meta { font-size: 11.5px; color: var(--muted); }
+.line-desc {
+  margin-top: 4px; font-size: 12px; padding: 4px 8px;
+  border-style: dashed; color: var(--ink-2); min-width: 220px;
+}
+.line-desc:focus { border-style: solid; }
 .qty-ctl { display: flex; align-items: center; gap: 4px; }
 .qty-ctl input { width: 64px; }
 .bill-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; }

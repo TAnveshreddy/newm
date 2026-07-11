@@ -311,7 +311,9 @@ function viewTxn(id) {
   let linesHtml = '';
   if ((t.lines || []).length) {
     linesHtml = '<div class="table-wrap"><table><thead><tr><th>#</th><th>Item</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">GST</th><th class="r">Amount</th></tr></thead><tbody>' +
-      t.lines.map((l, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(l.name) + '</td><td class="r">' + fmtQty(l.qty) + ' ' + esc(l.unit) + '</td><td class="r">' + fmtMoney(l.rate) + '</td><td class="r">' + num(l.taxRate) + '%</td><td class="r">' + fmtMoney(num(l.amount) + num(l.tax)) + '</td></tr>').join('') +
+      t.lines.map((l, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(l.name) +
+        (l.description ? '<div class="sub">' + esc(l.description) + '</div>' : '') +
+        '</td><td class="r">' + fmtQty(l.qty) + ' ' + esc(l.unit) + '</td><td class="r">' + fmtMoney(l.rate) + '</td><td class="r">' + num(l.taxRate) + '%</td><td class="r">' + fmtMoney(num(l.amount) + num(l.tax)) + '</td></tr>').join('') +
       '</tbody></table></div>' +
       '<div class="totals-panel">' +
       '<div class="totals-row"><span>Subtotal</span><span>' + fmtMoney(t.subtotal) + '</span></div>' +
@@ -348,7 +350,9 @@ function printTxn(id) {
 
   let rows = t.lines.map((l, i) => {
     const taxHalf = num(l.tax) / 2;
-    return '<tr><td>' + (i + 1) + '</td><td>' + esc(l.name) + '</td><td>' + esc(l.hsn || '') + '</td>' +
+    return '<tr><td>' + (i + 1) + '</td><td>' + esc(l.name) +
+      (l.description ? '<br><span class="muted" style="font-size:11px">' + esc(l.description) + '</span>' : '') +
+      '</td><td>' + esc(l.hsn || '') + '</td>' +
       '<td class="r">' + fmtQty(l.qty) + ' ' + esc(l.unit) + '</td><td class="r">' + fmtMoney(l.rate, false) + '</td>' +
       '<td class="r">' + fmtMoney(l.amount, false) + '</td>' +
       (s.taxEnabled ?

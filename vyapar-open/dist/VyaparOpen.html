@@ -238,6 +238,11 @@ label input, label select, label textarea { margin-top: 4px; font-weight: 400; }
 .product-chip.out { opacity: 0.55; }
 .pc-name { font-weight: 600; font-size: 13px; }
 .pc-meta { font-size: 11.5px; color: var(--muted); }
+.line-desc {
+  margin-top: 4px; font-size: 12px; padding: 4px 8px;
+  border-style: dashed; color: var(--ink-2); min-width: 220px;
+}
+.line-desc:focus { border-style: solid; }
 .qty-ctl { display: flex; align-items: center; gap: 4px; }
 .qty-ctl input { width: 64px; }
 .bill-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
@@ -1012,6 +1017,7 @@ function openItemForm(id) {
     '<label>Category<input id="if_cat" value="' + esc(it ? it.category : '') + '"></label>' +
     '<label>Unit<select id="if_unit">' + UNITS.map(u => '<option' + (it && it.unit === u ? ' selected' : '') + '>' + u + '</option>').join('') + '</select></label>' +
     '<label>HSN / SAC Code<input id="if_hsn" value="' + esc(it ? it.hsn : '') + '"></label>' +
+    '<label class="span2">Product Description<textarea id="if_desc" rows="2" placeholder="Shown on bills & printed invoices">' + esc(it ? (it.description || '') : '') + '</textarea></label>' +
     '<label>Sale Price (₹) *<input id="if_sale" type="number" step="0.01" min="0" value="' + (it ? num(it.salePrice) : '') + '"></label>' +
     '<label>Purchase Price (₹)<input id="if_pur" type="number" step="0.01" min="0" value="' + (it ? num(it.purchasePrice) : '') + '"></label>' +
     '<label>GST Rate %<select id="if_tax">' + GST_RATES.map(r => '<option value="' + r + '"' + (it && num(it.taxRate) === r ? ' selected' : (!it && r === 18 ? ' selected' : '')) + '>' + r + '%</option>').join('') + '</select></label>' +
@@ -1033,6 +1039,7 @@ function saveItem(id) {
     category: el('if_cat').value.trim(),
     unit: el('if_unit').value,
     hsn: el('if_hsn').value.trim(),
+    description: el('if_desc').value.trim(),
     salePrice: num(el('if_sale').value),
     purchasePrice: num(el('if_pur').value),
     taxRate: num(el('if_tax').value),
@@ -1446,7 +1453,9 @@ function viewTxn(id) {
   let linesHtml = '';
   if ((t.lines || []).length) {
     linesHtml = '<div class="table-wrap"><table><thead><tr><th>#</th><th>Item</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">GST</th><th class="r">Amount</th></tr></thead><tbody>' +
-      t.lines.map((l, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(l.name) + '</td><td class="r">' + fmtQty(l.qty) + ' ' + esc(l.unit) + '</td><td class="r">' + fmtMoney(l.rate) + '</td><td class="r">' + num(l.taxRate) + '%</td><td class="r">' + fmtMoney(num(l.amount) + num(l.tax)) + '</td></tr>').join('') +
+      t.lines.map((l, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(l.name) +
+        (l.description ? '<div class="sub">' + esc(l.description) + '</div>' : '') +
+        '</td><td class="r">' + fmtQty(l.qty) + ' ' + esc(l.unit) + '</td><td class="r">' + fmtMoney(l.rate) + '</td><td class="r">' + num(l.taxRate) + '%</td><td class="r">' + fmtMoney(num(l.amount) + num(l.tax)) + '</td></tr>').join('') +
       '</tbody></table></div>' +
       '<div class="totals-panel">' +
       '<div class="totals-row"><span>Subtotal</span><span>' + fmtMoney(t.subtotal) + '</span></div>' +
@@ -1483,7 +1492,9 @@ function printTxn(id) {
 
   let rows = t.lines.map((l, i) => {
     const taxHalf = num(l.tax) / 2;
-    return '<tr><td>' + (i + 1) + '</td><td>' + esc(l.name) + '</td><td>' + esc(l.hsn || '') + '</td>' +
+    return '<tr><td>' + (i + 1) + '</td><td>' + esc(l.name) +
+      (l.description ? '<br><span class="muted" style="font-size:11px">' + esc(l.description) + '</span>' : '') +
+      '</td><td>' + esc(l.hsn || '') + '</td>' +
       '<td class="r">' + fmtQty(l.qty) + ' ' + esc(l.unit) + '</td><td class="r">' + fmtMoney(l.rate, false) + '</td>' +
       '<td class="r">' + fmtMoney(l.amount, false) + '</td>' +
       (s.taxEnabled ?
@@ -1670,6 +1681,7 @@ const IMPORT_DEFS = {
       { key: 'category', label: 'Category', match: ['category', 'group', 'itemcategory'] },
       { key: 'unit', label: 'Unit', match: ['unit', 'uom', 'baseunit'] },
       { key: 'hsn', label: 'HSN', match: ['hsn', 'hsncode', 'hsnsac', 'sac', 'saccode', 'code', 'itemcode'] },
+      { key: 'description', label: 'Description', match: ['description', 'desc', 'productdescription', 'itemdescription', 'details'] },
       { key: 'salePrice', label: 'Sale Price', num: true, match: ['saleprice', 'sellingprice', 'price', 'rate', 'mrp', 'salerate'] },
       { key: 'purchasePrice', label: 'Purchase Price', num: true, match: ['purchaseprice', 'costprice', 'cost', 'purchaserate', 'buyprice'] },
       { key: 'taxRate', label: 'GST %', num: true, match: ['gst', 'gstrate', 'tax', 'taxrate', 'gstpercent', 'igst'] },
@@ -1677,9 +1689,9 @@ const IMPORT_DEFS = {
       { key: 'minStock', label: 'Min Stock', num: true, match: ['minstock', 'minimumstock', 'reorderlevel', 'lowstock', 'minqty'] },
       { key: 'type', label: 'Type', match: ['type', 'itemtype'] }
     ],
-    sample: [['Item Name', 'Category', 'Unit', 'HSN', 'Sale Price', 'Purchase Price', 'GST %', 'Opening Stock', 'Min Stock', 'Type'],
-      ['Basmati Rice 5kg', 'Grocery', 'BAG', '1006', '550', '470', '5', '40', '10', 'product'],
-      ['Home Delivery', 'Services', 'SERVICE', '9965', '50', '0', '18', '', '', 'service']]
+    sample: [['Item Name', 'Category', 'Unit', 'HSN', 'Description', 'Sale Price', 'Purchase Price', 'GST %', 'Opening Stock', 'Min Stock', 'Type'],
+      ['Basmati Rice 5kg', 'Grocery', 'BAG', '1006', 'Premium aged basmati', '550', '470', '5', '40', '10', 'product'],
+      ['Home Delivery', 'Services', 'SERVICE', '9965', 'Delivery within city limits', '50', '0', '18', '', '', 'service']]
   },
   parties: {
     title: 'Import Parties',
@@ -1815,7 +1827,7 @@ function runImport() {
       if (existing) {
         if (updateExisting) { Object.assign(existing, rec); updated++; } else skipped++;
       } else {
-        state.items.push(Object.assign({ id: uid(), createdAt: Date.now(), category: '', hsn: '', salePrice: 0, purchasePrice: 0, taxRate: 0, openingStock: 0, minStock: 0 }, rec));
+        state.items.push(Object.assign({ id: uid(), createdAt: Date.now(), category: '', hsn: '', description: '', salePrice: 0, purchasePrice: 0, taxRate: 0, openingStock: 0, minStock: 0 }, rec));
         added++;
       }
     } else {
@@ -1859,7 +1871,7 @@ function renderBilling() {
     '<div class="form-grid form-grid-4">' +
     '<label>Customer Name<input id="bl_name" list="bl_names" placeholder="Cash sale (optional)" value="' + esc(bill.customerName) + '" oninput="bill.customerName=this.value" onchange="billCustomerPicked()"></label>' +
     '<datalist id="bl_names">' + state.parties.filter(p => p.type !== 'supplier').map(p => '<option value="' + esc(p.name) + '">').join('') + '</datalist>' +
-    '<label>Mobile Number<input id="bl_mobile" placeholder="10-digit mobile" maxlength="10" value="' + esc(bill.mobile) + '" oninput="bill.mobile=this.value" onchange="billMobilePicked()"></label>' +
+    '<label>Contact Number<input id="bl_mobile" placeholder="10-digit mobile" maxlength="10" value="' + esc(bill.mobile) + '" oninput="bill.mobile=this.value" onchange="billMobilePicked()"></label>' +
     '<label>Search Product<input id="bl_search" placeholder="Type to search…" value="' + esc(bill.search) + '" oninput="bill.search=this.value;renderProductPicker()"></label>' +
     '<label>Category<select id="bl_cat" onchange="bill.category=this.value;renderProductPicker()">' +
     '<option value="">All Categories</option>' +
@@ -1922,6 +1934,7 @@ function billAddItem(itemId) {
   if (existing) existing.qty = num(existing.qty) + 1;
   else bill.lines.push({
     itemId: it.id, name: it.name, hsn: it.hsn, unit: it.unit, qty: 1,
+    description: it.description || '',
     rate: num(it.salePrice), disc: 0,
     taxRate: state.settings.taxEnabled ? num(it.taxRate) : 0,
     cost: num(it.purchasePrice)
@@ -1937,7 +1950,8 @@ function renderBillLines() {
     const taxable = gross - gross * num(l.disc) / 100;
     const tot = taxable + (state.settings.taxEnabled ? taxable * num(l.taxRate) / 100 : 0);
     return '<tr>' +
-      '<td><strong>' + esc(l.name) + '</strong><div class="sub">' + esc(l.unit) + '</div></td>' +
+      '<td><strong>' + esc(l.name) + '</strong><div class="sub">' + esc(l.unit) + '</div>' +
+      '<input class="line-desc" placeholder="Product description (prints on invoice)" value="' + esc(l.description || '') + '" oninput="bill.lines[' + i + '].description=this.value"></td>' +
       '<td><div class="qty-ctl"><button class="btn tiny ghost" onclick="billQty(' + i + ',-1)">−</button>' +
       '<input class="r" type="number" step="any" min="0" value="' + num(l.qty) + '" oninput="billLineSet(' + i + ',\'qty\',this.value)">' +
       '<button class="btn tiny ghost" onclick="billQty(' + i + ',1)">+</button></div></td>' +
