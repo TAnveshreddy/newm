@@ -20,17 +20,17 @@ Works on desktop, laptop and mobile browsers. No internet needed after download.
 
 | Area | What you get |
 |---|---|
-| **Sale invoices** | GST invoices with multi-line items, per-line & overall discount, round-off, received amount, balance due, payment modes (Cash/UPI/Card/Bank/Cheque/Credit) |
+| **Billing (POS-style)** | Fast billing screen: customer name + mobile (auto-creates/links customers), product search with category filter, tap-to-add products, quantity/price/discount/GST per line, received amount, **Save & Print Invoice** |
 | **Invoice printing** | Print / save-as-PDF tax invoice with CGST+SGST or IGST split (auto-detected from GSTINs), HSN codes, amount in words, UPI ID, terms & signature |
 | **Estimates / Quotations** | Create estimates and convert them to sale invoices in one click |
 | **Purchases** | Purchase bills with stock-in and supplier payables |
 | **Credit / Debit notes** | Sale returns and purchase returns with stock & ledger reversal |
 | **Parties** | Customers & suppliers, GSTIN, opening balances, full ledger/statement, "to collect / to pay" tracking |
-| **Inventory** | Products & services, units, HSN/SAC, sale & purchase prices, GST rates, opening stock, stock adjustments, low-stock alerts, stock movement history |
+| **Inventory** | Add/edit/delete products & services, units, HSN/SAC, sale & purchase prices, GST rates, current stock, **Stock In / Stock Out**, low-stock alerts, stock movement history |
 | **Payments** | Payment In / Payment Out with live party balance |
 | **Expenses** | Categorised expense tracking (rent, salary, transport…) |
-| **Reports (12)** | Sale, Purchase, Day Book, Cash Flow, Profit & Loss, Party Statement, All Party Balances, Stock Summary, Item Sale Summary, Low Stock, Expense, **GST Summary** (output vs input tax by rate) — all exportable to CSV/Excel |
-| **Dashboard** | To-collect / to-pay, stock value, monthly sales & expenses, 30-day sales chart, recent transactions, low-stock alerts |
+| **Reports (19)** | Daily / Weekly / Monthly / Quarterly / Yearly Sales (with profit), Product-wise, Category-wise, Customer-wise Sales, Profit Report, Stock Report, Low Stock, Bill Register, Purchase, Day Book, Cash Flow, Party Statement, Party Balances, Expense, **GST Summary** — all exportable to CSV/Excel |
+| **Dashboard** | Today's sales, today's profit, bills created today, low stock items, top selling products, monthly sales chart, recent bills, to-collect / to-pay |
 | **Excel import** | Bulk-import **Items and Parties from Excel (.xlsx) or CSV** — downloadable templates, automatic column matching, preview before import, duplicate skip/update |
 | **Backup & restore** | One-click JSON backup, restore on any device |
 | **Extras** | Dark theme, mobile-friendly layout, keyboard shortcuts (Alt+N new sale, Alt+P purchase), demo data to explore |

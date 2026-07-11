@@ -9,7 +9,7 @@ let html = fs.readFileSync('index.html', 'utf8');
 const css = fs.readFileSync('css/style.css', 'utf8');
 html = html.replace('<link rel="stylesheet" href="css/style.css">', '<style>\n' + css + '\n</style>');
 
-const scripts = ['utils.js', 'store.js', 'parties.js', 'items.js', 'txns.js', 'import.js', 'reports.js', 'dashboard.js', 'settings.js', 'app.js'];
+const scripts = ['utils.js', 'store.js', 'parties.js', 'items.js', 'txns.js', 'import.js', 'billing.js', 'reports.js', 'dashboard.js', 'settings.js', 'app.js'];
 let js = scripts.map(s => fs.readFileSync(path.join('js', s), 'utf8')).join('\n\n');
 js = js.replace(/<\/script>/g, '<\\/script>'); // don't terminate the inline script tag early
 

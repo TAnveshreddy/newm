@@ -2,25 +2,44 @@
 'use strict';
 
 const REPORTS = [
-  ['sale', 'Sale Report'],
+  ['daily', 'Daily Sales'],
+  ['weekly', 'Weekly Sales'],
+  ['monthly', 'Monthly Sales'],
+  ['quarterly', 'Quarterly Sales'],
+  ['yearly', 'Yearly Sales'],
+  ['productwise', 'Product-wise Sales'],
+  ['categorywise', 'Category-wise Sales'],
+  ['customerwise', 'Customer-wise Sales'],
+  ['profit', 'Profit Report'],
+  ['stock', 'Stock Report'],
+  ['lowstock', 'Low Stock'],
+  ['sale', 'Bill Register'],
   ['purchase', 'Purchase Report'],
   ['daybook', 'Day Book'],
   ['cashflow', 'Cash Flow'],
-  ['pnl', 'Profit & Loss'],
   ['party', 'Party Statement'],
-  ['allparties', 'All Parties Balance'],
-  ['stock', 'Stock Summary'],
-  ['itemsales', 'Item Sale Summary'],
-  ['lowstock', 'Low Stock'],
+  ['allparties', 'Party Balances'],
   ['expense', 'Expense Report'],
   ['gst', 'GST Summary']
 ];
 
-let repState = { key: 'sale', from: addDays(todayStr(), -29), to: todayStr(), partyId: '' };
+let repState = { key: 'daily', from: addDays(todayStr(), -29), to: todayStr(), partyId: '' };
+
+/* switching report picks a sensible default range for its granularity */
+function repSetKey(key) {
+  repState.key = key;
+  const d = new Date();
+  const fyStart = (d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1) + '-04-01';
+  if (key === 'daily') { repState.from = addDays(todayStr(), -29); repState.to = todayStr(); }
+  else if (key === 'weekly') { repState.from = addDays(todayStr(), -83); repState.to = todayStr(); }
+  else if (key === 'monthly' || key === 'quarterly' || key === 'profit') { repState.from = fyStart; repState.to = todayStr(); }
+  else if (key === 'yearly') { repState.from = addDays(fyStart, -730); repState.to = todayStr(); }
+  renderReports();
+}
 
 function renderReports() {
   const tabs = REPORTS.map(r =>
-    '<button class="rtab' + (repState.key === r[0] ? ' active' : '') + '" onclick="repState.key=\'' + r[0] + '\';renderReports()">' + r[1] + '</button>'
+    '<button class="rtab' + (repState.key === r[0] ? ' active' : '') + '" onclick="repSetKey(\'' + r[0] + '\')">' + r[1] + '</button>'
   ).join('');
   const needsRange = !['stock', 'lowstock', 'allparties'].includes(repState.key);
   const needsParty = repState.key === 'party';
@@ -79,11 +98,59 @@ function tbl(headers, rows, footRow) {
   return html + '</table></div>';
 }
 
+/* group a date into a period bucket for the sales-by-period reports */
+function periodKey(dateStr, granularity) {
+  const [y, m, dd] = dateStr.split('-').map(Number);
+  if (granularity === 'daily') return { key: dateStr, label: fmtDate(dateStr) };
+  if (granularity === 'weekly') {
+    const dt = new Date(dateStr + 'T00:00:00');
+    const monday = new Date(dt);
+    monday.setDate(dt.getDate() - ((dt.getDay() + 6) % 7));
+    const iso = monday.getFullYear() + '-' + String(monday.getMonth() + 1).padStart(2, '0') + '-' + String(monday.getDate()).padStart(2, '0');
+    return { key: iso, label: 'Week of ' + fmtDate(iso) };
+  }
+  if (granularity === 'monthly') return { key: y + '-' + String(m).padStart(2, '0'), label: monthName(m - 1) + ' ' + y };
+  const fy = m >= 4 ? y : y - 1;
+  if (granularity === 'quarterly') {
+    const q = Math.floor(((m - 4 + 12) % 12) / 3) + 1;
+    return { key: fy + '-Q' + q, label: 'Q' + q + ' FY ' + fy + '-' + String((fy + 1) % 100).padStart(2, '0') };
+  }
+  return { key: String(fy), label: 'FY ' + fy + '-' + String((fy + 1) % 100).padStart(2, '0') }; // yearly
+}
+
 function buildReport() {
   const k = repState.key, from = repState.from, to = repState.to;
   let html = '', csv = { name: k + '-report.csv', headers: [], rows: [] };
 
-  if (k === 'sale' || k === 'purchase') {
+  if (['daily', 'weekly', 'monthly', 'quarterly', 'yearly'].includes(k)) {
+    const buckets = {};
+    for (const t of txnsIn(['SALE'], from, to)) {
+      const p = periodKey(t.date, k);
+      if (!buckets[p.key]) buckets[p.key] = { label: p.label, bills: 0, sales: 0, received: 0, profit: 0 };
+      const b = buckets[p.key];
+      b.bills++; b.sales += num(t.total); b.received += num(t.paid); b.profit += txnProfit(t);
+    }
+    for (const t of txnsIn(['SALE_RETURN'], from, to)) {
+      const p = periodKey(t.date, k);
+      if (!buckets[p.key]) buckets[p.key] = { label: p.label, bills: 0, sales: 0, received: 0, profit: 0 };
+      buckets[p.key].sales -= num(t.total);
+      buckets[p.key].profit += txnProfit(t);
+    }
+    const keys = Object.keys(buckets).sort();
+    let tb = 0, ts = 0, tr = 0, tp = 0;
+    const rows = keys.map(key => {
+      const b = buckets[key];
+      tb += b.bills; ts += b.sales; tr += b.received; tp += b.profit;
+      return [esc(b.label), String(b.bills), fmtMoney(b.sales), fmtMoney(b.received),
+        '<span class="' + (b.profit >= 0 ? 'pos' : 'neg') + '">' + fmtMoney(b.profit) + '</span>'];
+    });
+    html = tbl([['Period'], ['Bills', 'r'], ['Sales', 'r'], ['Received', 'r'], ['Profit', 'r']], rows,
+      ['Total', String(tb), fmtMoney(ts), fmtMoney(tr), fmtMoney(tp)]);
+    csv.headers = ['Period', 'Bills', 'Sales', 'Received', 'Profit'];
+    csv.rows = keys.map(key => { const b = buckets[key]; return [b.label, b.bills, round2(b.sales), round2(b.received), round2(b.profit)]; });
+  }
+
+  else if (k === 'sale' || k === 'purchase') {
     const type = k === 'sale' ? 'SALE' : 'PURCHASE';
     const list = txnsIn([type], from, to);
     let tot = 0, paid = 0;
@@ -125,7 +192,7 @@ function buildReport() {
     csv.rows = [['Money In', mIn], ['Money Out', mOut], ['Net', mIn - mOut]];
   }
 
-  else if (k === 'pnl') {
+  else if (k === 'profit') {
     const sum = (types, field) => txnsIn(types, from, to).reduce((s, t) => s + num(t[field || 'total']), 0);
     const sales = sum(['SALE']), saleRet = sum(['SALE_RETURN']);
     const purch = sum(['PURCHASE']), purchRet = sum(['PURCHASE_RETURN']);
@@ -136,8 +203,12 @@ function buildReport() {
     const netPurch = purch - purchRet - taxIn;
     const gross = netSales - netPurch;
     const net = gross - expenses;
+    const costProfit = txnsIn(['SALE', 'SALE_RETURN'], from, to).reduce((s, t) => s + txnProfit(t), 0);
     const row = (l, v, strong, cls) => '<div class="totals-row' + (strong ? ' grand' : '') + '"><span>' + l + '</span><span class="' + (cls || '') + '">' + fmtMoney(v) + '</span></div>';
     html = '<div class="totals-panel pnl">' +
+      row('Gross Margin on items sold (sale price − item cost)', costProfit, false, costProfit >= 0 ? 'pos' : 'neg') +
+      row('Margin after expenses', costProfit - expenses, true, costProfit - expenses >= 0 ? 'pos' : 'neg') +
+      '<div class="totals-row"><span style="font-weight:700;margin-top:8px">Purchase-based P&amp;L</span><span></span></div>' +
       row('Sales (excl. GST)', sales - taxOut) +
       row('Less: Sale Returns', -(saleRet ? saleRet - (saleRet ? txnsIn(['SALE_RETURN'], from, to).reduce((s, t) => s + num(t.taxAmount), 0) : 0) : 0)) +
       row('Net Sales', netSales, true) +
@@ -199,22 +270,58 @@ function buildReport() {
     csv.rows = items.map(it => [it.name, it.category, itemStock(it.id), it.minStock, it.purchasePrice, Math.max(0, itemStock(it.id)) * num(it.purchasePrice || it.salePrice)]);
   }
 
-  else if (k === 'itemsales') {
+  else if (k === 'productwise' || k === 'categorywise') {
     const map = {};
     for (const t of txnsIn(['SALE'], from, to)) {
       for (const l of (t.lines || [])) {
-        const key = l.itemId || l.name;
-        if (!map[key]) map[key] = { name: l.name, qty: 0, amount: 0 };
+        let key, name;
+        if (k === 'productwise') { key = l.itemId || l.name; name = l.name; }
+        else {
+          const it = getItem(l.itemId);
+          name = (it && it.category) ? it.category : 'Uncategorised';
+          key = name;
+        }
+        if (!map[key]) map[key] = { name: name, qty: 0, amount: 0, profit: 0 };
         map[key].qty += num(l.qty);
         map[key].amount += num(l.amount) + num(l.tax);
+        map[key].profit += num(l.amount) - lineCost(l) * num(l.qty);
       }
     }
     const arr = Object.values(map).sort((a, b) => b.amount - a.amount);
-    let tq = 0, ta = 0;
-    const rows = arr.map(x => { tq += x.qty; ta += x.amount; return [esc(x.name), fmtQty(x.qty), fmtMoney(x.amount)]; });
-    html = tbl([['Item'], ['Qty Sold', 'r'], ['Sale Amount', 'r']], rows, ['Total', fmtQty(tq), fmtMoney(ta)]);
-    csv.headers = ['Item', 'QtySold', 'SaleAmount'];
-    csv.rows = arr.map(x => [x.name, x.qty, round2(x.amount)]);
+    let tq = 0, ta = 0, tp = 0;
+    const rows = arr.map(x => {
+      tq += x.qty; ta += x.amount; tp += x.profit;
+      return [esc(x.name), fmtQty(x.qty), fmtMoney(x.amount),
+        '<span class="' + (x.profit >= 0 ? 'pos' : 'neg') + '">' + fmtMoney(x.profit) + '</span>'];
+    });
+    const first = k === 'productwise' ? 'Product' : 'Category';
+    html = tbl([[first], ['Qty Sold', 'r'], ['Sales (incl. GST)', 'r'], ['Profit', 'r']], rows,
+      ['Total', fmtQty(tq), fmtMoney(ta), fmtMoney(tp)]);
+    csv.headers = [first, 'QtySold', 'Sales', 'Profit'];
+    csv.rows = arr.map(x => [x.name, x.qty, round2(x.amount), round2(x.profit)]);
+  }
+
+  else if (k === 'customerwise') {
+    const map = {};
+    for (const t of txnsIn(['SALE'], from, to)) {
+      const key = t.partyId || '_cash';
+      if (!map[key]) map[key] = { name: partyName(t.partyId), bills: 0, sales: 0, received: 0, profit: 0 };
+      const c = map[key];
+      c.bills++; c.sales += num(t.total); c.received += num(t.paid); c.profit += txnProfit(t);
+    }
+    const arr = Object.entries(map).sort((a, b) => b[1].sales - a[1].sales);
+    let tb2 = 0, ts = 0, tr = 0, tp = 0;
+    const rows = arr.map(([key, c]) => {
+      tb2 += c.bills; ts += c.sales; tr += c.received; tp += c.profit;
+      const due = key !== '_cash' ? partyBalance(key) : 0;
+      return [esc(c.name), String(c.bills), fmtMoney(c.sales), fmtMoney(c.received),
+        '<span class="' + (c.profit >= 0 ? 'pos' : 'neg') + '">' + fmtMoney(c.profit) + '</span>',
+        key !== '_cash' ? fmtMoney(Math.max(0, due)) : '—'];
+    });
+    html = tbl([['Customer'], ['Bills', 'r'], ['Sales', 'r'], ['Received', 'r'], ['Profit', 'r'], ['Outstanding', 'r']], rows,
+      ['Total', String(tb2), fmtMoney(ts), fmtMoney(tr), fmtMoney(tp), '']);
+    csv.headers = ['Customer', 'Bills', 'Sales', 'Received', 'Profit'];
+    csv.rows = arr.map(([, c]) => [c.name, c.bills, round2(c.sales), round2(c.received), round2(c.profit)]);
   }
 
   else if (k === 'expense') {

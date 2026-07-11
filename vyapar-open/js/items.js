@@ -18,25 +18,27 @@ function renderItems() {
       '<td class="r">' + fmtMoney(it.purchasePrice) + '</td>' +
       '<td class="r">' + num(it.taxRate) + '%</td>' +
       '<td class="r">' + (it.type === 'service' ? '—' :
-        (isLow ? '<span class="badge warn" title="Low stock">▲ ' : '<span>') + fmtQty(stock) + ' ' + esc(it.unit) + '</span>') + '</td>' +
+        (isLow ? '<span class="badge warn" title="Low stock alert">▲ ' : '<span>') + fmtQty(stock) + ' ' + esc(it.unit) + '</span>') + '</td>' +
       '<td class="r actions" onclick="event.stopPropagation()">' +
+      (it.type !== 'service' ?
+        '<button class="btn tiny ghost" onclick="openStockAdjust(\'' + it.id + '\',1)">Stock In</button> ' +
+        '<button class="btn tiny ghost" onclick="openStockAdjust(\'' + it.id + '\',-1)">Stock Out</button> ' : '') +
       '<button class="btn tiny ghost" onclick="openItemForm(\'' + it.id + '\')">Edit</button> ' +
-      '<button class="btn tiny ghost" onclick="openStockAdjust(\'' + it.id + '\')"' + (it.type === 'service' ? ' disabled' : '') + '>Adjust</button> ' +
       '<button class="btn tiny danger-ghost" onclick="deleteItem(\'' + it.id + '\')">Delete</button></td></tr>';
   }).join('');
-  if (!rows) rows = '<tr><td colspan="7" class="empty">No items yet. Add products or services you sell.</td></tr>';
+  if (!rows) rows = '<tr><td colspan="7" class="empty">No products yet. Add the products or services you sell.</td></tr>';
 
   el('view').innerHTML =
-    '<div class="page-head"><h2>Items</h2>' +
+    '<div class="page-head"><h2>Inventory</h2>' +
     '<div class="head-actions">' +
-    '<input class="search" placeholder="Search items…" value="' + esc(window._itemSearch || '') + '" oninput="_itemSearch=this.value;renderItems()">' +
+    '<input class="search" placeholder="Search products…" value="' + esc(window._itemSearch || '') + '" oninput="_itemSearch=this.value;renderItems()">' +
     '<button class="btn ghost" onclick="openImportModal(\'items\')">⬆ Import</button>' +
-    '<button class="btn primary" onclick="openItemForm()">+ Add Item</button></div></div>' +
+    '<button class="btn primary" onclick="openItemForm()">+ Add Product</button></div></div>' +
     '<div class="cards">' +
     '<div class="card stat"><div class="stat-label">Stock Value (at purchase price)</div><div class="stat-value">' + fmtMoney(stockValue()) + '</div></div>' +
     '<div class="card stat"><div class="stat-label">Low Stock Items</div><div class="stat-value ' + (low.length ? 'neg' : '') + '">' + low.length + '</div></div>' +
     '</div>' +
-    '<div class="card"><div class="table-wrap"><table><thead><tr><th>Item</th><th>Type</th><th class="r">Sale Price</th><th class="r">Purchase Price</th><th class="r">GST</th><th class="r">Stock</th><th class="r">Actions</th></tr></thead><tbody>' +
+    '<div class="card"><div class="table-wrap"><table><thead><tr><th>Product</th><th>Type</th><th class="r">Sale Price</th><th class="r">Purchase Price</th><th class="r">GST</th><th class="r">Current Stock</th><th class="r">Actions</th></tr></thead><tbody>' +
     rows + '</tbody></table></div></div>';
 }
 
@@ -99,12 +101,12 @@ function deleteItem(id) {
   });
 }
 
-function openStockAdjust(id) {
+function openStockAdjust(id, dir) {
   const it = getItem(id);
   openModal(
-    '<div class="modal-head"><h3>Adjust Stock — ' + esc(it.name) + '</h3><button class="x" onclick="closeModal()">×</button></div>' +
+    '<div class="modal-head"><h3>' + (dir === -1 ? 'Stock Out' : 'Stock In') + ' — ' + esc(it.name) + '</h3><button class="x" onclick="closeModal()">×</button></div>' +
     '<div class="modal-body"><div class="form-grid">' +
-    '<label>Adjustment<select id="sa_dir"><option value="1">Add stock (+)</option><option value="-1">Reduce stock (−)</option></select></label>' +
+    '<label>Adjustment<select id="sa_dir"><option value="1"' + (dir !== -1 ? ' selected' : '') + '>Stock In (+)</option><option value="-1"' + (dir === -1 ? ' selected' : '') + '>Stock Out (−)</option></select></label>' +
     '<label>Quantity<input id="sa_qty" type="number" step="any" min="0" value="1"></label>' +
     '<label>Date<input id="sa_date" type="date" value="' + todayStr() + '"></label>' +
     '<label>Reason<input id="sa_note" placeholder="e.g. damage, recount"></label>' +
@@ -156,9 +158,11 @@ function openItemDetail(id) {
   if (!rows) rows = '<tr><td colspan="5" class="empty">No movements yet.</td></tr>';
 
   el('view').innerHTML =
-    '<div class="page-head"><h2><a class="crumb" onclick="go(\'items\')">Items</a> › ' + esc(it.name) + '</h2>' +
+    '<div class="page-head"><h2><a class="crumb" onclick="go(\'items\')">Inventory</a> › ' + esc(it.name) + '</h2>' +
     '<div class="head-actions"><button class="btn ghost" onclick="openItemForm(\'' + id + '\')">Edit</button>' +
-    (it.type !== 'service' ? '<button class="btn primary" onclick="openStockAdjust(\'' + id + '\')">Adjust Stock</button>' : '') +
+    (it.type !== 'service' ?
+      '<button class="btn primary" onclick="openStockAdjust(\'' + id + '\',1)">Stock In</button>' +
+      '<button class="btn ghost" onclick="openStockAdjust(\'' + id + '\',-1)">Stock Out</button>' : '') +
     '</div></div>' +
     '<div class="cards">' +
     '<div class="card stat"><div class="stat-label">Sale Price</div><div class="stat-value">' + fmtMoney(it.salePrice) + '</div></div>' +

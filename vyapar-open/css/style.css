@@ -215,6 +215,27 @@ label input, label select, label textarea { margin-top: 4px; font-weight: 400; }
 .totals-row.grand { font-size: 16px; font-weight: 800; color: var(--ink); border-top: 1px solid var(--grid); margin-top: 4px; padding-top: 8px; }
 .totals-row.due { font-weight: 700; color: var(--bad); }
 
+/* ---------- billing / product picker ---------- */
+.product-picker {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 8px; margin-top: 14px;
+}
+.product-chip {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  border: 1px solid var(--baseline); border-radius: 10px; background: var(--surface);
+  padding: 9px 12px; cursor: pointer; font: inherit; text-align: left; color: var(--ink);
+}
+.product-chip:hover { border-color: var(--primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 25%, transparent); }
+.product-chip.out { opacity: 0.55; }
+.pc-name { font-weight: 600; font-size: 13px; }
+.pc-meta { font-size: 11.5px; color: var(--muted); }
+.qty-ctl { display: flex; align-items: center; gap: 4px; }
+.qty-ctl input { width: 64px; }
+.bill-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
+.bill-pay { min-width: 180px; }
+.minibar { height: 4px; background: var(--grid); border-radius: 2px; margin-top: 5px; max-width: 220px; }
+.minibar span { display: block; height: 100%; border-radius: 2px; background: var(--primary); }
+
 /* ---------- reports ---------- */
 .rtabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
 .rtab {

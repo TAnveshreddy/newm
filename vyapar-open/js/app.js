@@ -3,15 +3,15 @@
 
 const NAV = [
   ['dashboard', '🏠', 'Dashboard'],
+  ['billing', '🧾', 'Billing'],
+  ['items', '📦', 'Inventory'],
+  ['reports', '📊', 'Reports'],
   ['parties', '👥', 'Parties'],
-  ['items', '📦', 'Items'],
-  ['sales', '🧾', 'Sales'],
   ['estimates', '📋', 'Estimates'],
   ['purchases', '🛒', 'Purchases'],
   ['returns', '↩️', 'Cr/Dr Notes'],
   ['payments', '💰', 'Payments'],
   ['expenses', '💸', 'Expenses'],
-  ['reports', '📊', 'Reports'],
   ['settings', '⚙️', 'Settings']
 ];
 
@@ -29,9 +29,10 @@ function route() {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === currentPage));
   switch (currentPage) {
     case 'dashboard': renderDashboard(); break;
+    case 'billing': renderBilling(); break;
     case 'parties': renderParties(); break;
     case 'items': renderItems(); break;
-    case 'sales': renderTxnList('sales'); break;
+    case 'sales': currentPage = 'billing'; renderBilling(); break;
     case 'estimates': renderTxnList('estimates'); break;
     case 'purchases': renderTxnList('purchases'); break;
     case 'returns': renderTxnList('returns'); break;
@@ -79,7 +80,7 @@ function boot() {
   // keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     if (e.altKey && !e.ctrlKey && !e.metaKey) {
-      if (e.key === 'n') { e.preventDefault(); openTxnForm('SALE'); }
+      if (e.key === 'n') { e.preventDefault(); go('billing'); }
       if (e.key === 'p') { e.preventDefault(); openTxnForm('PURCHASE'); }
     }
   });

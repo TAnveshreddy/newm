@@ -2,36 +2,63 @@
 'use strict';
 
 function renderDashboard() {
+  const today = todayStr();
   const totals = totalsReceivablePayable();
-  const from30 = addDays(todayStr(), -29);
 
-  // sales by day (last 30 days) for the chart
-  const byDay = {};
-  for (let i = 0; i < 30; i++) byDay[addDays(from30, i)] = 0;
-  let sales30 = 0;
+  // today's figures
+  let todaySales = 0, todayProfit = 0, todayBills = 0;
   for (const t of state.txns) {
-    if (t.type === 'SALE' && inRange(t.date, from30, todayStr())) {
-      byDay[t.date] = (byDay[t.date] || 0) + num(t.total);
-      sales30 += num(t.total);
-    }
+    if (t.date !== today) continue;
+    if (t.type === 'SALE') { todaySales += num(t.total); todayProfit += txnProfit(t); todayBills++; }
+    if (t.type === 'SALE_RETURN') { todayProfit += txnProfit(t); }
   }
-  const chartData = Object.keys(byDay).sort().map(d => ({ label: d.slice(8) + '/' + d.slice(5, 7), value: byDay[d] }));
 
-  // this month figures
+  // monthly sales (daily bars for the current month)
   const d = new Date();
   const mStart = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01';
-  const sum = (type) => state.txns.filter(t => t.type === type && inRange(t.date, mStart, todayStr())).reduce((s, t) => s + num(t.total), 0);
-  const mSales = sum('SALE'), mPurch = sum('PURCHASE'), mExp = sum('EXPENSE');
+  const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  const byDay = {};
+  for (let i = 0; i < daysInMonth; i++) byDay[addDays(mStart, i)] = 0;
+  let monthSales = 0;
+  for (const t of state.txns) {
+    if (t.type === 'SALE' && inRange(t.date, mStart, null) && byDay[t.date] !== undefined) {
+      byDay[t.date] += num(t.total);
+      if (t.date <= today) monthSales += num(t.total);
+    }
+  }
+  const chartData = Object.keys(byDay).sort().map(dt => ({ label: dt.slice(8), value: byDay[dt] }));
+
+  // top selling products (this month, by revenue)
+  const prodMap = {};
+  for (const t of state.txns) {
+    if (t.type !== 'SALE' || !inRange(t.date, mStart, today)) continue;
+    for (const l of (t.lines || [])) {
+      const key = l.itemId || l.name;
+      if (!prodMap[key]) prodMap[key] = { name: l.name, qty: 0, amount: 0 };
+      prodMap[key].qty += num(l.qty);
+      prodMap[key].amount += num(l.amount) + num(l.tax);
+    }
+  }
+  const topProducts = Object.values(prodMap).sort((a, b) => b.amount - a.amount).slice(0, 5);
+  const maxProd = Math.max(1, ...topProducts.map(p => p.amount));
 
   const low = lowStockItems();
-  const recent = state.txns.slice().sort((a, b) => b.createdAt - a.createdAt).slice(0, 8);
-  const recentRows = recent.map(t =>
-    '<tr class="rowlink" onclick="viewTxn(\'' + t.id + '\')">' +
-    '<td>' + fmtDate(t.date) + '</td><td>' + TXN_TYPES[t.type].label + '<div class="sub">' + esc(t.number) + '</div></td>' +
-    '<td>' + esc(t.type === 'EXPENSE' ? (t.category || '') : partyName(t.partyId)) + '</td>' +
-    '<td class="r">' + fmtMoney(t.total) + '</td>' +
-    '<td><span class="badge ' + (txnStatus(t) === 'Paid' || txnStatus(t) === 'Converted' ? 'ok' : txnStatus(t) === 'Partial' ? 'warn' : 'bad') + '">' + txnStatus(t) + '</span></td></tr>'
-  ).join('') || '<tr><td colspan="5" class="empty">No transactions yet — create your first sale!</td></tr>';
+  const recentBills = state.txns.filter(t => t.type === 'SALE')
+    .sort((a, b) => b.createdAt - a.createdAt).slice(0, 8);
+
+  const billRows = recentBills.map(t => {
+    const st = txnStatus(t);
+    return '<tr class="rowlink" onclick="viewTxn(\'' + t.id + '\')">' +
+      '<td>' + fmtDate(t.date) + '</td><td>' + esc(t.number) + '</td>' +
+      '<td>' + esc(partyName(t.partyId)) + '</td>' +
+      '<td class="r">' + fmtMoney(t.total) + '</td>' +
+      '<td><span class="badge ' + (st === 'Paid' ? 'ok' : st === 'Partial' ? 'warn' : 'bad') + '">' + st + '</span></td></tr>';
+  }).join('') || '<tr><td colspan="5" class="empty">No bills yet — create your first bill!</td></tr>';
+
+  const topRows = topProducts.map(p =>
+    '<tr><td>' + esc(p.name) + '<div class="minibar"><span style="width:' + Math.round(p.amount / maxProd * 100) + '%"></span></div></td>' +
+    '<td class="r">' + fmtQty(p.qty) + '</td><td class="r">' + fmtMoney(p.amount) + '</td></tr>'
+  ).join('');
 
   const lowRows = low.slice(0, 6).map(it =>
     '<tr class="rowlink" onclick="openItemDetail(\'' + it.id + '\')"><td>' + esc(it.name) + '</td>' +
@@ -43,35 +70,40 @@ function renderDashboard() {
 
   el('view').innerHTML =
     '<div class="page-head"><h2>Dashboard</h2><div class="head-actions">' +
-    '<button class="btn primary" onclick="openTxnForm(\'SALE\')">+ New Sale</button>' +
+    '<button class="btn primary" onclick="go(\'billing\')">+ New Bill</button>' +
     '<button class="btn ghost" onclick="openTxnForm(\'PURCHASE\')">+ Purchase</button>' +
     '<button class="btn ghost" onclick="openTxnForm(\'PAYMENT_IN\')">+ Payment In</button>' +
     '<button class="btn ghost" onclick="openTxnForm(\'EXPENSE\')">+ Expense</button></div></div>' +
     (empty ?
       '<div class="card welcome"><h3>👋 Welcome to VyaparOpen!</h3>' +
-      '<p>Your free, open-source business manager — invoicing, inventory, payments &amp; GST reports. All data stays on this device.</p>' +
+      '<p>Your free, open-source business manager — billing, inventory, payments &amp; GST reports. All data stays on this device.</p>' +
       '<div class="head-actions" style="margin-top:12px">' +
       '<button class="btn primary" onclick="go(\'settings\')">1. Set up your business profile</button>' +
-      '<button class="btn ghost" onclick="openItemForm()">2. Add items</button>' +
-      '<button class="btn ghost" onclick="openPartyForm()">3. Add parties</button>' +
+      '<button class="btn ghost" onclick="openItemForm()">2. Add products</button>' +
+      '<button class="btn ghost" onclick="go(\'billing\')">3. Start billing</button>' +
       '<button class="btn ghost" onclick="confirmDemo()">Or load demo data</button></div></div>' : '') +
     '<div class="cards">' +
-    '<div class="card stat"><div class="stat-label">To Collect</div><div class="stat-value pos">' + fmtMoney(totals.receivable) + '</div></div>' +
-    '<div class="card stat"><div class="stat-label">To Pay</div><div class="stat-value neg">' + fmtMoney(totals.payable) + '</div></div>' +
-    '<div class="card stat"><div class="stat-label">Stock Value</div><div class="stat-value">' + fmtMoney(stockValue()) + '</div></div>' +
-    '<div class="card stat"><div class="stat-label">Sales This Month</div><div class="stat-value">' + fmtMoney(mSales) + '</div></div>' +
-    '<div class="card stat"><div class="stat-label">Purchases This Month</div><div class="stat-mid">' + fmtMoney(mPurch) + '</div></div>' +
-    '<div class="card stat"><div class="stat-label">Expenses This Month</div><div class="stat-mid">' + fmtMoney(mExp) + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">Today\'s Sales</div><div class="stat-value">' + fmtMoney(todaySales) + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">Today\'s Profit</div><div class="stat-value ' + (todayProfit >= 0 ? 'pos' : 'neg') + '">' + fmtMoney(todayProfit) + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">Bills Created Today</div><div class="stat-value">' + todayBills + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">Low Stock Items</div><div class="stat-value ' + (low.length ? 'neg' : '') + '">' + low.length + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">To Collect</div><div class="stat-mid pos">' + fmtMoney(totals.receivable) + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">To Pay</div><div class="stat-mid neg">' + fmtMoney(totals.payable) + '</div></div>' +
     '</div>' +
-    '<div class="card"><h3 class="card-title">Sales — last 30 days <span class="sub">(total ' + fmtMoney(sales30) + ')</span></h3>' +
+    '<div class="card"><h3 class="card-title">Monthly Sales — ' + monthName(d.getMonth()) + ' ' + d.getFullYear() + ' <span class="sub">(total ' + fmtMoney(monthSales) + ')</span></h3>' +
     svgBarChart(chartData, { height: 220 }) + '</div>' +
     '<div class="grid-2">' +
-    '<div class="card"><h3 class="card-title">Recent Transactions</h3><div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Party</th><th class="r">Amount</th><th>Status</th></tr></thead><tbody>' +
-    recentRows + '</tbody></table></div></div>' +
-    '<div class="card"><h3 class="card-title">Low Stock ' + (low.length ? '<span class="badge bad">' + low.length + '</span>' : '') + '</h3>' +
-    (lowRows ? '<div class="table-wrap"><table><thead><tr><th>Item</th><th class="r">Stock</th><th class="r">Min</th></tr></thead><tbody>' + lowRows + '</tbody></table></div>'
+    '<div class="card"><h3 class="card-title">Top Selling Products <span class="sub">(this month)</span></h3>' +
+    (topRows ? '<div class="table-wrap"><table><thead><tr><th>Product</th><th class="r">Qty</th><th class="r">Sales</th></tr></thead><tbody>' + topRows + '</tbody></table></div>'
+      : '<p class="empty">No sales yet this month.</p>') + '</div>' +
+    '<div class="card"><h3 class="card-title">Low Stock Items ' + (low.length ? '<span class="badge bad">' + low.length + '</span>' : '') + '</h3>' +
+    (lowRows ? '<div class="table-wrap"><table><thead><tr><th>Product</th><th class="r">Stock</th><th class="r">Min</th></tr></thead><tbody>' + lowRows + '</tbody></table></div>'
       : '<p class="empty">All stocked up 🎉</p>') +
-    '</div></div>';
+    '</div></div>' +
+    '<div class="card"><div class="page-head" style="margin-bottom:8px"><h3 class="card-title" style="margin:0">Recent Bills</h3>' +
+    '<button class="btn tiny ghost" onclick="go(\'billing\')">View all →</button></div>' +
+    '<div class="table-wrap"><table><thead><tr><th>Date</th><th>Bill No</th><th>Customer</th><th class="r">Amount</th><th>Status</th></tr></thead><tbody>' +
+    billRows + '</tbody></table></div></div>';
 }
 
 function confirmDemo() {

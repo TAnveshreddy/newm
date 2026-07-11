@@ -235,7 +235,10 @@ function saveTxn() {
     // fill denormalized names
     for (const l of draft.lines) {
       const it = getItem(l.itemId);
-      if (it) { l.name = it.name; l.hsn = it.hsn; }
+      if (it) {
+        l.name = it.name; l.hsn = it.hsn;
+        if (l.cost == null) l.cost = num(it.purchasePrice);
+      }
     }
     const t = computeTotals(draft.lines, draft.discountPct, state.settings.taxEnabled);
     Object.assign(draft, t);

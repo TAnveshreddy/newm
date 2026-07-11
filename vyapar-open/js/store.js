@@ -164,6 +164,25 @@ function txnStatus(t) {
   return 'Unpaid';
 }
 
+/* ---------- profit ----------
+   Profit on a sale = net taxable revenue (after discounts, excl. GST)
+   minus cost of goods. Cost is snapshotted on the line at billing time
+   (l.cost); falls back to the item's current purchase price. */
+function lineCost(l) {
+  if (l.cost != null) return num(l.cost);
+  const it = getItem(l.itemId);
+  return it ? num(it.purchasePrice) : 0;
+}
+
+function txnProfit(t) {
+  if (t.type !== 'SALE' && t.type !== 'SALE_RETURN') return 0;
+  const revenue = num(t.subtotal) - num(t.discount);
+  let cost = 0;
+  for (const l of (t.lines || [])) cost += lineCost(l) * num(l.qty);
+  const p = round2(revenue - cost);
+  return t.type === 'SALE' ? p : -p;
+}
+
 /* GST split: if both GSTINs exist and state codes (first 2 digits) differ → IGST, else CGST+SGST */
 function taxSplitFor(t) {
   const p = t.partyId ? getParty(t.partyId) : null;
