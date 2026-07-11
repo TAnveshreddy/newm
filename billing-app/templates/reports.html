@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Reports — Shop Billing{% endblock %}
+{% block content %}
+<h1>Reports</h1>
+
+<section class="summary-cards no-print">
+  {% for label, s in summary.items() %}
+  <div class="card stat">
+    <div class="stat-label">{{ label }}</div>
+    <div class="stat-value">₹{{ '%.2f' | format(s['sales']) }}</div>
+    <div class="stat-sub">{{ s['bills'] }} bill{{ 's' if s['bills'] != 1 }}</div>
+  </div>
+  {% endfor %}
+</section>
+
+<section class="card no-print">
+  <form method="get" class="filter-row wrap">
+    <div class="tabs">
+      {% for p in ['daily', 'monthly', 'quarterly', 'yearly'] %}
+      <button class="tab {{ 'active' if p == period }}" name="period" value="{{ p }}">{{ p | capitalize }}</button>
+      {% endfor %}
+    </div>
+    <label>From <input type="date" name="start" value="{{ start }}"></label>
+    <label>To <input type="date" name="end" value="{{ end }}"></label>
+    <input type="hidden" name="period" value="{{ period }}">
+    <button class="btn" type="submit">Apply</button>
+    <a class="btn secondary"
+       href="{{ url_for('export_csv', period=period, start=start, end=end) }}">⬇ Export CSV</a>
+  </form>
+</section>
+
+<div class="report-grid">
+  <section class="card">
+    <h3>{{ period | capitalize }} Sales ({{ start }} → {{ end }})</h3>
+    <table class="data-table">
+      <thead><tr><th>Period</th><th class="right">Bills</th>
+                 <th class="right">Discount ₹</th><th class="right">Sales ₹</th></tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r['period'] }}</td>
+          <td class="right">{{ r['bills'] }}</td>
+          <td class="right">{{ '%.2f' | format(r['discount'] or 0) }}</td>
+          <td class="right">{{ '%.2f' | format(r['sales'] or 0) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty">No sales in this range.</td></tr>
+        {% endfor %}
+      </tbody>
+      {% if rows %}
+      <tfoot><tr><td><strong>Total</strong></td>
+        <td class="right"><strong>{{ grand_bills }}</strong></td><td></td>
+        <td class="right"><strong>{{ '%.2f' | format(grand_sales) }}</strong></td></tr></tfoot>
+      {% endif %}
+    </table>
+  </section>
+
+  <section class="card">
+    <h3>Sales by Category</h3>
+    <table class="data-table">
+      <thead><tr><th>Category</th><th class="right">Qty</th><th class="right">Sales ₹</th></tr></thead>
+      <tbody>
+        {% for c in by_category %}
+        <tr><td>{{ c['category'] }}</td>
+            <td class="right">{{ c['qty'] | round(2) }}</td>
+            <td class="right">{{ '%.2f' | format(c['sales'] or 0) }}</td></tr>
+        {% else %}
+        <tr><td colspan="3" class="empty">No data.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h3>Top 10 Products</h3>
+    <table class="data-table">
+      <thead><tr><th>Product</th><th>Category</th>
+                 <th class="right">Qty</th><th class="right">Sales ₹</th></tr></thead>
+      <tbody>
+        {% for t in top_products %}
+        <tr><td>{{ t['product_name'] }}</td><td>{{ t['category'] }}</td>
+            <td class="right">{{ t['qty'] | round(2) }}</td>
+            <td class="right">{{ '%.2f' | format(t['sales'] or 0) }}</td></tr>
+        {% else %}
+        <tr><td colspan="4" class="empty">No data.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+{% endblock %}

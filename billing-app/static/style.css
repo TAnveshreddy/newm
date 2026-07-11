@@ -1,0 +1,107 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: #f2f4f8; color: #1c2430;
+  font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  font-size: 15px;
+}
+main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+h1 { font-size: 1.4rem; margin: 8px 0 16px; }
+h3 { margin: 8px 0; }
+
+/* ---- navigation ---- */
+.topnav {
+  display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+  background: #14324f; padding: 10px 16px;
+}
+.topnav .brand { color: #fff; font-weight: 700; margin-right: 16px; font-size: 1.1rem; }
+.topnav a {
+  color: #cfe0f2; text-decoration: none; padding: 8px 14px; border-radius: 6px;
+  font-weight: 600;
+}
+.topnav a:hover { background: #1d4568; color: #fff; }
+.topnav a.active { background: #2e6da4; color: #fff; }
+
+/* ---- cards & layout ---- */
+.card {
+  background: #fff; border: 1px solid #dde3ec; border-radius: 10px;
+  padding: 16px; margin-bottom: 16px;
+}
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 800px) {
+  .grid-3, .report-grid { grid-template-columns: 1fr; }
+}
+
+label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 0.85rem; }
+input, select {
+  padding: 10px; border: 1px solid #c6cfdc; border-radius: 6px;
+  font-size: 15px; width: 100%; background: #fff;
+}
+input:focus, select:focus { outline: 2px solid #2e6da4; border-color: #2e6da4; }
+
+/* ---- buttons ---- */
+.btn {
+  display: inline-block; background: #2e6da4; color: #fff; border: none;
+  padding: 10px 18px; border-radius: 6px; font-size: 15px; font-weight: 600;
+  cursor: pointer; text-decoration: none;
+}
+.btn:hover { background: #245a8a; }
+.btn.secondary { background: #e8edf4; color: #1c2430; }
+.btn.secondary:hover { background: #d8e0ec; }
+.btn.small { padding: 6px 10px; font-size: 13px; }
+.btn.danger { background: #c0392b; color: #fff; }
+.actions { margin-top: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.msg { color: #c0392b; font-weight: 600; }
+
+/* ---- tables ---- */
+table { border-collapse: collapse; width: 100%; }
+.items-table th, .items-table td,
+.data-table th, .data-table td {
+  border-bottom: 1px solid #e3e8f0; padding: 8px 6px; text-align: left;
+  vertical-align: middle;
+}
+.data-table thead th { background: #f4f7fb; font-size: 0.82rem; text-transform: uppercase; }
+.items-table thead th { background: #f4f7fb; font-size: 0.82rem; }
+.items-table input, .items-table select { padding: 8px 6px; }
+.right { text-align: right !important; }
+.empty { text-align: center; color: #7a8699; padding: 20px !important; }
+tfoot td { border-top: 2px solid #c6cfdc; }
+.del { background: none; border: none; color: #c0392b; font-size: 16px; cursor: pointer; }
+
+/* ---- totals ---- */
+.total-box { align-self: end; text-align: right; font-size: 1rem; }
+.total-box .grand { font-size: 1.35rem; font-weight: 700; color: #14324f; }
+
+/* ---- filters / tabs ---- */
+.filter-row { display: flex; gap: 10px; align-items: end; }
+.filter-row.wrap { flex-wrap: wrap; }
+.filter-row input, .filter-row select { width: auto; min-width: 140px; }
+.tabs { display: flex; gap: 6px; }
+.tab {
+  padding: 9px 16px; border: 1px solid #c6cfdc; background: #fff; border-radius: 6px;
+  cursor: pointer; font-weight: 600; font-size: 14px;
+}
+.tab.active { background: #2e6da4; color: #fff; border-color: #2e6da4; }
+
+/* ---- report summary cards ---- */
+.summary-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
+@media (max-width: 700px) { .summary-cards { grid-template-columns: 1fr; } }
+.stat { text-align: center; }
+.stat-label { color: #7a8699; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
+.stat-value { font-size: 1.6rem; font-weight: 700; color: #14324f; margin: 4px 0; }
+.stat-sub { color: #7a8699; font-size: 0.85rem; }
+
+/* ---- invoice ---- */
+.invoice-head { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.invoice-head h2 { margin: 0 0 4px; }
+.invoice-head p { margin: 0; color: #55606f; font-size: 0.9rem; }
+.invoice .grand td { font-size: 1.05rem; }
+.thanks { text-align: center; color: #55606f; margin-top: 20px; }
+
+/* ---- print ---- */
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; font-size: 13px; }
+  main { max-width: none; padding: 0; }
+  .card { border: none; padding: 0; }
+}

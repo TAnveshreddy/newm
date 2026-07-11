@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Shop Billing{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<nav class="topnav no-print">
+  <span class="brand">🧾 Shop Billing</span>
+  <a href="{{ url_for('new_bill') }}" class="{{ 'active' if request.endpoint == 'new_bill' }}">New Bill</a>
+  <a href="{{ url_for('bills') }}" class="{{ 'active' if request.endpoint == 'bills' }}">Bills</a>
+  <a href="{{ url_for('products') }}" class="{{ 'active' if request.endpoint == 'products' }}">Products</a>
+  <a href="{{ url_for('reports') }}" class="{{ 'active' if request.endpoint == 'reports' }}">Reports</a>
+</nav>
+<main>
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>

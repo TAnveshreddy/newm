@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}New Bill — Shop Billing{% endblock %}
+{% block content %}
+<h1>New Bill</h1>
+
+<section class="card">
+  <div class="grid-3">
+    <label>Customer Name *
+      <input id="customer_name" list="customer_list" placeholder="Customer name" autocomplete="off">
+      <datalist id="customer_list">
+        {% for c in customers %}<option value="{{ c['customer_name'] }}">{{ c['phone'] }}</option>{% endfor %}
+      </datalist>
+    </label>
+    <label>Contact Number
+      <input id="phone" type="tel" placeholder="Mobile number" maxlength="15">
+    </label>
+    <label>Bill Date
+      <input id="bill_date" type="date" value="{{ today }}">
+    </label>
+  </div>
+</section>
+
+<section class="card">
+  <table id="items" class="items-table">
+    <thead>
+      <tr>
+        <th style="width:14%">Category</th>
+        <th style="width:20%">Product</th>
+        <th>Description</th>
+        <th style="width:9%">Qty</th>
+        <th style="width:7%">Unit</th>
+        <th style="width:11%">Price ₹</th>
+        <th style="width:12%">Amount ₹</th>
+        <th style="width:4%"></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <button type="button" class="btn secondary" onclick="addRow()">+ Add Item</button>
+</section>
+
+<section class="card totals">
+  <div class="grid-3">
+    <label>Payment Mode
+      <select id="payment_mode">
+        <option>Cash</option><option>UPI</option><option>Card</option><option>Credit (Udhaar)</option>
+      </select>
+    </label>
+    <label>Discount ₹
+      <input id="discount" type="number" min="0" step="0.01" value="0" oninput="recalc()">
+    </label>
+    <div class="total-box">
+      <div>Subtotal: <span id="subtotal">₹0.00</span></div>
+      <div class="grand">Total: <span id="total">₹0.00</span></div>
+    </div>
+  </div>
+  <div class="actions">
+    <button type="button" class="btn" onclick="saveBill(true)">Save &amp; Print</button>
+    <button type="button" class="btn secondary" onclick="saveBill(false)">Save</button>
+    <span id="msg" class="msg"></span>
+  </div>
+</section>
+
+<script>
+const PRODUCTS = {{ products | tojson }};
+const CATEGORIES = {{ categories | tojson }};
+</script>
+<script src="{{ url_for('static', filename='billing.js') }}"></script>
+{% endblock %}

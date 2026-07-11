@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Products — Shop Billing{% endblock %}
+{% block content %}
+<h1>Products</h1>
+
+<section class="card">
+  <h3>Add Product</h3>
+  <form method="post" action="{{ url_for('add_product') }}" class="filter-row wrap">
+    <select name="category" required>
+      {% for c in categories %}<option>{{ c }}</option>{% endfor %}
+    </select>
+    <input name="name" placeholder="Product name" required>
+    <input name="description" placeholder="Description">
+    <input name="unit" placeholder="Unit (pcs, box, litre…)" value="pcs" style="max-width:120px">
+    <input name="price" type="number" min="0" step="0.01" placeholder="Price ₹" required style="max-width:120px">
+    <button class="btn" type="submit">Add</button>
+  </form>
+</section>
+
+<section class="card">
+  <table class="data-table">
+    <thead>
+      <tr><th>Category</th><th>Product</th><th>Description</th>
+          <th>Unit</th><th class="right">Price ₹</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for p in products %}
+      <tr>
+        <td>{{ p['category'] }}</td>
+        <td>{{ p['name'] }}</td>
+        <td>{{ p['description'] }}</td>
+        <td>{{ p['unit'] }}</td>
+        <td class="right">{{ '%.2f' | format(p['price']) }}</td>
+        <td>
+          <form method="post" action="{{ url_for('delete_product', pid=p['id']) }}"
+                onsubmit="return confirm('Remove {{ p['name'] }}?')">
+            <button class="btn small danger" type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="empty">No products yet — add one above.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

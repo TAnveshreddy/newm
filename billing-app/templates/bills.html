@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Bills — Shop Billing{% endblock %}
+{% block content %}
+<h1>Bills</h1>
+
+<section class="card no-print">
+  <form method="get" class="filter-row">
+    <input name="q" value="{{ q }}" placeholder="Search name / phone / bill no">
+    <input name="date" type="date" value="{{ day }}">
+    <button class="btn" type="submit">Filter</button>
+    <a class="btn secondary" href="{{ url_for('bills') }}">Clear</a>
+  </form>
+</section>
+
+<section class="card">
+  <table class="data-table">
+    <thead>
+      <tr><th>Bill No</th><th>Date</th><th>Customer</th><th>Phone</th>
+          <th>Payment</th><th class="right">Total ₹</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for b in bills %}
+      <tr>
+        <td>{{ b['bill_no'] }}</td>
+        <td>{{ b['bill_date'] }}</td>
+        <td>{{ b['customer_name'] }}</td>
+        <td>{{ b['phone'] }}</td>
+        <td>{{ b['payment_mode'] }}</td>
+        <td class="right">{{ '%.2f' | format(b['total']) }}</td>
+        <td><a class="btn small" href="{{ url_for('bill_view', bill_id=b['id']) }}">View / Print</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="empty">No bills found.</td></tr>
+      {% endfor %}
+    </tbody>
+    {% if bills %}
+    <tfoot>
+      <tr><td colspan="5" class="right"><strong>Total ({{ bills | length }} bills)</strong></td>
+          <td class="right"><strong>{{ '%.2f' | format(total) }}</strong></td><td></td></tr>
+    </tfoot>
+    {% endif %}
+  </table>
+</section>
+{% endblock %}
