@@ -1,12 +1,12 @@
-# VyaparOpen 🧾
+# Shopkeeper 🧾
 
-**A free, open-source alternative to Vyapar** — GST billing, inventory, parties, payments, expenses and reports for small businesses. Runs **100% offline in your browser**: no installation, no account, no server, no tracking. Your data never leaves your device.
+**Shopkeeper — a free, open-source alternative to Vyapar** — GST billing, inventory, parties, payments, expenses and reports for small businesses. Runs **100% offline in your browser**: no installation, no account, no server, no tracking. Your data never leaves your device.
 
 ## 📥 Download & use (30 seconds)
 
 **Option A — single file (easiest):**
 
-1. Download [`dist/VyaparOpen.html`](dist/VyaparOpen.html) (click → "Download raw file").
+1. Download [`dist/Shopkeeper.html`](dist/Shopkeeper.html) (click → "Download raw file").
 2. Double-click the downloaded file. It opens in your browser — that's it, start billing.
 
 **Option B — full source:**
@@ -20,7 +20,7 @@ Works on desktop, laptop and mobile browsers. No internet needed after download.
 
 | Area | What you get |
 |---|---|
-| **Billing (POS-style)** | Fast billing screen: customer name + mobile (auto-creates/links customers), product search with category filter, tap-to-add products, quantity/price/discount/GST per line, received amount, **Save & Print Invoice** |
+| **Billing (POS-style)** | Fast billing screen: customer name + contact + referred-by (auto-creates/links customers), Category → Item → Brand → Description selector, product search with tap-to-add, quantity/price/GST per line, whole-bill discount (% or ₹), received amount, **Save & Print Invoice** |
 | **Invoice printing** | Print / save-as-PDF tax invoice with CGST+SGST or IGST split (auto-detected from GSTINs), HSN codes, amount in words, UPI ID, terms & signature |
 | **Estimates / Quotations** | Create estimates and convert them to sale invoices in one click |
 | **Purchases** | Purchase bills with stock-in and supplier payables |
@@ -54,7 +54,7 @@ Everything is stored in your browser's `localStorage` on your own device. Nothin
 
 ## 🛠 Tech
 
-Plain HTML + CSS + vanilla JavaScript — zero dependencies, zero build step. `dist/VyaparOpen.html` is the same app with all CSS/JS inlined into one file (generated from the sources in `js/` and `css/`).
+Plain HTML + CSS + vanilla JavaScript — zero dependencies, zero build step. `dist/Shopkeeper.html` is the same app with all CSS/JS inlined into one file (generated from the sources in `js/` and `css/`).
 
 To rebuild the single file after editing sources:
 
@@ -64,7 +64,7 @@ node build.js
 
 ## ⚠️ Disclaimer
 
-VyaparOpen is an independent open-source project and is **not affiliated with or endorsed by Vyapar / Simply Vyapar Apps Pvt Ltd**. GST figures are working summaries — verify with your accountant before filing.
+Shopkeeper is an independent open-source project and is **not affiliated with or endorsed by Vyapar / Simply Vyapar Apps Pvt Ltd**. GST figures are working summaries — verify with your accountant before filing.
 
 ## 📄 License
 

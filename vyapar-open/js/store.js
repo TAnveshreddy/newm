@@ -226,7 +226,7 @@ function deleteTxn(id) {
 
 /* ---------- backup / restore ---------- */
 function exportBackup() {
-  downloadFile('vyaparopen-backup-' + todayStr() + '.json', JSON.stringify(state, null, 2), 'application/json');
+  downloadFile('shopkeeper-backup-' + todayStr() + '.json', JSON.stringify(state, null, 2), 'application/json');
   toast('Backup downloaded');
 }
 
@@ -235,7 +235,7 @@ function importBackup(file, done) {
   r.onload = () => {
     try {
       const s = JSON.parse(r.result);
-      if (!s || !s.settings || !Array.isArray(s.txns)) throw new Error('Not a VyaparOpen backup file');
+      if (!s || !s.settings || !Array.isArray(s.txns)) throw new Error('Not a Shopkeeper backup file');
       state = s;
       // re-merge defaults for forward compatibility
       const d = defaultState();

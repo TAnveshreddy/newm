@@ -91,8 +91,10 @@ function openModal(html, wide) {
   overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) closeModal(); });
   document.body.appendChild(overlay);
   document.body.classList.add('modal-open');
+  // focus synchronously — a delayed focus() steals focus from whatever field
+  // the user has already clicked into and their keystrokes land in the wrong box
   const first = overlay.querySelector('input,select,textarea');
-  if (first) setTimeout(() => first.focus(), 50);
+  if (first) first.focus();
 }
 
 function closeModal() {

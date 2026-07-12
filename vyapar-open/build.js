@@ -16,5 +16,5 @@ js = js.replace(/<\/script>/g, '<\\/script>'); // don't terminate the inline scr
 html = html.replace(/(\s*<script src="js\/[a-z]+\.js"><\/script>)+/g, () => '\n  <script>\n' + js + '\n  </script>');
 
 fs.mkdirSync('dist', { recursive: true });
-fs.writeFileSync(path.join('dist', 'VyaparOpen.html'), html);
-console.log('Built dist/VyaparOpen.html (' + fs.statSync('dist/VyaparOpen.html').size + ' bytes)');
+fs.writeFileSync(path.join('dist', 'Shopkeeper.html'), html);
+console.log('Built dist/Shopkeeper.html (' + fs.statSync('dist/Shopkeeper.html').size + ' bytes)');

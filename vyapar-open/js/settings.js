@@ -37,7 +37,7 @@ function renderSettings() {
     '<button class="btn danger" onclick="wipeAll()">Erase All Data</button></div></div>' +
 
     '<div class="card"><h3 class="card-title">About</h3>' +
-    '<p class="sub"><strong>VyaparOpen</strong> — free &amp; open-source business management (billing · inventory · GST). ' +
+    '<p class="sub"><strong>Shopkeeper</strong> — free &amp; open-source business management (billing · inventory · GST). ' +
     'Works fully offline; no account, no server, no tracking. MIT licensed.</p></div>' +
     '</div></div>';
 }

@@ -75,7 +75,7 @@ function renderDashboard() {
     '<button class="btn ghost" onclick="openTxnForm(\'PAYMENT_IN\')">+ Payment In</button>' +
     '<button class="btn ghost" onclick="openTxnForm(\'EXPENSE\')">+ Expense</button></div></div>' +
     (empty ?
-      '<div class="card welcome"><h3>👋 Welcome to VyaparOpen!</h3>' +
+      '<div class="card welcome"><h3>👋 Welcome to Shopkeeper!</h3>' +
       '<p>Your free, open-source business manager — billing, inventory, payments &amp; GST reports. All data stays on this device.</p>' +
       '<div class="head-actions" style="margin-top:12px">' +
       '<button class="btn primary" onclick="go(\'settings\')">1. Set up your business profile</button>' +

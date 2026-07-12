@@ -12,7 +12,7 @@ function renderItems() {
     const stock = itemStock(it.id);
     const isLow = it.type !== 'service' && num(it.minStock) > 0 && stock <= num(it.minStock);
     return '<tr class="rowlink" onclick="openItemDetail(\'' + it.id + '\')">' +
-      '<td><strong>' + esc(it.name) + '</strong><div class="sub">' + esc(it.category || '') + (it.hsn ? ' · HSN ' + esc(it.hsn) : '') + '</div></td>' +
+      '<td><strong>' + esc(it.name) + '</strong><div class="sub">' + [it.brand, it.category, it.hsn ? 'HSN ' + it.hsn : ''].filter(Boolean).map(esc).join(' · ') + '</div></td>' +
       '<td><span class="tag">' + (it.type === 'service' ? 'Service' : 'Product') + '</span></td>' +
       '<td class="r">' + fmtMoney(it.salePrice) + '</td>' +
       '<td class="r">' + fmtMoney(it.purchasePrice) + '</td>' +
@@ -52,6 +52,8 @@ function openItemForm(id) {
     '<option value="product"' + (it && it.type === 'product' ? ' selected' : '') + '>Product</option>' +
     '<option value="service"' + (it && it.type === 'service' ? ' selected' : '') + '>Service</option></select></label>' +
     '<label>Category<input id="if_cat" value="' + esc(it ? it.category : '') + '"></label>' +
+    '<label>Brand<input id="if_brand" list="if_brands" placeholder="e.g. Finolex, Havells" value="' + esc(it ? (it.brand || '') : '') + '"></label>' +
+    '<datalist id="if_brands">' + [...new Set(state.items.map(i => i.brand).filter(Boolean))].sort().map(b => '<option value="' + esc(b) + '">').join('') + '</datalist>' +
     '<label>Unit<select id="if_unit">' + UNITS.map(u => '<option' + (it && it.unit === u ? ' selected' : '') + '>' + u + '</option>').join('') + '</select></label>' +
     '<label>HSN / SAC Code<input id="if_hsn" value="' + esc(it ? it.hsn : '') + '"></label>' +
     '<label class="span2">Product Description<textarea id="if_desc" rows="2" placeholder="Shown on bills & printed invoices">' + esc(it ? (it.description || '') : '') + '</textarea></label>' +
@@ -74,6 +76,7 @@ function saveItem(id) {
     name: name,
     type: el('if_type').value,
     category: el('if_cat').value.trim(),
+    brand: el('if_brand').value.trim(),
     unit: el('if_unit').value,
     hsn: el('if_hsn').value.trim(),
     description: el('if_desc').value.trim(),

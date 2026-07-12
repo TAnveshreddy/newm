@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VyaparOpen — Free Business Manager (Billing · Inventory · GST)</title>
-  <meta name="description" content="Free, open-source Vyapar alternative. GST billing, inventory, parties, payments, expenses and reports. 100% offline — your data never leaves your device.">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232a78d6'/><text x='50' y='72' font-size='60' font-weight='bold' text-anchor='middle' fill='white' font-family='sans-serif'>V</text></svg>">
+  <title>Shopkeeper — Free Business Manager (Billing · Inventory · GST)</title>
+  <meta name="description" content="Shopkeeper — free, open-source GST billing, inventory, parties, payments, expenses and reports. 100% offline — your data never leaves your device.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232a78d6'/><text x='50' y='72' font-size='60' font-weight='bold' text-anchor='middle' fill='white' font-family='sans-serif'>S</text></svg>">
   <style>
 /* VyaparOpen — style.css */
 :root {
@@ -226,8 +226,9 @@ label input, label select, label textarea { margin-top: 4px; font-weight: 400; }
 .totals-row.due { font-weight: 700; color: var(--bad); }
 
 /* ---------- billing / product picker ---------- */
+.form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
 .add-item-row {
-  display: grid; grid-template-columns: 1fr 1.4fr 1.8fr 0.7fr auto;
+  display: grid; grid-template-columns: 1fr 1.5fr 1fr 1.6fr auto;
   gap: 12px; align-items: end; margin-top: 12px;
   padding: 12px; border: 1px dashed var(--baseline); border-radius: 10px;
   background: color-mix(in srgb, var(--primary) 4%, transparent);
@@ -404,8 +405,10 @@ function openModal(html, wide) {
   overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) closeModal(); });
   document.body.appendChild(overlay);
   document.body.classList.add('modal-open');
+  // focus synchronously — a delayed focus() steals focus from whatever field
+  // the user has already clicked into and their keystrokes land in the wrong box
   const first = overlay.querySelector('input,select,textarea');
-  if (first) setTimeout(() => first.focus(), 50);
+  if (first) first.focus();
 }
 
 function closeModal() {
@@ -752,7 +755,7 @@ function deleteTxn(id) {
 
 /* ---------- backup / restore ---------- */
 function exportBackup() {
-  downloadFile('vyaparopen-backup-' + todayStr() + '.json', JSON.stringify(state, null, 2), 'application/json');
+  downloadFile('shopkeeper-backup-' + todayStr() + '.json', JSON.stringify(state, null, 2), 'application/json');
   toast('Backup downloaded');
 }
 
@@ -761,7 +764,7 @@ function importBackup(file, done) {
   r.onload = () => {
     try {
       const s = JSON.parse(r.result);
-      if (!s || !s.settings || !Array.isArray(s.txns)) throw new Error('Not a VyaparOpen backup file');
+      if (!s || !s.settings || !Array.isArray(s.txns)) throw new Error('Not a Shopkeeper backup file');
       state = s;
       // re-merge defaults for forward compatibility
       const d = defaultState();
@@ -986,7 +989,7 @@ function renderItems() {
     const stock = itemStock(it.id);
     const isLow = it.type !== 'service' && num(it.minStock) > 0 && stock <= num(it.minStock);
     return '<tr class="rowlink" onclick="openItemDetail(\'' + it.id + '\')">' +
-      '<td><strong>' + esc(it.name) + '</strong><div class="sub">' + esc(it.category || '') + (it.hsn ? ' · HSN ' + esc(it.hsn) : '') + '</div></td>' +
+      '<td><strong>' + esc(it.name) + '</strong><div class="sub">' + [it.brand, it.category, it.hsn ? 'HSN ' + it.hsn : ''].filter(Boolean).map(esc).join(' · ') + '</div></td>' +
       '<td><span class="tag">' + (it.type === 'service' ? 'Service' : 'Product') + '</span></td>' +
       '<td class="r">' + fmtMoney(it.salePrice) + '</td>' +
       '<td class="r">' + fmtMoney(it.purchasePrice) + '</td>' +
@@ -1026,6 +1029,8 @@ function openItemForm(id) {
     '<option value="product"' + (it && it.type === 'product' ? ' selected' : '') + '>Product</option>' +
     '<option value="service"' + (it && it.type === 'service' ? ' selected' : '') + '>Service</option></select></label>' +
     '<label>Category<input id="if_cat" value="' + esc(it ? it.category : '') + '"></label>' +
+    '<label>Brand<input id="if_brand" list="if_brands" placeholder="e.g. Finolex, Havells" value="' + esc(it ? (it.brand || '') : '') + '"></label>' +
+    '<datalist id="if_brands">' + [...new Set(state.items.map(i => i.brand).filter(Boolean))].sort().map(b => '<option value="' + esc(b) + '">').join('') + '</datalist>' +
     '<label>Unit<select id="if_unit">' + UNITS.map(u => '<option' + (it && it.unit === u ? ' selected' : '') + '>' + u + '</option>').join('') + '</select></label>' +
     '<label>HSN / SAC Code<input id="if_hsn" value="' + esc(it ? it.hsn : '') + '"></label>' +
     '<label class="span2">Product Description<textarea id="if_desc" rows="2" placeholder="Shown on bills & printed invoices">' + esc(it ? (it.description || '') : '') + '</textarea></label>' +
@@ -1048,6 +1053,7 @@ function saveItem(id) {
     name: name,
     type: el('if_type').value,
     category: el('if_cat').value.trim(),
+    brand: el('if_brand').value.trim(),
     unit: el('if_unit').value,
     hsn: el('if_hsn').value.trim(),
     description: el('if_desc').value.trim(),
@@ -1351,27 +1357,45 @@ function lineSet(i, field, value) {
     const gross = num(l.qty) * num(l.rate);
     row.querySelector('.amt').textContent = fmtMoney(gross - gross * num(l.disc) / 100);
   }
-  renderTotals();
+  txnTotalsRecalc();
 }
 
+/* Panel is built once; typing only updates the number displays (see billing.js
+   for why — rebuilding inputs on their own oninput steals focus mid-keystroke). */
 function renderTotals() {
   const box = el('tf_totals');
   if (!box) return;
+  const paidLabel = ['SALE', 'ESTIMATE'].includes(draft.type) ? 'Received' : draft.type === 'SALE_RETURN' ? 'Refunded' : 'Paid';
+  box.innerHTML =
+    '<div class="totals-row"><span>Subtotal (taxable)</span><span id="tf_sub"></span></div>' +
+    '<div class="totals-row"><span>Discount <input id="tf_disc" type="number" min="0" max="100" step="0.01" style="width:70px" onfocus="this.select()" value="' + num(draft.discountPct) + '" oninput="draft.discountPct=num(this.value);txnTotalsRecalc()"> %</span><span id="tf_discamt"></span></div>' +
+    (state.settings.taxEnabled ? '<div class="totals-row"><span>GST</span><span id="tf_gst"></span></div>' : '') +
+    '<div class="totals-row"><span>Round Off</span><span id="tf_ro"></span></div>' +
+    '<div class="totals-row grand"><span>Total</span><span id="tf_grand"></span></div>' +
+    (draft.type !== 'ESTIMATE' ?
+      '<div class="totals-row"><span>' + paidLabel + ' <button class="btn tiny ghost" onclick="draftPaidFull()">Full</button></span>' +
+      '<span><input id="tf_paid" type="number" min="0" step="0.01" style="width:110px;text-align:right" onfocus="this.select()" value="' + num(draft.paid) + '" oninput="draft.paid=num(this.value);txnTotalsRecalc()"></span></div>' +
+      '<div class="totals-row due"><span>Balance Due</span><span id="tf_due"></span></div>' : '');
+  txnTotalsRecalc();
+}
+
+function txnTotalsRecalc() {
   const lines = draft.lines.filter(l => l.itemId || num(l.qty) * num(l.rate) > 0);
   const t = computeTotals(JSON.parse(JSON.stringify(lines)), draft.discountPct, state.settings.taxEnabled);
   draft._totals = t;
-  const due = Math.max(0, t.total - num(draft.paid));
-  const paidLabel = ['SALE', 'ESTIMATE'].includes(draft.type) ? 'Received' : draft.type === 'SALE_RETURN' ? 'Refunded' : 'Paid';
-  box.innerHTML =
-    '<div class="totals-row"><span>Subtotal (taxable)</span><span>' + fmtMoney(t.subtotal) + '</span></div>' +
-    '<div class="totals-row"><span>Discount <input id="tf_disc" type="number" min="0" max="100" step="0.01" style="width:70px" value="' + num(draft.discountPct) + '" oninput="draft.discountPct=num(this.value);renderTotals()"> %</span><span>− ' + fmtMoney(t.discount) + '</span></div>' +
-    (state.settings.taxEnabled ? '<div class="totals-row"><span>GST</span><span>+ ' + fmtMoney(t.taxAmount) + '</span></div>' : '') +
-    '<div class="totals-row"><span>Round Off</span><span>' + fmtMoney(t.roundOff) + '</span></div>' +
-    '<div class="totals-row grand"><span>Total</span><span>' + fmtMoney(t.total) + '</span></div>' +
-    (draft.type !== 'ESTIMATE' ?
-      '<div class="totals-row"><span>' + paidLabel + ' <button class="btn tiny ghost" onclick="draft.paid=draft._totals.total;renderTotals()">Full</button></span>' +
-      '<span><input id="tf_paid" type="number" min="0" step="0.01" style="width:110px;text-align:right" value="' + num(draft.paid) + '" oninput="draft.paid=num(this.value);renderTotals()"></span></div>' +
-      '<div class="totals-row due"><span>Balance Due</span><span>' + fmtMoney(due) + '</span></div>' : '');
+  el('tf_sub').textContent = fmtMoney(t.subtotal);
+  el('tf_discamt').textContent = '− ' + fmtMoney(t.discount);
+  if (el('tf_gst')) el('tf_gst').textContent = '+ ' + fmtMoney(t.taxAmount);
+  el('tf_ro').textContent = fmtMoney(t.roundOff);
+  el('tf_grand').textContent = fmtMoney(t.total);
+  if (el('tf_due')) el('tf_due').textContent = fmtMoney(Math.max(0, t.total - num(draft.paid)));
+}
+
+function draftPaidFull() {
+  draft.paid = draft._totals ? draft._totals.total : 0;
+  const inp = el('tf_paid');
+  if (inp) inp.value = draft.paid;
+  txnTotalsRecalc();
 }
 
 function saveTxn() {
@@ -1465,7 +1489,7 @@ function viewTxn(id) {
   if ((t.lines || []).length) {
     linesHtml = '<div class="table-wrap"><table><thead><tr><th>#</th><th>Item</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">GST</th><th class="r">Amount</th></tr></thead><tbody>' +
       t.lines.map((l, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(l.name) +
-        (l.description ? '<div class="sub">' + esc(l.description) + '</div>' : '') +
+        ([l.brand, l.description].filter(Boolean).length ? '<div class="sub">' + [l.brand, l.description].filter(Boolean).map(esc).join(' — ') + '</div>' : '') +
         '</td><td class="r">' + fmtQty(l.qty) + ' ' + esc(l.unit) + '</td><td class="r">' + fmtMoney(l.rate) + '</td><td class="r">' + num(l.taxRate) + '%</td><td class="r">' + fmtMoney(num(l.amount) + num(l.tax)) + '</td></tr>').join('') +
       '</tbody></table></div>' +
       '<div class="totals-panel">' +
@@ -1481,7 +1505,8 @@ function viewTxn(id) {
   openModal(
     '<div class="modal-head"><h3>' + cfg.label + ' ' + esc(t.number) + ' <span class="badge ' + (st === 'Paid' || st === 'Converted' ? 'ok' : st === 'Partial' ? 'warn' : 'bad') + '">' + st + '</span></h3><button class="x" onclick="closeModal()">×</button></div>' +
     '<div class="modal-body">' +
-    '<p><strong>' + esc(t.type === 'EXPENSE' ? (t.category || 'Expense') : partyName(t.partyId)) + '</strong> · ' + fmtDate(t.date) + (t.mode ? ' · ' + esc(t.mode) : '') + '</p>' +
+    '<p><strong>' + esc(t.type === 'EXPENSE' ? (t.category || 'Expense') : partyName(t.partyId)) + '</strong> · ' + fmtDate(t.date) + (t.mode ? ' · ' + esc(t.mode) : '') +
+    (t.referredBy ? ' · Referred by ' + esc(t.referredBy) : '') + '</p>' +
     linesHtml +
     (t.notes ? '<p class="sub">Note: ' + esc(t.notes) + '</p>' : '') +
     '</div>' +
@@ -1503,8 +1528,9 @@ function printTxn(id) {
 
   let rows = t.lines.map((l, i) => {
     const taxHalf = num(l.tax) / 2;
+    const meta = [l.brand, l.description].filter(Boolean).join(' — ');
     return '<tr><td>' + (i + 1) + '</td><td>' + esc(l.name) +
-      (l.description ? '<br><span class="muted" style="font-size:11px">' + esc(l.description) + '</span>' : '') +
+      (meta ? '<br><span class="muted" style="font-size:11px">' + esc(meta) + '</span>' : '') +
       '</td><td>' + esc(l.hsn || '') + '</td>' +
       '<td class="r">' + fmtQty(l.qty) + ' ' + esc(l.unit) + '</td><td class="r">' + fmtMoney(l.rate, false) + '</td>' +
       '<td class="r">' + fmtMoney(l.amount, false) + '</td>' +
@@ -1537,7 +1563,8 @@ function printTxn(id) {
     '<div><h2>' + docTitle + '</h2><div class="muted" style="text-align:right">No: <strong>' + esc(t.number) + '</strong><br>Date: ' + fmtDate(t.date) + '</div></div></div>' +
     '<table><tr><td style="width:50%"><strong>Bill To:</strong><br>' +
     (p ? esc(p.name) + (p.address ? '<br>' + esc(p.address) : '') + (p.phone ? '<br>Phone: ' + esc(p.phone) : '') + (p.gstin ? '<br>GSTIN: ' + esc(p.gstin) : '') : 'Cash Sale') +
-    '</td><td><strong>Payment:</strong> ' + esc(t.mode || '—') + '<br><strong>Status:</strong> ' + txnStatus(t) + '</td></tr></table>' +
+    '</td><td><strong>Payment:</strong> ' + esc(t.mode || '—') + '<br><strong>Status:</strong> ' + txnStatus(t) +
+    (t.referredBy ? '<br><strong>Referred by:</strong> ' + esc(t.referredBy) : '') + '</td></tr></table>' +
     '<table><thead><tr><th>#</th><th>Item</th><th>HSN</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Taxable</th>' + taxCols + '<th class="r">Amount</th></tr></thead>' +
     '<tbody>' + rows + '</tbody><tfoot>' +
     (num(t.discount) ? '<tr><td colspan="' + (nCols - 1) + '" class="r">Discount</td><td class="r">− ' + fmtMoney(t.discount, false) + '</td></tr>' : '') +
@@ -1690,6 +1717,7 @@ const IMPORT_DEFS = {
     columns: [
       { key: 'name', label: 'Item Name', required: true, match: ['name', 'itemname', 'item', 'product', 'productname'] },
       { key: 'category', label: 'Category', match: ['category', 'group', 'itemcategory'] },
+      { key: 'brand', label: 'Brand', match: ['brand', 'make', 'company', 'manufacturer', 'brandname'] },
       { key: 'unit', label: 'Unit', match: ['unit', 'uom', 'baseunit'] },
       { key: 'hsn', label: 'HSN', match: ['hsn', 'hsncode', 'hsnsac', 'sac', 'saccode', 'code', 'itemcode'] },
       { key: 'description', label: 'Description', match: ['description', 'desc', 'productdescription', 'itemdescription', 'details'] },
@@ -1700,9 +1728,9 @@ const IMPORT_DEFS = {
       { key: 'minStock', label: 'Min Stock', num: true, match: ['minstock', 'minimumstock', 'reorderlevel', 'lowstock', 'minqty'] },
       { key: 'type', label: 'Type', match: ['type', 'itemtype'] }
     ],
-    sample: [['Item Name', 'Category', 'Unit', 'HSN', 'Description', 'Sale Price', 'Purchase Price', 'GST %', 'Opening Stock', 'Min Stock', 'Type'],
-      ['Basmati Rice 5kg', 'Grocery', 'BAG', '1006', 'Premium aged basmati', '550', '470', '5', '40', '10', 'product'],
-      ['Home Delivery', 'Services', 'SERVICE', '9965', 'Delivery within city limits', '50', '0', '18', '', '', 'service']]
+    sample: [['Item Name', 'Category', 'Brand', 'Unit', 'HSN', 'Description', 'Sale Price', 'Purchase Price', 'GST %', 'Opening Stock', 'Min Stock', 'Type'],
+      ['Basmati Rice 5kg', 'Grocery', 'India Gate', 'BAG', '1006', 'Premium aged basmati', '550', '470', '5', '40', '10', 'product'],
+      ['Home Delivery', 'Services', '', 'SERVICE', '9965', 'Delivery within city limits', '50', '0', '18', '', '', 'service']]
   },
   parties: {
     title: 'Import Parties',
@@ -1838,7 +1866,7 @@ function runImport() {
       if (existing) {
         if (updateExisting) { Object.assign(existing, rec); updated++; } else skipped++;
       } else {
-        state.items.push(Object.assign({ id: uid(), createdAt: Date.now(), category: '', hsn: '', description: '', salePrice: 0, purchasePrice: 0, taxRate: 0, openingStock: 0, minStock: 0 }, rec));
+        state.items.push(Object.assign({ id: uid(), createdAt: Date.now(), category: '', brand: '', hsn: '', description: '', salePrice: 0, purchasePrice: 0, taxRate: 0, openingStock: 0, minStock: 0 }, rec));
         added++;
       }
     } else {
@@ -1872,8 +1900,8 @@ function newBill() {
   bill = {
     customerName: '', mobile: '', lines: [],
     discountVal: 0, discountType: 'pct',   // whole-bill discount: % or ₹
-    paid: 0, mode: 'Cash', search: '', category: '',
-    itemSel: '', desc: '', qty: 1
+    paid: 0, mode: 'Cash', search: '', category: '', brand: '',
+    referredBy: '', itemSel: '', desc: ''
   };
 }
 
@@ -1884,20 +1912,21 @@ function renderBilling() {
     '<button class="btn ghost" onclick="newBill();renderBilling()">Clear Bill</button></div></div>' +
 
     '<div class="card">' +
-    '<div class="form-grid">' +
+    '<div class="form-grid form-grid-3">' +
     '<label>Customer Name<input id="bl_name" list="bl_names" placeholder="Cash sale (optional)" value="' + esc(bill.customerName) + '" oninput="bill.customerName=this.value" onchange="billCustomerPicked()"></label>' +
     '<datalist id="bl_names">' + state.parties.filter(p => p.type !== 'supplier').map(p => '<option value="' + esc(p.name) + '">').join('') + '</datalist>' +
     '<label>Contact Number<input id="bl_mobile" placeholder="10-digit mobile" maxlength="10" value="' + esc(bill.mobile) + '" oninput="bill.mobile=this.value" onchange="billMobilePicked()"></label>' +
+    '<label>Referred By<input id="bl_ref" placeholder="Who referred this customer (optional)" value="' + esc(bill.referredBy) + '" oninput="bill.referredBy=this.value"></label>' +
     '</div>' +
 
     '<div class="add-item-row">' +
-    '<label>Category<select id="bl_cat" onchange="bill.category=this.value;bill.itemSel=\'\';renderItemSelect();renderProductPicker()">' +
+    '<label>Category<select id="bl_cat" onchange="bill.category=this.value;bill.itemSel=\'\';bill.brand=\'\';el(\'bl_brand\').value=\'\';renderItemSelect();renderProductPicker()">' +
     '<option value="">All Categories</option>' +
     [...new Set(state.items.map(i => i.category).filter(Boolean))].sort().map(c => '<option' + (bill.category === c ? ' selected' : '') + '>' + esc(c) + '</option>').join('') +
     '</select></label>' +
     '<label>Item<select id="bl_item" onchange="billItemSelected(this.value)"></select></label>' +
+    '<label>Brand<input id="bl_brand" placeholder="Auto-fills from item" value="' + esc(bill.brand) + '" oninput="bill.brand=this.value"></label>' +
     '<label>Product Description<input id="bl_desc" placeholder="Prints on invoice" value="' + esc(bill.desc) + '" oninput="bill.desc=this.value"></label>' +
-    '<label>Quantity<input id="bl_qty" type="number" step="any" min="0" value="' + num(bill.qty) + '" oninput="bill.qty=this.value"></label>' +
     '<button class="btn primary" onclick="billAddSelected()">+ Add to Bill</button>' +
     '</div>' +
 
@@ -1947,33 +1976,35 @@ function renderItemSelect() {
     .filter(i => !bill.category || i.category === bill.category)
     .sort((a, b) => a.name.localeCompare(b.name));
   sel.innerHTML = '<option value="">— select item —</option>' +
-    items.map(i => '<option value="' + i.id + '"' + (bill.itemSel === i.id ? ' selected' : '') + '>' + esc(i.name) + '</option>').join('');
+    items.map(i => '<option value="' + i.id + '"' + (bill.itemSel === i.id ? ' selected' : '') + '>' + esc(i.name) + (i.brand ? ' (' + esc(i.brand) + ')' : '') + '</option>').join('');
 }
 
 function billItemSelected(itemId) {
   bill.itemSel = itemId;
   const it = getItem(itemId);
+  bill.brand = it ? (it.brand || '') : '';
   bill.desc = it ? (it.description || '') : '';
+  el('bl_brand').value = bill.brand;
   el('bl_desc').value = bill.desc;
-  if (!num(bill.qty)) { bill.qty = 1; el('bl_qty').value = 1; }
 }
 
 function billAddSelected() {
   const it = getItem(bill.itemSel);
   if (!it) { toast('Select an item first', 'error'); return; }
-  const qty = num(bill.qty) || 1;
-  const existing = bill.lines.find(l => l.itemId === it.id && (l.description || '') === (bill.desc || '').trim());
-  if (existing) existing.qty = num(existing.qty) + qty;
+  const brand = (bill.brand || '').trim();
+  const desc = (bill.desc || '').trim();
+  const existing = bill.lines.find(l => l.itemId === it.id && (l.description || '') === desc && (l.brand || '') === brand);
+  if (existing) existing.qty = num(existing.qty) + 1;
   else bill.lines.push({
-    itemId: it.id, name: it.name, hsn: it.hsn, unit: it.unit, qty: qty,
-    description: (bill.desc || '').trim(),
+    itemId: it.id, name: it.name, hsn: it.hsn, unit: it.unit, qty: 1,
+    brand: brand, description: desc,
     rate: num(it.salePrice), disc: 0,
     taxRate: state.settings.taxEnabled ? num(it.taxRate) : 0,
     cost: num(it.purchasePrice)
   });
-  bill.itemSel = ''; bill.desc = ''; bill.qty = 1;
+  bill.itemSel = ''; bill.brand = ''; bill.desc = '';
   renderItemSelect();
-  el('bl_desc').value = ''; el('bl_qty').value = 1;
+  el('bl_brand').value = ''; el('bl_desc').value = '';
   renderBillLines();
 }
 
@@ -2003,7 +2034,7 @@ function billAddItem(itemId) {
   if (existing) existing.qty = num(existing.qty) + 1;
   else bill.lines.push({
     itemId: it.id, name: it.name, hsn: it.hsn, unit: it.unit, qty: 1,
-    description: it.description || '',
+    brand: it.brand || '', description: it.description || '',
     rate: num(it.salePrice), disc: 0,
     taxRate: state.settings.taxEnabled ? num(it.taxRate) : 0,
     cost: num(it.purchasePrice)
@@ -2019,12 +2050,12 @@ function renderBillLines() {
     const taxable = num(l.qty) * num(l.rate);
     const tot = taxable + (state.settings.taxEnabled ? taxable * num(l.taxRate) / 100 : 0);
     return '<tr>' +
-      '<td><strong>' + esc(l.name) + '</strong><div class="sub">' + esc(l.unit) + '</div>' +
+      '<td><strong>' + esc(l.name) + '</strong><div class="sub">' + [l.brand, l.unit].filter(Boolean).map(esc).join(' · ') + '</div>' +
       '<input class="line-desc" placeholder="Product description (prints on invoice)" value="' + esc(l.description || '') + '" oninput="bill.lines[' + i + '].description=this.value"></td>' +
       '<td><div class="qty-ctl"><button class="btn tiny ghost" onclick="billQty(' + i + ',-1)">−</button>' +
-      '<input class="r" type="number" step="any" min="0" value="' + num(l.qty) + '" oninput="billLineSet(' + i + ',\'qty\',this.value)">' +
+      '<input class="r" type="number" step="any" min="0" onfocus="this.select()" value="' + num(l.qty) + '" oninput="billLineSet(' + i + ',\'qty\',this.value)">' +
       '<button class="btn tiny ghost" onclick="billQty(' + i + ',1)">+</button></div></td>' +
-      '<td><input class="r" type="number" step="0.01" min="0" value="' + num(l.rate) + '" oninput="billLineSet(' + i + ',\'rate\',this.value)"></td>' +
+      '<td><input class="r" type="number" step="0.01" min="0" onfocus="this.select()" value="' + num(l.rate) + '" oninput="billLineSet(' + i + ',\'rate\',this.value)"></td>' +
       '<td><select onchange="billLineSet(' + i + ',\'taxRate\',this.value)">' + GST_RATES.map(r => '<option value="' + r + '"' + (num(l.taxRate) === r ? ' selected' : '') + '>' + r + '%</option>').join('') + '</select></td>' +
       '<td class="r amt">' + fmtMoney(tot) + '</td>' +
       '<td><button class="btn tiny danger-ghost" onclick="bill.lines.splice(' + i + ',1);renderBillLines()">×</button></td></tr>';
@@ -2046,7 +2077,7 @@ function billLineSet(i, field, value) {
     const taxable = num(l.qty) * num(l.rate);
     row.querySelector('.amt').textContent = fmtMoney(taxable + (state.settings.taxEnabled ? taxable * num(l.taxRate) / 100 : 0));
   }
-  renderBillTotals();
+  billTotalsRecalc();
 }
 
 /* whole-bill discount: convert a ₹ amount into the equivalent % of subtotal */
@@ -2058,25 +2089,44 @@ function billDiscountPct() {
   return Math.min(100, num(bill.discountVal));
 }
 
+/* The totals panel is built once; keystrokes in its inputs only update the
+   displayed numbers (billTotalsRecalc). Rebuilding the panel on every input
+   event would destroy the input mid-typing and steal focus — the page then
+   feels frozen after the first keystroke. */
 function renderBillTotals() {
   const box = el('bl_totals');
   if (!box) return;
-  const t = computeTotals(JSON.parse(JSON.stringify(bill.lines)), billDiscountPct(), state.settings.taxEnabled);
-  bill._totals = t;
-  const due = Math.max(0, t.total - num(bill.paid));
   box.innerHTML =
-    '<div class="totals-row"><span>Subtotal</span><span>' + fmtMoney(t.subtotal) + '</span></div>' +
+    '<div class="totals-row"><span>Subtotal</span><span id="bl_sub"></span></div>' +
     '<div class="totals-row"><span>Discount on entire bill ' +
-    '<input type="number" min="0" step="0.01" style="width:80px" value="' + num(bill.discountVal) + '" oninput="bill.discountVal=num(this.value);renderBillTotals()"> ' +
-    '<select style="width:56px" onchange="bill.discountType=this.value;renderBillTotals()">' +
+    '<input id="bl_discin" type="number" min="0" step="0.01" style="width:80px" onfocus="this.select()" value="' + num(bill.discountVal) + '" oninput="bill.discountVal=num(this.value);billTotalsRecalc()"> ' +
+    '<select id="bl_disctype" style="width:56px" onchange="bill.discountType=this.value;billTotalsRecalc()">' +
     '<option value="pct"' + (bill.discountType === 'pct' ? ' selected' : '') + '>%</option>' +
     '<option value="amt"' + (bill.discountType === 'amt' ? ' selected' : '') + '>₹</option></select>' +
-    '</span><span>− ' + fmtMoney(t.discount) + '</span></div>' +
-    (state.settings.taxEnabled ? '<div class="totals-row"><span>GST</span><span>+ ' + fmtMoney(t.taxAmount) + '</span></div>' : '') +
-    '<div class="totals-row grand"><span>Total</span><span id="bl_grand">' + fmtMoney(t.total) + '</span></div>' +
-    '<div class="totals-row"><span>Received <button class="btn tiny ghost" onclick="bill.paid=bill._totals.total;renderBillTotals()">Full</button></span>' +
-    '<span><input type="number" min="0" step="0.01" style="width:110px;text-align:right" value="' + num(bill.paid) + '" oninput="bill.paid=num(this.value);renderBillTotals()"></span></div>' +
-    '<div class="totals-row due"><span>Balance Due</span><span>' + fmtMoney(due) + '</span></div>';
+    '</span><span id="bl_discamt"></span></div>' +
+    (state.settings.taxEnabled ? '<div class="totals-row"><span>GST</span><span id="bl_gst"></span></div>' : '') +
+    '<div class="totals-row grand"><span>Total</span><span id="bl_grand"></span></div>' +
+    '<div class="totals-row"><span>Received <button class="btn tiny ghost" onclick="billPaidFull()">Full</button></span>' +
+    '<span><input id="bl_paid" type="number" min="0" step="0.01" style="width:110px;text-align:right" onfocus="this.select()" value="' + num(bill.paid) + '" oninput="bill.paid=num(this.value);billTotalsRecalc()"></span></div>' +
+    '<div class="totals-row due"><span>Balance Due</span><span id="bl_due"></span></div>';
+  billTotalsRecalc();
+}
+
+function billTotalsRecalc() {
+  const t = computeTotals(JSON.parse(JSON.stringify(bill.lines)), billDiscountPct(), state.settings.taxEnabled);
+  bill._totals = t;
+  el('bl_sub').textContent = fmtMoney(t.subtotal);
+  el('bl_discamt').textContent = '− ' + fmtMoney(t.discount);
+  if (el('bl_gst')) el('bl_gst').textContent = '+ ' + fmtMoney(t.taxAmount);
+  el('bl_grand').textContent = fmtMoney(t.total);
+  el('bl_due').textContent = fmtMoney(Math.max(0, t.total - num(bill.paid)));
+}
+
+function billPaidFull() {
+  bill.paid = bill._totals ? bill._totals.total : 0;
+  const inp = el('bl_paid');
+  if (inp) inp.value = bill.paid;
+  billTotalsRecalc();
 }
 
 function saveBill(print) {
@@ -2104,6 +2154,7 @@ function saveBill(print) {
   const t = Object.assign({
     id: uid(), type: 'SALE', number: nextNumber('SALE'), date: todayStr(),
     partyId: partyId, lines: bill.lines, discountPct: round2(discountPct),
+    referredBy: bill.referredBy.trim(),
     paid: Math.min(num(bill.paid), totals.total), mode: bill.mode, notes: '', createdAt: Date.now()
   }, totals);
   // cash sales are settled in full unless told otherwise
@@ -2619,7 +2670,7 @@ function renderDashboard() {
     '<button class="btn ghost" onclick="openTxnForm(\'PAYMENT_IN\')">+ Payment In</button>' +
     '<button class="btn ghost" onclick="openTxnForm(\'EXPENSE\')">+ Expense</button></div></div>' +
     (empty ?
-      '<div class="card welcome"><h3>👋 Welcome to VyaparOpen!</h3>' +
+      '<div class="card welcome"><h3>👋 Welcome to Shopkeeper!</h3>' +
       '<p>Your free, open-source business manager — billing, inventory, payments &amp; GST reports. All data stays on this device.</p>' +
       '<div class="head-actions" style="margin-top:12px">' +
       '<button class="btn primary" onclick="go(\'settings\')">1. Set up your business profile</button>' +
@@ -2699,7 +2750,7 @@ function renderSettings() {
     '<button class="btn danger" onclick="wipeAll()">Erase All Data</button></div></div>' +
 
     '<div class="card"><h3 class="card-title">About</h3>' +
-    '<p class="sub"><strong>VyaparOpen</strong> — free &amp; open-source business management (billing · inventory · GST). ' +
+    '<p class="sub"><strong>Shopkeeper</strong> — free &amp; open-source business management (billing · inventory · GST). ' +
     'Works fully offline; no account, no server, no tracking. MIT licensed.</p></div>' +
     '</div></div>';
 }
@@ -2796,7 +2847,7 @@ function boot() {
   const app = el('app');
   app.innerHTML =
     '<aside class="sidebar" id="sidebar">' +
-    '<div class="brand"><div class="logo">V</div><div><div class="brand-name">VyaparOpen</div>' +
+    '<div class="brand"><div class="logo">S</div><div><div class="brand-name">Shopkeeper</div>' +
     '<div class="brand-biz" id="bizName">' + esc(state.settings.businessName) + '</div></div></div>' +
     '<nav>' + NAV.map(n =>
       '<a class="nav-item" data-page="' + n[0] + '" onclick="go(\'' + n[0] + '\')"><span class="ico">' + n[1] + '</span>' + n[2] + '</a>'
@@ -2805,7 +2856,7 @@ function boot() {
     '</aside>' +
     '<div class="main"><header class="topbar">' +
     '<button class="hamburger" onclick="el(\'sidebar\').classList.toggle(\'open\')">☰</button>' +
-    '<div class="topbar-title">VyaparOpen</div>' +
+    '<div class="topbar-title">Shopkeeper</div>' +
     '<button class="btn ghost tiny" onclick="exportBackup()">⬇ Backup</button>' +
     '</header><main id="view"></main></div>';
 

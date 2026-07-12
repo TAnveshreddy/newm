@@ -54,7 +54,7 @@ function boot() {
   const app = el('app');
   app.innerHTML =
     '<aside class="sidebar" id="sidebar">' +
-    '<div class="brand"><div class="logo">V</div><div><div class="brand-name">VyaparOpen</div>' +
+    '<div class="brand"><div class="logo">S</div><div><div class="brand-name">Shopkeeper</div>' +
     '<div class="brand-biz" id="bizName">' + esc(state.settings.businessName) + '</div></div></div>' +
     '<nav>' + NAV.map(n =>
       '<a class="nav-item" data-page="' + n[0] + '" onclick="go(\'' + n[0] + '\')"><span class="ico">' + n[1] + '</span>' + n[2] + '</a>'
@@ -63,7 +63,7 @@ function boot() {
     '</aside>' +
     '<div class="main"><header class="topbar">' +
     '<button class="hamburger" onclick="el(\'sidebar\').classList.toggle(\'open\')">☰</button>' +
-    '<div class="topbar-title">VyaparOpen</div>' +
+    '<div class="topbar-title">Shopkeeper</div>' +
     '<button class="btn ghost tiny" onclick="exportBackup()">⬇ Backup</button>' +
     '</header><main id="view"></main></div>';
 

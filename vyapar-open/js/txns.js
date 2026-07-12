@@ -198,27 +198,45 @@ function lineSet(i, field, value) {
     const gross = num(l.qty) * num(l.rate);
     row.querySelector('.amt').textContent = fmtMoney(gross - gross * num(l.disc) / 100);
   }
-  renderTotals();
+  txnTotalsRecalc();
 }
 
+/* Panel is built once; typing only updates the number displays (see billing.js
+   for why — rebuilding inputs on their own oninput steals focus mid-keystroke). */
 function renderTotals() {
   const box = el('tf_totals');
   if (!box) return;
+  const paidLabel = ['SALE', 'ESTIMATE'].includes(draft.type) ? 'Received' : draft.type === 'SALE_RETURN' ? 'Refunded' : 'Paid';
+  box.innerHTML =
+    '<div class="totals-row"><span>Subtotal (taxable)</span><span id="tf_sub"></span></div>' +
+    '<div class="totals-row"><span>Discount <input id="tf_disc" type="number" min="0" max="100" step="0.01" style="width:70px" onfocus="this.select()" value="' + num(draft.discountPct) + '" oninput="draft.discountPct=num(this.value);txnTotalsRecalc()"> %</span><span id="tf_discamt"></span></div>' +
+    (state.settings.taxEnabled ? '<div class="totals-row"><span>GST</span><span id="tf_gst"></span></div>' : '') +
+    '<div class="totals-row"><span>Round Off</span><span id="tf_ro"></span></div>' +
+    '<div class="totals-row grand"><span>Total</span><span id="tf_grand"></span></div>' +
+    (draft.type !== 'ESTIMATE' ?
+      '<div class="totals-row"><span>' + paidLabel + ' <button class="btn tiny ghost" onclick="draftPaidFull()">Full</button></span>' +
+      '<span><input id="tf_paid" type="number" min="0" step="0.01" style="width:110px;text-align:right" onfocus="this.select()" value="' + num(draft.paid) + '" oninput="draft.paid=num(this.value);txnTotalsRecalc()"></span></div>' +
+      '<div class="totals-row due"><span>Balance Due</span><span id="tf_due"></span></div>' : '');
+  txnTotalsRecalc();
+}
+
+function txnTotalsRecalc() {
   const lines = draft.lines.filter(l => l.itemId || num(l.qty) * num(l.rate) > 0);
   const t = computeTotals(JSON.parse(JSON.stringify(lines)), draft.discountPct, state.settings.taxEnabled);
   draft._totals = t;
-  const due = Math.max(0, t.total - num(draft.paid));
-  const paidLabel = ['SALE', 'ESTIMATE'].includes(draft.type) ? 'Received' : draft.type === 'SALE_RETURN' ? 'Refunded' : 'Paid';
-  box.innerHTML =
-    '<div class="totals-row"><span>Subtotal (taxable)</span><span>' + fmtMoney(t.subtotal) + '</span></div>' +
-    '<div class="totals-row"><span>Discount <input id="tf_disc" type="number" min="0" max="100" step="0.01" style="width:70px" value="' + num(draft.discountPct) + '" oninput="draft.discountPct=num(this.value);renderTotals()"> %</span><span>− ' + fmtMoney(t.discount) + '</span></div>' +
-    (state.settings.taxEnabled ? '<div class="totals-row"><span>GST</span><span>+ ' + fmtMoney(t.taxAmount) + '</span></div>' : '') +
-    '<div class="totals-row"><span>Round Off</span><span>' + fmtMoney(t.roundOff) + '</span></div>' +
-    '<div class="totals-row grand"><span>Total</span><span>' + fmtMoney(t.total) + '</span></div>' +
-    (draft.type !== 'ESTIMATE' ?
-      '<div class="totals-row"><span>' + paidLabel + ' <button class="btn tiny ghost" onclick="draft.paid=draft._totals.total;renderTotals()">Full</button></span>' +
-      '<span><input id="tf_paid" type="number" min="0" step="0.01" style="width:110px;text-align:right" value="' + num(draft.paid) + '" oninput="draft.paid=num(this.value);renderTotals()"></span></div>' +
-      '<div class="totals-row due"><span>Balance Due</span><span>' + fmtMoney(due) + '</span></div>' : '');
+  el('tf_sub').textContent = fmtMoney(t.subtotal);
+  el('tf_discamt').textContent = '− ' + fmtMoney(t.discount);
+  if (el('tf_gst')) el('tf_gst').textContent = '+ ' + fmtMoney(t.taxAmount);
+  el('tf_ro').textContent = fmtMoney(t.roundOff);
+  el('tf_grand').textContent = fmtMoney(t.total);
+  if (el('tf_due')) el('tf_due').textContent = fmtMoney(Math.max(0, t.total - num(draft.paid)));
+}
+
+function draftPaidFull() {
+  draft.paid = draft._totals ? draft._totals.total : 0;
+  const inp = el('tf_paid');
+  if (inp) inp.value = draft.paid;
+  txnTotalsRecalc();
 }
 
 function saveTxn() {
@@ -312,7 +330,7 @@ function viewTxn(id) {
   if ((t.lines || []).length) {
     linesHtml = '<div class="table-wrap"><table><thead><tr><th>#</th><th>Item</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">GST</th><th class="r">Amount</th></tr></thead><tbody>' +
       t.lines.map((l, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(l.name) +
-        (l.description ? '<div class="sub">' + esc(l.description) + '</div>' : '') +
+        ([l.brand, l.description].filter(Boolean).length ? '<div class="sub">' + [l.brand, l.description].filter(Boolean).map(esc).join(' — ') + '</div>' : '') +
         '</td><td class="r">' + fmtQty(l.qty) + ' ' + esc(l.unit) + '</td><td class="r">' + fmtMoney(l.rate) + '</td><td class="r">' + num(l.taxRate) + '%</td><td class="r">' + fmtMoney(num(l.amount) + num(l.tax)) + '</td></tr>').join('') +
       '</tbody></table></div>' +
       '<div class="totals-panel">' +
@@ -328,7 +346,8 @@ function viewTxn(id) {
   openModal(
     '<div class="modal-head"><h3>' + cfg.label + ' ' + esc(t.number) + ' <span class="badge ' + (st === 'Paid' || st === 'Converted' ? 'ok' : st === 'Partial' ? 'warn' : 'bad') + '">' + st + '</span></h3><button class="x" onclick="closeModal()">×</button></div>' +
     '<div class="modal-body">' +
-    '<p><strong>' + esc(t.type === 'EXPENSE' ? (t.category || 'Expense') : partyName(t.partyId)) + '</strong> · ' + fmtDate(t.date) + (t.mode ? ' · ' + esc(t.mode) : '') + '</p>' +
+    '<p><strong>' + esc(t.type === 'EXPENSE' ? (t.category || 'Expense') : partyName(t.partyId)) + '</strong> · ' + fmtDate(t.date) + (t.mode ? ' · ' + esc(t.mode) : '') +
+    (t.referredBy ? ' · Referred by ' + esc(t.referredBy) : '') + '</p>' +
     linesHtml +
     (t.notes ? '<p class="sub">Note: ' + esc(t.notes) + '</p>' : '') +
     '</div>' +
@@ -350,8 +369,9 @@ function printTxn(id) {
 
   let rows = t.lines.map((l, i) => {
     const taxHalf = num(l.tax) / 2;
+    const meta = [l.brand, l.description].filter(Boolean).join(' — ');
     return '<tr><td>' + (i + 1) + '</td><td>' + esc(l.name) +
-      (l.description ? '<br><span class="muted" style="font-size:11px">' + esc(l.description) + '</span>' : '') +
+      (meta ? '<br><span class="muted" style="font-size:11px">' + esc(meta) + '</span>' : '') +
       '</td><td>' + esc(l.hsn || '') + '</td>' +
       '<td class="r">' + fmtQty(l.qty) + ' ' + esc(l.unit) + '</td><td class="r">' + fmtMoney(l.rate, false) + '</td>' +
       '<td class="r">' + fmtMoney(l.amount, false) + '</td>' +
@@ -384,7 +404,8 @@ function printTxn(id) {
     '<div><h2>' + docTitle + '</h2><div class="muted" style="text-align:right">No: <strong>' + esc(t.number) + '</strong><br>Date: ' + fmtDate(t.date) + '</div></div></div>' +
     '<table><tr><td style="width:50%"><strong>Bill To:</strong><br>' +
     (p ? esc(p.name) + (p.address ? '<br>' + esc(p.address) : '') + (p.phone ? '<br>Phone: ' + esc(p.phone) : '') + (p.gstin ? '<br>GSTIN: ' + esc(p.gstin) : '') : 'Cash Sale') +
-    '</td><td><strong>Payment:</strong> ' + esc(t.mode || '—') + '<br><strong>Status:</strong> ' + txnStatus(t) + '</td></tr></table>' +
+    '</td><td><strong>Payment:</strong> ' + esc(t.mode || '—') + '<br><strong>Status:</strong> ' + txnStatus(t) +
+    (t.referredBy ? '<br><strong>Referred by:</strong> ' + esc(t.referredBy) : '') + '</td></tr></table>' +
     '<table><thead><tr><th>#</th><th>Item</th><th>HSN</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Taxable</th>' + taxCols + '<th class="r">Amount</th></tr></thead>' +
     '<tbody>' + rows + '</tbody><tfoot>' +
     (num(t.discount) ? '<tr><td colspan="' + (nCols - 1) + '" class="r">Discount</td><td class="r">− ' + fmtMoney(t.discount, false) + '</td></tr>' : '') +

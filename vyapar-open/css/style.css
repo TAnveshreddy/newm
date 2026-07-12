@@ -217,8 +217,9 @@ label input, label select, label textarea { margin-top: 4px; font-weight: 400; }
 .totals-row.due { font-weight: 700; color: var(--bad); }
 
 /* ---------- billing / product picker ---------- */
+.form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
 .add-item-row {
-  display: grid; grid-template-columns: 1fr 1.4fr 1.8fr 0.7fr auto;
+  display: grid; grid-template-columns: 1fr 1.5fr 1fr 1.6fr auto;
   gap: 12px; align-items: end; margin-top: 12px;
   padding: 12px; border: 1px dashed var(--baseline); border-radius: 10px;
   background: color-mix(in srgb, var(--primary) 4%, transparent);
