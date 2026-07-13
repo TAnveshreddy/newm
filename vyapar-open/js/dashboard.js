@@ -28,20 +28,6 @@ function renderDashboard() {
   }
   const chartData = Object.keys(byDay).sort().map(dt => ({ label: dt.slice(8), value: byDay[dt] }));
 
-  // top selling products (this month, by revenue)
-  const prodMap = {};
-  for (const t of state.txns) {
-    if (t.type !== 'SALE' || !inRange(t.date, mStart, today)) continue;
-    for (const l of (t.lines || [])) {
-      const key = l.itemId || l.name;
-      if (!prodMap[key]) prodMap[key] = { name: l.name, qty: 0, amount: 0 };
-      prodMap[key].qty += num(l.qty);
-      prodMap[key].amount += num(l.amount) + num(l.tax);
-    }
-  }
-  const topProducts = Object.values(prodMap).sort((a, b) => b.amount - a.amount).slice(0, 5);
-  const maxProd = Math.max(1, ...topProducts.map(p => p.amount));
-
   const low = lowStockItems();
   const recentBills = state.txns.filter(t => t.type === 'SALE')
     .sort((a, b) => b.createdAt - a.createdAt).slice(0, 8);
@@ -55,17 +41,20 @@ function renderDashboard() {
       '<td><span class="badge ' + (st === 'Paid' ? 'ok' : st === 'Partial' ? 'warn' : 'bad') + '">' + st + '</span></td></tr>';
   }).join('') || '<tr><td colspan="5" class="empty">No bills yet — create your first bill!</td></tr>';
 
-  const topRows = topProducts.map(p =>
-    '<tr><td>' + esc(p.name) + '<div class="minibar"><span style="width:' + Math.round(p.amount / maxProd * 100) + '%"></span></div></td>' +
-    '<td class="r">' + fmtQty(p.qty) + '</td><td class="r">' + fmtMoney(p.amount) + '</td></tr>'
+  // stock availability (same as the report: No Stock first, then Low, then In Stock)
+  const severity = (it, stock) => stock <= 0 ? 0 : isLowStock(it) ? 1 : 2;
+  const availItems = state.items.filter(i => i.type !== 'service')
+    .map(it => ({ it: it, stock: itemStock(it.id) }))
+    .sort((a, b) => severity(a.it, a.stock) - severity(b.it, b.stock) || a.it.name.localeCompare(b.it.name));
+  const availRows = availItems.slice(0, 10).map(({ it, stock }) =>
+    '<tr class="rowlink" onclick="openItemDetail(\'' + it.id + '\')">' +
+    '<td><strong>' + esc(it.name) + '</strong></td>' +
+    '<td>' + esc(it.category || '') + '</td>' +
+    '<td>' + esc(it.brand || '') + '</td>' +
+    '<td class="r">' + (stock <= 0 ? '<span class="badge bad">No Stock</span>'
+      : isLowStock(it) ? '<span class="badge warn">▲ ' + fmtQty(stock) + ' ' + esc(it.unit) + '</span>'
+        : fmtQty(stock) + ' ' + esc(it.unit)) + '</td></tr>'
   ).join('');
-
-  const lowRows = low.slice(0, 6).map(it => {
-    const stock = itemStock(it.id);
-    return '<tr class="rowlink" onclick="openItemDetail(\'' + it.id + '\')"><td>' + esc(it.name) + '</td>' +
-      '<td class="r">' + (stock <= 0 ? '<span class="badge bad">No Stock</span>' : '<span class="neg">' + fmtQty(stock) + ' ' + esc(it.unit) + '</span>') + '</td>' +
-      '<td class="r">' + fmtQty(it.minStock) + '</td></tr>';
-  }).join('');
 
   const empty = state.txns.length === 0 && state.parties.length === 0 && state.items.length === 0;
 
@@ -93,14 +82,14 @@ function renderDashboard() {
     '</div>' +
     '<div class="card"><h3 class="card-title">Monthly Sales — ' + monthName(d.getMonth()) + ' ' + d.getFullYear() + ' <span class="sub">(total ' + fmtMoney(monthSales) + ')</span></h3>' +
     svgBarChart(chartData, { height: 220 }) + '</div>' +
-    '<div class="grid-2">' +
-    '<div class="card"><h3 class="card-title">Top Selling Products <span class="sub">(this month)</span></h3>' +
-    (topRows ? '<div class="table-wrap"><table><thead><tr><th>Product</th><th class="r">Qty</th><th class="r">Sales</th></tr></thead><tbody>' + topRows + '</tbody></table></div>'
-      : '<p class="empty">No sales yet this month.</p>') + '</div>' +
-    '<div class="card"><h3 class="card-title">Low Stock Items ' + (low.length ? '<span class="badge bad">' + low.length + '</span>' : '') + '</h3>' +
-    (lowRows ? '<div class="table-wrap"><table><thead><tr><th>Product</th><th class="r">Stock</th><th class="r">Min</th></tr></thead><tbody>' + lowRows + '</tbody></table></div>'
-      : '<p class="empty">All stocked up 🎉</p>') +
-    '</div></div>' +
+    '<div class="card"><div class="page-head" style="margin-bottom:8px"><h3 class="card-title" style="margin:0">Stock Availability ' +
+    (low.length ? '<span class="badge bad">' + low.length + ' need attention</span>' : '') + '</h3>' +
+    '<button class="btn tiny ghost" onclick="repState.key=\'stock\';go(\'reports\')">Full report →</button></div>' +
+    (availRows ? '<div class="table-wrap"><table><thead><tr><th>Product</th><th>Category</th><th>Brand</th><th class="r">Available Stock</th></tr></thead><tbody>' +
+      availRows + '</tbody></table></div>' +
+      (availItems.length > 10 ? '<p class="sub">Showing 10 of ' + availItems.length + ' products — open the full report for all.</p>' : '')
+      : '<p class="empty">No products yet — add products in Inventory.</p>') +
+    '</div>' +
     '<div class="card"><div class="page-head" style="margin-bottom:8px"><h3 class="card-title" style="margin:0">Recent Bills</h3>' +
     '<button class="btn tiny ghost" onclick="go(\'billing\')">View all →</button></div>' +
     '<div class="table-wrap"><table><thead><tr><th>Date</th><th>Bill No</th><th>Customer</th><th class="r">Amount</th><th>Status</th></tr></thead><tbody>' +
