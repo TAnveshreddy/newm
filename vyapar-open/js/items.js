@@ -18,7 +18,8 @@ function renderItems() {
       '<td class="r">' + fmtMoney(it.purchasePrice) + '</td>' +
       '<td class="r">' + num(it.taxRate) + '%</td>' +
       '<td class="r">' + (it.type === 'service' ? '—' :
-        (isLow ? '<span class="badge warn" title="Low stock alert">▲ ' : '<span>') + fmtQty(stock) + ' ' + esc(it.unit) + '</span>') + '</td>' +
+        stock <= 0 ? '<span class="badge bad">No Stock</span>' :
+          (isLow ? '<span class="badge warn" title="Low stock alert">▲ ' : '<span>') + fmtQty(stock) + ' ' + esc(it.unit) + '</span>') + '</td>' +
       '<td class="r actions" onclick="event.stopPropagation()">' +
       (it.type !== 'service' ?
         '<button class="btn tiny ghost" onclick="openStockAdjust(\'' + it.id + '\',1)">Stock In</button> ' +
@@ -172,7 +173,8 @@ function openItemDetail(id) {
     '<div class="cards">' +
     '<div class="card stat"><div class="stat-label">Sale Price</div><div class="stat-value">' + fmtMoney(it.salePrice) + '</div></div>' +
     '<div class="card stat"><div class="stat-label">Purchase Price</div><div class="stat-value">' + fmtMoney(it.purchasePrice) + '</div></div>' +
-    '<div class="card stat"><div class="stat-label">Current Stock</div><div class="stat-value">' + (it.type === 'service' ? '—' : fmtQty(itemStock(id)) + ' ' + esc(it.unit)) + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">Current Stock</div><div class="stat-value">' +
+    (it.type === 'service' ? '—' : itemStock(id) <= 0 ? '<span class="neg">No Stock</span>' : fmtQty(itemStock(id)) + ' ' + esc(it.unit)) + '</div></div>' +
     '<div class="card stat"><div class="stat-label">GST Rate</div><div class="stat-value">' + num(it.taxRate) + '%</div></div></div>' +
     '<div class="card"><h3 class="card-title">Stock Movement</h3><div class="table-wrap"><table><thead><tr>' +
     '<th>Date</th><th>Transaction</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Stock After</th></tr></thead><tbody>' +

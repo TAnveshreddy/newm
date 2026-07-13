@@ -11,8 +11,7 @@ const REPORTS = [
   ['categorywise', 'Category-wise Sales'],
   ['customerwise', 'Customer-wise Sales'],
   ['profit', 'Profit Report'],
-  ['stock', 'Stock Report'],
-  ['lowstock', 'Low Stock'],
+  ['stock', 'Stock Availability'],
   ['sale', 'Bill Register'],
   ['purchase', 'Purchase Report'],
   ['daybook', 'Day Book'],
@@ -257,19 +256,27 @@ function buildReport() {
     csv.rows = state.parties.map(p => { const b = partyBalance(p.id); return [p.name, p.phone, p.type, Math.abs(b), b >= 0 ? 'Receive' : 'Pay']; });
   }
 
-  else if (k === 'stock' || k === 'lowstock') {
-    const items = k === 'lowstock' ? lowStockItems() : state.items.filter(i => i.type !== 'service');
+  else if (k === 'stock') {
+    // one combined stock-availability report: No Stock first, then Low, then In Stock
+    const severity = (it, stock) => stock <= 0 ? 0 : isLowStock(it) ? 1 : 2;
+    const items = state.items.filter(i => i.type !== 'service')
+      .map(it => ({ it: it, stock: itemStock(it.id) }))
+      .sort((a, b) => severity(a.it, a.stock) - severity(b.it, b.stock) || a.it.name.localeCompare(b.it.name));
     let totVal = 0;
-    const rows = items.map(it => {
-      const stq = itemStock(it.id);
-      const val = Math.max(0, stq) * num(it.purchasePrice || it.salePrice);
+    const rows = items.map(({ it, stock }) => {
+      const val = Math.max(0, stock) * num(it.purchasePrice || it.salePrice);
       totVal += val;
-      return [esc(it.name), esc(it.category || ''), fmtQty(stq) + ' ' + esc(it.unit), fmtQty(it.minStock), fmtMoney(it.purchasePrice), fmtMoney(val)];
+      const avail = stock <= 0 ? '<span class="badge bad">No Stock</span>'
+        : isLowStock(it) ? '<span class="badge warn">▲ ' + fmtQty(stock) + ' ' + esc(it.unit) + '</span>'
+          : fmtQty(stock) + ' ' + esc(it.unit);
+      return [esc(it.name), esc(it.category || ''), esc(it.brand || ''), avail, fmtMoney(val)];
     });
-    html = tbl([['Item'], ['Category'], ['Stock', 'r'], ['Min Level', 'r'], ['Purchase Price', 'r'], ['Stock Value', 'r']], rows,
-      ['Total', '', '', '', '', fmtMoney(totVal)]);
-    csv.headers = ['Item', 'Category', 'Stock', 'MinLevel', 'PurchasePrice', 'StockValue'];
-    csv.rows = items.map(it => [it.name, it.category, itemStock(it.id), it.minStock, it.purchasePrice, Math.max(0, itemStock(it.id)) * num(it.purchasePrice || it.salePrice)]);
+    html = tbl([['Product'], ['Category'], ['Brand'], ['Available Stock', 'r'], ['Stock Value', 'r']], rows,
+      ['Total', '', '', '', fmtMoney(totVal)]);
+    csv.headers = ['Product', 'Category', 'Brand', 'AvailableStock', 'Status', 'StockValue'];
+    csv.rows = items.map(({ it, stock }) => [it.name, it.category, it.brand || '',
+      Math.max(0, stock), stock <= 0 ? 'No Stock' : isLowStock(it) ? 'Low Stock' : 'In Stock',
+      round2(Math.max(0, stock) * num(it.purchasePrice || it.salePrice))]);
   }
 
   else if (k === 'productwise' || k === 'categorywise') {

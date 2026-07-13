@@ -60,11 +60,12 @@ function renderDashboard() {
     '<td class="r">' + fmtQty(p.qty) + '</td><td class="r">' + fmtMoney(p.amount) + '</td></tr>'
   ).join('');
 
-  const lowRows = low.slice(0, 6).map(it =>
-    '<tr class="rowlink" onclick="openItemDetail(\'' + it.id + '\')"><td>' + esc(it.name) + '</td>' +
-    '<td class="r neg">' + fmtQty(itemStock(it.id)) + ' ' + esc(it.unit) + '</td>' +
-    '<td class="r">' + fmtQty(it.minStock) + '</td></tr>'
-  ).join('');
+  const lowRows = low.slice(0, 6).map(it => {
+    const stock = itemStock(it.id);
+    return '<tr class="rowlink" onclick="openItemDetail(\'' + it.id + '\')"><td>' + esc(it.name) + '</td>' +
+      '<td class="r">' + (stock <= 0 ? '<span class="badge bad">No Stock</span>' : '<span class="neg">' + fmtQty(stock) + ' ' + esc(it.unit) + '</span>') + '</td>' +
+      '<td class="r">' + fmtQty(it.minStock) + '</td></tr>';
+  }).join('');
 
   const empty = state.txns.length === 0 && state.parties.length === 0 && state.items.length === 0;
 

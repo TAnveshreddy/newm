@@ -130,7 +130,8 @@ function renderProductPicker() {
     const low = stock !== null && isLowStock(it);
     return '<button class="product-chip' + (stock !== null && stock <= 0 ? ' out' : '') + '" onclick="billAddItem(\'' + it.id + '\')">' +
       '<span class="pc-name">' + esc(it.name) + '</span>' +
-      '<span class="pc-meta">' + fmtMoney(it.salePrice) + (stock !== null ? ' · <span class="' + (low ? 'neg' : '') + '">' + fmtQty(stock) + ' ' + esc(it.unit) + '</span>' : '') + '</span></button>';
+      '<span class="pc-meta">' + fmtMoney(it.salePrice) +
+      (stock !== null ? ' · <span class="' + (low ? 'neg' : '') + '">' + (stock <= 0 ? 'No Stock' : fmtQty(stock) + ' ' + esc(it.unit)) + '</span>' : '') + '</span></button>';
   }).join('') : '<p class="empty">No matching products. <a class="crumb" onclick="openItemForm()">Add a product</a></p>';
 }
 

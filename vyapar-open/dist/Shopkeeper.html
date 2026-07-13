@@ -1008,7 +1008,8 @@ function renderItems() {
       '<td class="r">' + fmtMoney(it.purchasePrice) + '</td>' +
       '<td class="r">' + num(it.taxRate) + '%</td>' +
       '<td class="r">' + (it.type === 'service' ? '—' :
-        (isLow ? '<span class="badge warn" title="Low stock alert">▲ ' : '<span>') + fmtQty(stock) + ' ' + esc(it.unit) + '</span>') + '</td>' +
+        stock <= 0 ? '<span class="badge bad">No Stock</span>' :
+          (isLow ? '<span class="badge warn" title="Low stock alert">▲ ' : '<span>') + fmtQty(stock) + ' ' + esc(it.unit) + '</span>') + '</td>' +
       '<td class="r actions" onclick="event.stopPropagation()">' +
       (it.type !== 'service' ?
         '<button class="btn tiny ghost" onclick="openStockAdjust(\'' + it.id + '\',1)">Stock In</button> ' +
@@ -1162,7 +1163,8 @@ function openItemDetail(id) {
     '<div class="cards">' +
     '<div class="card stat"><div class="stat-label">Sale Price</div><div class="stat-value">' + fmtMoney(it.salePrice) + '</div></div>' +
     '<div class="card stat"><div class="stat-label">Purchase Price</div><div class="stat-value">' + fmtMoney(it.purchasePrice) + '</div></div>' +
-    '<div class="card stat"><div class="stat-label">Current Stock</div><div class="stat-value">' + (it.type === 'service' ? '—' : fmtQty(itemStock(id)) + ' ' + esc(it.unit)) + '</div></div>' +
+    '<div class="card stat"><div class="stat-label">Current Stock</div><div class="stat-value">' +
+    (it.type === 'service' ? '—' : itemStock(id) <= 0 ? '<span class="neg">No Stock</span>' : fmtQty(itemStock(id)) + ' ' + esc(it.unit)) + '</div></div>' +
     '<div class="card stat"><div class="stat-label">GST Rate</div><div class="stat-value">' + num(it.taxRate) + '%</div></div></div>' +
     '<div class="card"><h3 class="card-title">Stock Movement</h3><div class="table-wrap"><table><thead><tr>' +
     '<th>Date</th><th>Transaction</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Stock After</th></tr></thead><tbody>' +
@@ -2036,7 +2038,8 @@ function renderProductPicker() {
     const low = stock !== null && isLowStock(it);
     return '<button class="product-chip' + (stock !== null && stock <= 0 ? ' out' : '') + '" onclick="billAddItem(\'' + it.id + '\')">' +
       '<span class="pc-name">' + esc(it.name) + '</span>' +
-      '<span class="pc-meta">' + fmtMoney(it.salePrice) + (stock !== null ? ' · <span class="' + (low ? 'neg' : '') + '">' + fmtQty(stock) + ' ' + esc(it.unit) + '</span>' : '') + '</span></button>';
+      '<span class="pc-meta">' + fmtMoney(it.salePrice) +
+      (stock !== null ? ' · <span class="' + (low ? 'neg' : '') + '">' + (stock <= 0 ? 'No Stock' : fmtQty(stock) + ' ' + esc(it.unit)) + '</span>' : '') + '</span></button>';
   }).join('') : '<p class="empty">No matching products. <a class="crumb" onclick="openItemForm()">Add a product</a></p>';
 }
 
@@ -2219,8 +2222,7 @@ const REPORTS = [
   ['categorywise', 'Category-wise Sales'],
   ['customerwise', 'Customer-wise Sales'],
   ['profit', 'Profit Report'],
-  ['stock', 'Stock Report'],
-  ['lowstock', 'Low Stock'],
+  ['stock', 'Stock Availability'],
   ['sale', 'Bill Register'],
   ['purchase', 'Purchase Report'],
   ['daybook', 'Day Book'],
@@ -2465,19 +2467,27 @@ function buildReport() {
     csv.rows = state.parties.map(p => { const b = partyBalance(p.id); return [p.name, p.phone, p.type, Math.abs(b), b >= 0 ? 'Receive' : 'Pay']; });
   }
 
-  else if (k === 'stock' || k === 'lowstock') {
-    const items = k === 'lowstock' ? lowStockItems() : state.items.filter(i => i.type !== 'service');
+  else if (k === 'stock') {
+    // one combined stock-availability report: No Stock first, then Low, then In Stock
+    const severity = (it, stock) => stock <= 0 ? 0 : isLowStock(it) ? 1 : 2;
+    const items = state.items.filter(i => i.type !== 'service')
+      .map(it => ({ it: it, stock: itemStock(it.id) }))
+      .sort((a, b) => severity(a.it, a.stock) - severity(b.it, b.stock) || a.it.name.localeCompare(b.it.name));
     let totVal = 0;
-    const rows = items.map(it => {
-      const stq = itemStock(it.id);
-      const val = Math.max(0, stq) * num(it.purchasePrice || it.salePrice);
+    const rows = items.map(({ it, stock }) => {
+      const val = Math.max(0, stock) * num(it.purchasePrice || it.salePrice);
       totVal += val;
-      return [esc(it.name), esc(it.category || ''), fmtQty(stq) + ' ' + esc(it.unit), fmtQty(it.minStock), fmtMoney(it.purchasePrice), fmtMoney(val)];
+      const avail = stock <= 0 ? '<span class="badge bad">No Stock</span>'
+        : isLowStock(it) ? '<span class="badge warn">▲ ' + fmtQty(stock) + ' ' + esc(it.unit) + '</span>'
+          : fmtQty(stock) + ' ' + esc(it.unit);
+      return [esc(it.name), esc(it.category || ''), esc(it.brand || ''), avail, fmtMoney(val)];
     });
-    html = tbl([['Item'], ['Category'], ['Stock', 'r'], ['Min Level', 'r'], ['Purchase Price', 'r'], ['Stock Value', 'r']], rows,
-      ['Total', '', '', '', '', fmtMoney(totVal)]);
-    csv.headers = ['Item', 'Category', 'Stock', 'MinLevel', 'PurchasePrice', 'StockValue'];
-    csv.rows = items.map(it => [it.name, it.category, itemStock(it.id), it.minStock, it.purchasePrice, Math.max(0, itemStock(it.id)) * num(it.purchasePrice || it.salePrice)]);
+    html = tbl([['Product'], ['Category'], ['Brand'], ['Available Stock', 'r'], ['Stock Value', 'r']], rows,
+      ['Total', '', '', '', fmtMoney(totVal)]);
+    csv.headers = ['Product', 'Category', 'Brand', 'AvailableStock', 'Status', 'StockValue'];
+    csv.rows = items.map(({ it, stock }) => [it.name, it.category, it.brand || '',
+      Math.max(0, stock), stock <= 0 ? 'No Stock' : isLowStock(it) ? 'Low Stock' : 'In Stock',
+      round2(Math.max(0, stock) * num(it.purchasePrice || it.salePrice))]);
   }
 
   else if (k === 'productwise' || k === 'categorywise') {
@@ -2702,11 +2712,12 @@ function renderDashboard() {
     '<td class="r">' + fmtQty(p.qty) + '</td><td class="r">' + fmtMoney(p.amount) + '</td></tr>'
   ).join('');
 
-  const lowRows = low.slice(0, 6).map(it =>
-    '<tr class="rowlink" onclick="openItemDetail(\'' + it.id + '\')"><td>' + esc(it.name) + '</td>' +
-    '<td class="r neg">' + fmtQty(itemStock(it.id)) + ' ' + esc(it.unit) + '</td>' +
-    '<td class="r">' + fmtQty(it.minStock) + '</td></tr>'
-  ).join('');
+  const lowRows = low.slice(0, 6).map(it => {
+    const stock = itemStock(it.id);
+    return '<tr class="rowlink" onclick="openItemDetail(\'' + it.id + '\')"><td>' + esc(it.name) + '</td>' +
+      '<td class="r">' + (stock <= 0 ? '<span class="badge bad">No Stock</span>' : '<span class="neg">' + fmtQty(stock) + ' ' + esc(it.unit) + '</span>') + '</td>' +
+      '<td class="r">' + fmtQty(it.minStock) + '</td></tr>';
+  }).join('');
 
   const empty = state.txns.length === 0 && state.parties.length === 0 && state.items.length === 0;
 
