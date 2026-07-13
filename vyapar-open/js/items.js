@@ -10,7 +10,7 @@ function renderItems() {
 
   let rows = list.map(it => {
     const stock = itemStock(it.id);
-    const isLow = it.type !== 'service' && num(it.minStock) > 0 && stock <= num(it.minStock);
+    const isLow = isLowStock(it);
     return '<tr class="rowlink" onclick="openItemDetail(\'' + it.id + '\')">' +
       '<td><strong>' + esc(it.name) + '</strong><div class="sub">' + [it.brand, it.category, it.hsn ? 'HSN ' + it.hsn : ''].filter(Boolean).map(esc).join(' · ') + '</div></td>' +
       '<td><span class="tag">' + (it.type === 'service' ? 'Service' : 'Product') + '</span></td>' +

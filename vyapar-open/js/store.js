@@ -149,8 +149,15 @@ function stockValue() {
   return round2(v);
 }
 
+function isLowStock(it) {
+  if (it.type === 'service') return false;
+  const stock = itemStock(it.id);
+  // out of stock always alerts; otherwise alert at/below the item's min level
+  return stock <= 0 || (num(it.minStock) > 0 && stock <= num(it.minStock));
+}
+
 function lowStockItems() {
-  return state.items.filter(it => it.type !== 'service' && num(it.minStock) > 0 && itemStock(it.id) <= num(it.minStock));
+  return state.items.filter(isLowStock);
 }
 
 /* ---------- txn helpers ---------- */

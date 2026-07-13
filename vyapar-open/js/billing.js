@@ -127,7 +127,7 @@ function renderProductPicker() {
     .slice(0, 12);
   box.innerHTML = matches.length ? matches.map(it => {
     const stock = it.type === 'service' ? null : itemStock(it.id);
-    const low = stock !== null && num(it.minStock) > 0 && stock <= num(it.minStock);
+    const low = stock !== null && isLowStock(it);
     return '<button class="product-chip' + (stock !== null && stock <= 0 ? ' out' : '') + '" onclick="billAddItem(\'' + it.id + '\')">' +
       '<span class="pc-name">' + esc(it.name) + '</span>' +
       '<span class="pc-meta">' + fmtMoney(it.salePrice) + (stock !== null ? ' · <span class="' + (low ? 'neg' : '') + '">' + fmtQty(stock) + ' ' + esc(it.unit) + '</span>' : '') + '</span></button>';

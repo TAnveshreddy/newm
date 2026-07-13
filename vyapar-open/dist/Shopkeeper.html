@@ -684,8 +684,15 @@ function stockValue() {
   return round2(v);
 }
 
+function isLowStock(it) {
+  if (it.type === 'service') return false;
+  const stock = itemStock(it.id);
+  // out of stock always alerts; otherwise alert at/below the item's min level
+  return stock <= 0 || (num(it.minStock) > 0 && stock <= num(it.minStock));
+}
+
 function lowStockItems() {
-  return state.items.filter(it => it.type !== 'service' && num(it.minStock) > 0 && itemStock(it.id) <= num(it.minStock));
+  return state.items.filter(isLowStock);
 }
 
 /* ---------- txn helpers ---------- */
@@ -993,7 +1000,7 @@ function renderItems() {
 
   let rows = list.map(it => {
     const stock = itemStock(it.id);
-    const isLow = it.type !== 'service' && num(it.minStock) > 0 && stock <= num(it.minStock);
+    const isLow = isLowStock(it);
     return '<tr class="rowlink" onclick="openItemDetail(\'' + it.id + '\')">' +
       '<td><strong>' + esc(it.name) + '</strong><div class="sub">' + [it.brand, it.category, it.hsn ? 'HSN ' + it.hsn : ''].filter(Boolean).map(esc).join(' · ') + '</div></td>' +
       '<td><span class="tag">' + (it.type === 'service' ? 'Service' : 'Product') + '</span></td>' +
@@ -2026,7 +2033,7 @@ function renderProductPicker() {
     .slice(0, 12);
   box.innerHTML = matches.length ? matches.map(it => {
     const stock = it.type === 'service' ? null : itemStock(it.id);
-    const low = stock !== null && num(it.minStock) > 0 && stock <= num(it.minStock);
+    const low = stock !== null && isLowStock(it);
     return '<button class="product-chip' + (stock !== null && stock <= 0 ? ' out' : '') + '" onclick="billAddItem(\'' + it.id + '\')">' +
       '<span class="pc-name">' + esc(it.name) + '</span>' +
       '<span class="pc-meta">' + fmtMoney(it.salePrice) + (stock !== null ? ' · <span class="' + (low ? 'neg' : '') + '">' + fmtQty(stock) + ' ' + esc(it.unit) + '</span>' : '') + '</span></button>';
