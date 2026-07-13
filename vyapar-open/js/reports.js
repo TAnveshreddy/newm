@@ -61,8 +61,10 @@ function renderReports() {
       '<option value="">— select —</option>' +
       state.parties.slice().sort((a, b) => a.name.localeCompare(b.name)).map(p => '<option value="' + p.id + '"' + (repState.partyId === p.id ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('') +
       '</select></label>' : '') +
-    '<button class="btn ghost" style="margin-left:auto" onclick="exportCurrentReport()">⬇ Export CSV</button>' +
-    '</div><div id="repBody"></div></div>';
+    '<span style="margin-left:auto;display:flex;gap:8px">' +
+    '<button class="btn ghost" onclick="exportDetailedSales()" title="Every bill item in the date range: customer, item, brand, received, due, profit">⬇ Detailed CSV</button>' +
+    '<button class="btn ghost" onclick="exportCurrentReport()">⬇ Export CSV</button>' +
+    '</span></div><div id="repBody"></div></div>';
 
   el('repBody').innerHTML = buildReport().html;
 }
@@ -395,4 +397,36 @@ function exportCurrentReport() {
   const c = window._lastReportCSV;
   if (!c || !c.headers.length) { toast('Nothing to export', 'error'); return; }
   exportTableCSV(c.name, c.headers, c.rows);
+}
+
+/* Bill-item level export for the selected date range.
+   Bill-level amounts (Bill Total / Received / Due) are written only on the
+   first row of each bill so that summing those columns in Excel stays correct. */
+function exportDetailedSales() {
+  const from = repState.from, to = repState.to;
+  const bills = txnsIn(['SALE'], from, to);
+  if (!bills.length) { toast('No bills in the selected date range', 'error'); return; }
+  const headers = ['Date', 'Bill No', 'Customer Name', 'Contact Number', 'Referred By',
+    'Item', 'Brand', 'Description', 'Qty', 'Unit', 'Rate',
+    'Line Sales (incl GST)', 'Line Profit/Loss',
+    'Bill Total', 'Received', 'Due', 'Status'];
+  const rows = [];
+  for (const t of bills) {
+    const p = t.partyId ? getParty(t.partyId) : null;
+    const discFactor = 1 - num(t.discountPct || 0) / 100;
+    const due = round2(Math.max(0, num(t.total) - num(t.paid)));
+    (t.lines || []).forEach((l, i) => {
+      const lineSales = round2((num(l.amount) + num(l.tax)) * discFactor);
+      const lineProfit = round2(num(l.amount) * discFactor - lineCost(l) * num(l.qty));
+      rows.push([
+        fmtDate(t.date), t.number,
+        p ? p.name : 'Cash Sale', p ? (p.phone || '') : '', t.referredBy || '',
+        l.name, l.brand || '', l.description || '', num(l.qty), l.unit || '', num(l.rate),
+        lineSales, lineProfit,
+        i === 0 ? num(t.total) : '', i === 0 ? num(t.paid) : '', i === 0 ? due : '',
+        i === 0 ? txnStatus(t) : ''
+      ]);
+    });
+  }
+  exportTableCSV('sales-detailed-' + from + '-to-' + to + '.csv', headers, rows);
 }
