@@ -268,6 +268,9 @@ label input, label select, label textarea { margin-top: 4px; font-weight: 400; }
 .rtab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 .rfilters { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-bottom: 14px; }
 .rfilters label { display: flex; align-items: center; gap: 6px; }
+.radio-group { display: flex; gap: 16px; align-items: center; padding: 6px 14px; border: 1px solid var(--baseline); border-radius: 999px; background: var(--surface); }
+.radio-opt { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--ink-2); }
+.radio-opt input { width: auto; accent-color: var(--primary); cursor: pointer; }
 .rfilters input, .rfilters select { width: auto; }
 .presets { display: flex; gap: 6px; }
 

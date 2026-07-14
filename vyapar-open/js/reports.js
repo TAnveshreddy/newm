@@ -22,7 +22,7 @@ const REPORTS = [
   ['gst', 'GST Summary']
 ];
 
-let repState = { key: 'daily', from: addDays(todayStr(), -29), to: todayStr(), partyId: '' };
+let repState = { key: 'daily', from: addDays(todayStr(), -29), to: todayStr(), partyId: '', stockSearch: '', stockFilter: 'all' };
 
 /* switching report picks a sensible default range for its granularity */
 function repSetKey(key) {
@@ -66,6 +66,43 @@ function renderReports() {
     '</span></div><div id="repBody"></div></div>';
 
   el('repBody').innerHTML = buildReport().html;
+  if (repState.key === 'stock') renderStockTable();
+}
+
+/* Stock Availability table — filtered by the search box and All/Stock/No Stock radios.
+   Column naming per shop convention: Item = product name, Product = category. */
+function renderStockTable() {
+  const wrap = el('stockTblWrap');
+  if (!wrap) return;
+  const q = (repState.stockSearch || '').trim().toLowerCase();
+  const f = repState.stockFilter || 'all';
+  const severity = (it, stock) => stock <= 0 ? 0 : isLowStock(it) ? 1 : 2;
+  const items = state.items.filter(i => i.type !== 'service')
+    .map(it => ({ it: it, stock: itemStock(it.id) }))
+    .filter(({ it }) => !q || it.name.toLowerCase().includes(q) ||
+      (it.brand || '').toLowerCase().includes(q) || (it.category || '').toLowerCase().includes(q))
+    .filter(({ stock }) => f === 'all' || (f === 'stock' ? stock > 0 : stock <= 0))
+    .sort((a, b) => severity(a.it, a.stock) - severity(b.it, b.stock) || a.it.name.localeCompare(b.it.name));
+
+  let totVal = 0;
+  const rows = items.map(({ it, stock }) => {
+    const val = Math.max(0, stock) * num(it.purchasePrice || it.salePrice);
+    totVal += val;
+    const avail = stock <= 0 ? '<span class="badge bad">No Stock</span>'
+      : isLowStock(it) ? '<span class="badge warn">▲ ' + fmtQty(stock) + ' ' + esc(it.unit) + '</span>'
+        : fmtQty(stock) + ' ' + esc(it.unit);
+    return [esc(it.name), esc(it.category || ''), esc(it.brand || ''), avail, fmtMoney(val)];
+  });
+  wrap.innerHTML = tbl([['Item'], ['Product'], ['Brand'], ['Available Stock', 'r'], ['Stock Value', 'r']], rows,
+    ['Total (' + items.length + ' items)', '', '', '', fmtMoney(totVal)]);
+
+  window._lastReportCSV = {
+    name: 'stock-availability.csv',
+    headers: ['Item', 'Product', 'Brand', 'AvailableStock', 'Status', 'StockValue'],
+    rows: items.map(({ it, stock }) => [it.name, it.category, it.brand || '',
+      Math.max(0, stock), stock <= 0 ? 'No Stock' : isLowStock(it) ? 'Low Stock' : 'In Stock',
+      round2(Math.max(0, stock) * num(it.purchasePrice || it.salePrice))])
+  };
 }
 
 function setRange(daysBack) { repState.to = todayStr(); repState.from = addDays(todayStr(), -daysBack); renderReports(); }
@@ -257,26 +294,17 @@ function buildReport() {
   }
 
   else if (k === 'stock') {
-    // one combined stock-availability report: No Stock first, then Low, then In Stock
-    const severity = (it, stock) => stock <= 0 ? 0 : isLowStock(it) ? 1 : 2;
-    const items = state.items.filter(i => i.type !== 'service')
-      .map(it => ({ it: it, stock: itemStock(it.id) }))
-      .sort((a, b) => severity(a.it, a.stock) - severity(b.it, b.stock) || a.it.name.localeCompare(b.it.name));
-    let totVal = 0;
-    const rows = items.map(({ it, stock }) => {
-      const val = Math.max(0, stock) * num(it.purchasePrice || it.salePrice);
-      totVal += val;
-      const avail = stock <= 0 ? '<span class="badge bad">No Stock</span>'
-        : isLowStock(it) ? '<span class="badge warn">▲ ' + fmtQty(stock) + ' ' + esc(it.unit) + '</span>'
-          : fmtQty(stock) + ' ' + esc(it.unit);
-      return [esc(it.name), esc(it.category || ''), esc(it.brand || ''), avail, fmtMoney(val)];
-    });
-    html = tbl([['Product'], ['Category'], ['Brand'], ['Available Stock', 'r'], ['Stock Value', 'r']], rows,
-      ['Total', '', '', '', fmtMoney(totVal)]);
-    csv.headers = ['Product', 'Category', 'Brand', 'AvailableStock', 'Status', 'StockValue'];
-    csv.rows = items.map(({ it, stock }) => [it.name, it.category, it.brand || '',
-      Math.max(0, stock), stock <= 0 ? 'No Stock' : isLowStock(it) ? 'Low Stock' : 'In Stock',
-      round2(Math.max(0, stock) * num(it.purchasePrice || it.salePrice))]);
+    // controls live outside the table wrapper so typing in search never
+    // rebuilds (and un-focuses) the search box — only the table refreshes
+    const f = repState.stockFilter || 'all';
+    const radio = (val, label) =>
+      '<label class="radio-opt"><input type="radio" name="st_filter" value="' + val + '"' +
+      (f === val ? ' checked' : '') + ' onchange="repState.stockFilter=this.value;renderStockTable()"> ' + label + '</label>';
+    html = '<div class="rfilters" style="margin-bottom:4px">' +
+      '<input id="st_stocksearch" class="search" placeholder="Search item / brand…" value="' + esc(repState.stockSearch || '') + '" oninput="repState.stockSearch=this.value;renderStockTable()">' +
+      '<span class="radio-group">' + radio('all', 'All') + radio('stock', 'Stock') + radio('nostock', 'No Stock') + '</span>' +
+      '</div><div id="stockTblWrap"></div>';
+    // csv is produced by renderStockTable so the export matches the filters
   }
 
   else if (k === 'productwise' || k === 'categorywise') {

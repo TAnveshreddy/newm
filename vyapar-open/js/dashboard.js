@@ -85,7 +85,7 @@ function renderDashboard() {
     '<div class="card"><div class="page-head" style="margin-bottom:8px"><h3 class="card-title" style="margin:0">Stock Availability ' +
     (low.length ? '<span class="badge bad">' + low.length + ' need attention</span>' : '') + '</h3>' +
     '<button class="btn tiny ghost" onclick="repState.key=\'stock\';go(\'reports\')">Full report →</button></div>' +
-    (availRows ? '<div class="table-wrap"><table><thead><tr><th>Product</th><th>Category</th><th>Brand</th><th class="r">Available Stock</th></tr></thead><tbody>' +
+    (availRows ? '<div class="table-wrap"><table><thead><tr><th>Item</th><th>Product</th><th>Brand</th><th class="r">Available Stock</th></tr></thead><tbody>' +
       availRows + '</tbody></table></div>' +
       (availItems.length > 10 ? '<p class="sub">Showing 10 of ' + availItems.length + ' products — open the full report for all.</p>' : '')
       : '<p class="empty">No products yet — add products in Inventory.</p>') +
