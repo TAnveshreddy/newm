@@ -6,7 +6,7 @@ const NAV = [
   ['billing', '🧾', 'Billing'],
   ['items', '📦', 'Inventory'],
   ['reports', '📊', 'Reports'],
-  ['parties', '👥', 'Customers & Distributors'],
+  ['parties', '👥', 'Distributors & Suppliers'],
   ['estimates', '📋', 'Estimates'],
   ['purchases', '🛒', 'Purchases'],
   ['returns', '↩️', 'Cr/Dr Notes'],

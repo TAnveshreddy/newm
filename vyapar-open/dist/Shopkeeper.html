@@ -871,7 +871,7 @@ function renderParties() {
     const dir = bal > 0 ? 'You will get' : bal < 0 ? 'You will pay' : '—';
     return '<tr class="rowlink" onclick="openPartyLedger(\'' + p.id + '\')">' +
       '<td><strong>' + esc(p.name) + '</strong><div class="sub">' + esc(p.phone || '') + '</div></td>' +
-      '<td><span class="tag">' + (p.type === 'supplier' ? 'Distributor' : p.type === 'both' ? 'Both' : 'Customer') + '</span></td>' +
+      '<td><span class="tag">' + (p.type === 'supplier' ? 'Supplier' : p.type === 'both' ? 'Both' : 'Distributor') + '</span></td>' +
       '<td>' + esc(p.gstin || '—') + '</td>' +
       '<td class="r ' + cls + '">' + fmtMoney(Math.abs(bal)) + '<div class="sub">' + dir + '</div></td>' +
       '<td class="r actions" onclick="event.stopPropagation()">' +
@@ -881,7 +881,7 @@ function renderParties() {
   if (!rows) rows = '<tr><td colspan="5" class="empty">No parties yet. Add your first customer or supplier.</td></tr>';
 
   el('view').innerHTML =
-    '<div class="page-head"><h2>Customers &amp; Distributors</h2>' +
+    '<div class="page-head"><h2>Distributors &amp; Suppliers</h2>' +
     '<div class="head-actions">' +
     '<input class="search" placeholder="Search name or phone…" value="' + esc(window._partySearch || '') + '" oninput="_partySearch=this.value;renderParties()">' +
     '<button class="btn ghost" onclick="openImportModal(\'parties\')">⬆ Import</button>' +
@@ -903,7 +903,7 @@ function openPartyForm(id) {
     '<label>Email<input id="pf_email" type="email" value="' + esc(p ? p.email : '') + '"></label>' +
     '<label>GSTIN<input id="pf_gstin" maxlength="15" style="text-transform:uppercase" value="' + esc(p ? p.gstin : '') + '"></label>' +
     '<label>Party Type<select id="pf_type">' +
-    [['customer', 'Customer'], ['supplier', 'Distributor'], ['both', 'Both']].map(([v, lbl]) => '<option value="' + v + '"' + (p && p.type === v ? ' selected' : '') + '>' + lbl + '</option>').join('') +
+    [['customer', 'Distributor'], ['supplier', 'Supplier'], ['both', 'Both']].map(([v, lbl]) => '<option value="' + v + '"' + (p && p.type === v ? ' selected' : '') + '>' + lbl + '</option>').join('') +
     '</select></label>' +
     '<label class="span2">Billing Address<textarea id="pf_addr" rows="2">' + esc(p ? p.address : '') + '</textarea></label>' +
     '<label>Opening Balance<input id="pf_open" type="number" step="0.01" min="0" value="' + (p ? num(p.openingBalance) : 0) + '"></label>' +
@@ -979,7 +979,7 @@ function openPartyLedger(id) {
   }
   const finalBal = partyBalance(id);
   el('view').innerHTML =
-    '<div class="page-head"><h2><a class="crumb" onclick="go(\'parties\')">Customers &amp; Distributors</a> › ' + esc(p.name) + '</h2>' +
+    '<div class="page-head"><h2><a class="crumb" onclick="go(\'parties\')">Distributors &amp; Suppliers</a> › ' + esc(p.name) + '</h2>' +
     '<div class="head-actions">' +
     '<button class="btn ghost" onclick="openPartyForm(\'' + id + '\')">Edit Party</button>' +
     '<button class="btn primary" onclick="openTxnForm(\'PAYMENT_IN\',null,\'' + id + '\')">+ Payment In</button>' +
@@ -1756,7 +1756,7 @@ const IMPORT_DEFS = {
       ['Home Delivery', 'Services', '', 'SERVICE', '9965', 'Delivery within city limits', '50', '0', '18', '', '', 'service']]
   },
   parties: {
-    title: 'Import Customers / Distributors',
+    title: 'Import Distributors / Suppliers',
     template: 'parties-import-template.csv',
     columns: [
       { key: 'name', label: 'Party Name', required: true, match: ['name', 'partyname', 'party', 'customername', 'customer', 'suppliername', 'businessname'] },
@@ -2905,7 +2905,7 @@ const NAV = [
   ['billing', '🧾', 'Billing'],
   ['items', '📦', 'Inventory'],
   ['reports', '📊', 'Reports'],
-  ['parties', '👥', 'Customers & Distributors'],
+  ['parties', '👥', 'Distributors & Suppliers'],
   ['estimates', '📋', 'Estimates'],
   ['purchases', '🛒', 'Purchases'],
   ['returns', '↩️', 'Cr/Dr Notes'],
