@@ -145,7 +145,7 @@ const IMPORT_DEFS = {
       ['Home Delivery', 'Services', '', 'SERVICE', '9965', 'Delivery within city limits', '50', '0', '18', '', '', 'service']]
   },
   parties: {
-    title: 'Import Customers / Suppliers',
+    title: 'Import Customers / Distributors',
     template: 'parties-import-template.csv',
     columns: [
       { key: 'name', label: 'Party Name', required: true, match: ['name', 'partyname', 'party', 'customername', 'customer', 'suppliername', 'businessname'] },
