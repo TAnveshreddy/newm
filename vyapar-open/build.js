@@ -17,4 +17,6 @@ html = html.replace(/(\s*<script src="js\/[a-z]+\.js"><\/script>)+/g, () => '\n 
 
 fs.mkdirSync('dist', { recursive: true });
 fs.writeFileSync(path.join('dist', 'Shopkeeper.html'), html);
-console.log('Built dist/Shopkeeper.html (' + fs.statSync('dist/Shopkeeper.html').size + ' bytes)');
+// identical copy named index.html so static hosts (Netlify, GitHub Pages) serve the site root
+fs.writeFileSync(path.join('dist', 'index.html'), html);
+console.log('Built dist/Shopkeeper.html + dist/index.html (' + fs.statSync('dist/Shopkeeper.html').size + ' bytes)');
