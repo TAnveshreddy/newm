@@ -24,7 +24,7 @@ function renderParties() {
   if (!rows) rows = '<tr><td colspan="5" class="empty">No parties yet. Add your first customer or supplier.</td></tr>';
 
   el('view').innerHTML =
-    '<div class="page-head"><h2>Parties</h2>' +
+    '<div class="page-head"><h2>Customers &amp; Suppliers</h2>' +
     '<div class="head-actions">' +
     '<input class="search" placeholder="Search name or phone…" value="' + esc(window._partySearch || '') + '" oninput="_partySearch=this.value;renderParties()">' +
     '<button class="btn ghost" onclick="openImportModal(\'parties\')">⬆ Import</button>' +
@@ -122,7 +122,7 @@ function openPartyLedger(id) {
   }
   const finalBal = partyBalance(id);
   el('view').innerHTML =
-    '<div class="page-head"><h2><a class="crumb" onclick="go(\'parties\')">Parties</a> › ' + esc(p.name) + '</h2>' +
+    '<div class="page-head"><h2><a class="crumb" onclick="go(\'parties\')">Customers &amp; Suppliers</a> › ' + esc(p.name) + '</h2>' +
     '<div class="head-actions">' +
     '<button class="btn ghost" onclick="openPartyForm(\'' + id + '\')">Edit Party</button>' +
     '<button class="btn primary" onclick="openTxnForm(\'PAYMENT_IN\',null,\'' + id + '\')">+ Payment In</button>' +
