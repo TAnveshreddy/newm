@@ -271,6 +271,10 @@ label input, label select, label textarea { margin-top: 4px; font-weight: 400; }
 .radio-group { display: flex; gap: 16px; align-items: center; padding: 6px 14px; border: 1px solid var(--baseline); border-radius: 999px; background: var(--surface); }
 .radio-opt { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--ink-2); }
 .radio-opt input { width: auto; accent-color: var(--primary); cursor: pointer; }
+
+/* scrollable table body (~10 rows visible) with sticky header */
+.scroll-y { max-height: 420px; overflow-y: auto; }
+.scroll-y thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; box-shadow: 0 1px 0 var(--baseline); }
 .rfilters input, .rfilters select { width: auto; }
 .presets { display: flex; gap: 6px; }
 

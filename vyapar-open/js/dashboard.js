@@ -41,20 +41,9 @@ function renderDashboard() {
       '<td><span class="badge ' + (st === 'Paid' ? 'ok' : st === 'Partial' ? 'warn' : 'bad') + '">' + st + '</span></td></tr>';
   }).join('') || '<tr><td colspan="5" class="empty">No bills yet — create your first bill!</td></tr>';
 
-  // stock availability (same as the report: No Stock first, then Low, then In Stock)
-  const severity = (it, stock) => stock <= 0 ? 0 : isLowStock(it) ? 1 : 2;
-  const availItems = state.items.filter(i => i.type !== 'service')
-    .map(it => ({ it: it, stock: itemStock(it.id) }))
-    .sort((a, b) => severity(a.it, a.stock) - severity(b.it, b.stock) || a.it.name.localeCompare(b.it.name));
-  const availRows = availItems.slice(0, 10).map(({ it, stock }) =>
-    '<tr class="rowlink" onclick="openItemDetail(\'' + it.id + '\')">' +
-    '<td><strong>' + esc(it.name) + '</strong></td>' +
-    '<td>' + esc(it.category || '') + '</td>' +
-    '<td>' + esc(it.brand || '') + '</td>' +
-    '<td class="r">' + (stock <= 0 ? '<span class="badge bad">No Stock</span>'
-      : isLowStock(it) ? '<span class="badge warn">▲ ' + fmtQty(stock) + ' ' + esc(it.unit) + '</span>'
-        : fmtQty(stock) + ' ' + esc(it.unit)) + '</td></tr>'
-  ).join('');
+  const dradio = (val, label) =>
+    '<label class="radio-opt"><input type="radio" name="dash_st_filter" value="' + val + '"' +
+    ((window._dashStockF || 'all') === val ? ' checked' : '') + ' onchange="_dashStockF=this.value;renderDashStockTable()"> ' + label + '</label>';
 
   const empty = state.txns.length === 0 && state.parties.length === 0 && state.items.length === 0;
 
@@ -84,16 +73,50 @@ function renderDashboard() {
     svgBarChart(chartData, { height: 220 }) + '</div>' +
     '<div class="card"><div class="page-head" style="margin-bottom:8px"><h3 class="card-title" style="margin:0">Stock Availability ' +
     (low.length ? '<span class="badge bad">' + low.length + ' need attention</span>' : '') + '</h3>' +
-    '<button class="btn tiny ghost" onclick="repState.key=\'stock\';go(\'reports\')">Full report →</button></div>' +
-    (availRows ? '<div class="table-wrap"><table><thead><tr><th>Item</th><th>Product</th><th>Brand</th><th class="r">Available Stock</th></tr></thead><tbody>' +
-      availRows + '</tbody></table></div>' +
-      (availItems.length > 10 ? '<p class="sub">Showing 10 of ' + availItems.length + ' products — open the full report for all.</p>' : '')
-      : '<p class="empty">No products yet — add products in Inventory.</p>') +
+    '<div class="head-actions">' +
+    '<input id="dash_stocksearch" class="search" placeholder="Search item / brand…" value="' + esc(window._dashStockQ || '') + '" oninput="_dashStockQ=this.value;renderDashStockTable()">' +
+    '<span class="radio-group">' + dradio('all', 'All') + dradio('stock', 'Stock') + dradio('nostock', 'No Stock') + '</span>' +
+    '<button class="btn tiny ghost" onclick="repState.key=\'stock\';go(\'reports\')">Full report →</button></div></div>' +
+    '<div id="dashStockWrap"></div>' +
     '</div>' +
     '<div class="card"><div class="page-head" style="margin-bottom:8px"><h3 class="card-title" style="margin:0">Recent Bills</h3>' +
     '<button class="btn tiny ghost" onclick="go(\'billing\')">View all →</button></div>' +
     '<div class="table-wrap"><table><thead><tr><th>Date</th><th>Bill No</th><th>Customer</th><th class="r">Amount</th><th>Status</th></tr></thead><tbody>' +
     billRows + '</tbody></table></div></div>';
+
+  renderDashStockTable();
+}
+
+/* Dashboard stock-availability table — same search + All/Stock/No Stock filter
+   as the report; scrolls (sticky header) when more than ~10 rows. */
+function renderDashStockTable() {
+  const wrap = el('dashStockWrap');
+  if (!wrap) return;
+  const q = (window._dashStockQ || '').trim().toLowerCase();
+  const f = window._dashStockF || 'all';
+  const severity = (it, stock) => stock <= 0 ? 0 : isLowStock(it) ? 1 : 2;
+  const items = state.items.filter(i => i.type !== 'service')
+    .map(it => ({ it: it, stock: itemStock(it.id) }))
+    .filter(({ it }) => !q || it.name.toLowerCase().includes(q) ||
+      (it.brand || '').toLowerCase().includes(q) || (it.category || '').toLowerCase().includes(q))
+    .filter(({ stock }) => f === 'all' || (f === 'stock' ? stock > 0 : stock <= 0))
+    .sort((a, b) => severity(a.it, a.stock) - severity(b.it, b.stock) || a.it.name.localeCompare(b.it.name));
+
+  const rows = items.map(({ it, stock }) =>
+    '<tr class="rowlink" onclick="openItemDetail(\'' + it.id + '\')">' +
+    '<td><strong>' + esc(it.name) + '</strong></td>' +
+    '<td>' + esc(it.category || '') + '</td>' +
+    '<td>' + esc(it.brand || '') + '</td>' +
+    '<td class="r">' + (stock <= 0 ? '<span class="badge bad">No Stock</span>'
+      : isLowStock(it) ? '<span class="badge warn">▲ ' + fmtQty(stock) + ' ' + esc(it.unit) + '</span>'
+        : fmtQty(stock) + ' ' + esc(it.unit)) + '</td></tr>'
+  ).join('');
+
+  wrap.innerHTML = rows ?
+    '<div class="table-wrap scroll-y"><table><thead><tr><th>Item</th><th>Product</th><th>Brand</th><th class="r">Available Stock</th></tr></thead><tbody>' +
+    rows + '</tbody></table></div>' +
+    '<p class="sub">' + items.length + ' product' + (items.length === 1 ? '' : 's') + (items.length > 10 ? ' — scroll for more' : '') + '</p>'
+    : '<p class="empty">' + (state.items.length ? 'No matching products.' : 'No products yet — add products in Inventory.') + '</p>';
 }
 
 function confirmDemo() {
