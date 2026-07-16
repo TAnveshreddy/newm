@@ -352,11 +352,46 @@ function viewTxn(id) {
     (t.notes ? '<p class="sub">Note: ' + esc(t.notes) + '</p>' : '') +
     '</div>' +
     '<div class="modal-foot">' +
-    ((t.lines || []).length ? '<button class="btn ghost" onclick="printTxn(\'' + t.id + '\')">🖨 Print / PDF</button>' : '') +
+    ((t.lines || []).length ? '<button class="btn wa" onclick="waShareTxn(\'' + t.id + '\')">🟢 WhatsApp</button>' +
+      '<button class="btn ghost" onclick="printTxn(\'' + t.id + '\')">🖨 Print / PDF</button>' : '') +
     '<button class="btn ghost" onclick="closeModal();openTxnForm(\'' + t.type + '\',\'' + t.id + '\')">Edit</button>' +
     '<button class="btn primary" onclick="closeModal()">Done</button></div>',
     true
   );
+}
+
+/* Share a bill summary via WhatsApp. Uses the wa.me deep link — opens
+   WhatsApp app on phones and WhatsApp Web on desktop. If the party has a
+   phone number the chat is pre-selected, otherwise WhatsApp asks to pick. */
+function waShareTxn(id) {
+  const t = getTxn(id);
+  if (!t) return;
+  const s = state.settings;
+  const p = t.partyId ? getParty(t.partyId) : null;
+  let msg = '*' + s.businessName + '*\n';
+  msg += (t.type === 'ESTIMATE' ? 'Estimate' : 'Bill') + ' *' + t.number + '* | ' + fmtDate(t.date) + '\n';
+  if (p) msg += 'To: ' + p.name + '\n';
+  msg += '------------------------\n';
+  for (const l of (t.lines || [])) {
+    msg += '• ' + l.name + (l.brand ? ' (' + l.brand + ')' : '') + '  x' + fmtQty(l.qty) +
+      ' = ₹' + fmtMoney(num(l.amount) + num(l.tax), false) + '\n';
+  }
+  msg += '------------------------\n';
+  if (num(t.discount)) msg += 'Discount: -₹' + fmtMoney(t.discount, false) + '\n';
+  if (num(t.taxAmount)) msg += 'GST: ₹' + fmtMoney(t.taxAmount, false) + '\n';
+  msg += '*Total: ₹' + fmtMoney(t.total, false) + '*\n';
+  if (t.type !== 'ESTIMATE') {
+    msg += 'Received: ₹' + fmtMoney(t.paid, false) + '\n';
+    const due = Math.max(0, num(t.total) - num(t.paid));
+    if (due > 0) msg += '*Balance Due: ₹' + fmtMoney(due, false) + '*\n';
+  }
+  if (s.upiId) msg += 'Pay via UPI: ' + s.upiId + '\n';
+  msg += 'Thank you! 🙏';
+  let phone = p && p.phone ? p.phone.replace(/\D/g, '') : '';
+  if (phone.length === 10) phone = '91' + phone; // default Indian country code
+  const url = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(msg);
+  const w = window.open(url, '_blank');
+  if (!w) toast('Pop-up blocked — allow pop-ups to share on WhatsApp', 'error');
 }
 
 function printTxn(id) {

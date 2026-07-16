@@ -292,6 +292,7 @@ function renderBillList() {
       '<td class="r">' + fmtMoney(t.total) + '</td>' +
       '<td><span class="badge ' + (st === 'Paid' ? 'ok' : st === 'Partial' ? 'warn' : 'bad') + '">' + st + '</span></td>' +
       '<td class="r actions" onclick="event.stopPropagation()">' +
+      '<button class="btn tiny wa" onclick="waShareTxn(\'' + t.id + '\')">WhatsApp</button> ' +
       '<button class="btn tiny ghost" onclick="printTxn(\'' + t.id + '\')">Print</button> ' +
       '<button class="btn tiny ghost" onclick="openTxnForm(\'SALE\',\'' + t.id + '\')">Edit</button> ' +
       '<button class="btn tiny danger-ghost" onclick="askDeleteTxn(\'' + t.id + '\')">Delete</button></td></tr>';
