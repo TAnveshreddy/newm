@@ -95,12 +95,13 @@ body.modal-open { overflow: hidden; }
 /* ---------- main ---------- */
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .topbar {
-  display: none; align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: 10px;
   background: var(--surface); border-bottom: 1px solid var(--grid); padding: 8px 12px;
   position: sticky; top: 0; z-index: 20;
 }
 .topbar-title { font-weight: 700; flex: 1; }
-.hamburger { background: none; border: 1px solid var(--grid); border-radius: 8px; font-size: 18px; padding: 3px 10px; color: var(--ink); cursor: pointer; }
+.hamburger { display: none; background: none; border: 1px solid var(--grid); border-radius: 8px; font-size: 18px; padding: 3px 10px; color: var(--ink); cursor: pointer; }
+#syncInfo { margin-right: 2px; }
 main#view { padding: 20px 24px 60px; max-width: 1200px; width: 100%; margin: 0 auto; }
 
 .page-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
@@ -312,7 +313,7 @@ label input, label select, label textarea { margin-top: 4px; font-weight: 400; }
     position: fixed; z-index: 60; height: 100vh; left: -240px; transition: left 0.2s;
   }
   .sidebar.open { left: 0; box-shadow: 0 0 0 100vmax rgba(0,0,0,0.35); }
-  .topbar { display: flex; }
+  .hamburger { display: block; }
   main#view { padding: 14px 12px 60px; }
   .grid-2 { grid-template-columns: 1fr; }
   .form-grid, .form-grid-4 { grid-template-columns: 1fr; }

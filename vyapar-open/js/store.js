@@ -64,6 +64,8 @@ function load() {
 
 function save() {
   try {
+    state.meta = state.meta || {};
+    state.meta.updatedAt = Date.now();
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
   } catch (e) {
     toast('Could not save data: ' + e.message, 'error');

@@ -61,10 +61,13 @@ function boot() {
     '<div class="main"><header class="topbar">' +
     '<button class="hamburger" onclick="el(\'sidebar\').classList.toggle(\'open\')">☰</button>' +
     '<div class="topbar-title">Shopkeeper</div>' +
+    '<span class="sub" id="syncInfo"></span>' +
+    '<button class="btn tiny wa" id="syncBtn" onclick="syncNow()">🔄 Sync</button>' +
     '<button class="btn ghost tiny" onclick="exportBackup()">⬇ Backup</button>' +
     '</header><main id="view"></main></div>';
 
   applyTheme();
+  updateSyncUI();
   const hash = location.hash.replace('#', '');
   if (NAV.some(n => n[0] === hash)) currentPage = hash;
   route();

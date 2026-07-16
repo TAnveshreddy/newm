@@ -23,6 +23,14 @@ function renderSettings() {
     '<label class="switch-row"><input type="checkbox" id="st_dark"' + (s.theme === 'dark' ? ' checked' : '') + ' onchange="state.settings.theme=this.checked?\'dark\':\'light\';save();applyTheme()"> Dark theme</label>' +
     '</div>' +
 
+    '<div class="card"><h3 class="card-title">🔄 Google Sheet Sync</h3>' +
+    '<p class="sub">' + (s.syncUrl ? 'Connected' + (s.syncEmail ? ' as <strong>' + esc(s.syncEmail) + '</strong>' : '') + '. Use the Sync button (top right) on any device with the same link to see the same data.' : 'Not set up. Sync saves your data to a Google Sheet in your own Google account, so mobile and PC show the same data.') + '</p>' +
+    '<div class="head-actions" style="margin-top:10px;flex-wrap:wrap">' +
+    '<button class="btn primary" onclick="openSyncSetup()">' + (s.syncUrl ? 'Edit Sync Settings' : 'Set Up Sync') + '</button>' +
+    (s.syncUrl ? '<button class="btn ghost" onclick="syncNow(\'push\')">⬆ Upload Now</button>' +
+      '<button class="btn ghost" onclick="syncNow(\'pull\')">⬇ Download Now</button>' : '') +
+    '</div></div>' +
+
     '<div class="card"><h3 class="card-title">Backup &amp; Restore</h3>' +
     '<p class="sub">All data is stored only in this browser (localStorage). Take regular backups — clearing browser data will erase everything.</p>' +
     '<div class="head-actions" style="margin-top:10px;flex-wrap:wrap">' +
