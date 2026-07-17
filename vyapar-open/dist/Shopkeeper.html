@@ -330,6 +330,38 @@ label input, label select, label textarea { margin-top: 4px; font-weight: 400; }
   .search { width: 140px; }
 }
 
+/* ---------- login (mobile + OTP) ---------- */
+.login-wrap {
+  flex: 1; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 20px; background: linear-gradient(160deg, var(--primary) 0%, var(--primary-strong) 55%, #7a0f13 100%);
+}
+.login-card {
+  width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 18px; padding: 30px 26px; text-align: center; box-shadow: 0 18px 50px rgba(0,0,0,0.30);
+}
+.login-logo {
+  width: 58px; height: 58px; margin: 0 auto 10px; border-radius: 16px; background: var(--primary);
+  color: #fff; font-weight: 800; font-size: 30px; display: flex; align-items: center; justify-content: center;
+}
+.login-title { margin: 0 0 4px; font-size: 22px; color: var(--ink); }
+.login-card label { display: block; font-size: 12px; font-weight: 600; color: var(--ink-2); margin: 14px 0 4px; }
+.login-card input {
+  width: 100%; padding: 11px 12px; border: 1px solid var(--baseline); border-radius: 10px;
+  font-size: 15px; background: var(--surface); color: var(--ink);
+}
+.login-phone { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.login-phone span {
+  padding: 11px 12px; border: 1px solid var(--baseline); border-radius: 10px;
+  font-size: 15px; font-weight: 600; color: var(--ink-2); background: var(--surface);
+}
+.login-btn { width: 100%; margin-top: 16px; padding: 12px; font-size: 15px; }
+.login-link { color: var(--primary); font-size: 13px; font-weight: 600; cursor: pointer; }
+.otp-note {
+  margin: 14px 0 2px; padding: 10px 12px; border: 1.5px dashed var(--primary); border-radius: 12px;
+  font-size: 13px; color: var(--ink-2); background: color-mix(in srgb, var(--primary) 6%, transparent);
+}
+.otp-code { font-size: 22px; letter-spacing: 5px; color: var(--primary); }
+
 </style>
 </head>
 <body>
@@ -2954,6 +2986,10 @@ function renderSettings() {
     '<button class="btn ghost" onclick="confirmDemo()">Load Demo Data</button>' +
     '<button class="btn danger" onclick="wipeAll()">Erase All Data</button></div></div>' +
 
+    '<div class="card"><h3 class="card-title">🔐 Login</h3>' +
+    '<p class="sub">Logged in on this device as <strong>+91 ' + esc((currentLogin() || {}).phone || '') + '</strong></p>' +
+    '<div class="head-actions" style="margin-top:10px"><button class="btn ghost" onclick="logout()">Log Out</button></div></div>' +
+
     '<div class="card"><h3 class="card-title">About</h3>' +
     '<p class="sub"><strong>Shopkeeper</strong> — free &amp; open-source business management (billing · inventory · GST). ' +
     'Works fully offline; no account, no server, no tracking. MIT licensed.</p></div>' +
@@ -3006,7 +3042,7 @@ const LAST_SYNC_KEY = 'shopkeeper_last_sync'; // kept outside state so syncing d
 const DRIVE_FILE_NAME = 'Shopkeeper Sync Data.json';
 const DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email';
 
-let _gToken = null, _gTokenExp = 0;
+let _gToken = null, _gTokenExp = 0, _gFresh = false;
 
 const APPS_SCRIPT_CODE =
 `function sheet_() {
@@ -3155,15 +3191,18 @@ function loadGsi() {
 }
 
 function getDriveToken(askConsent) {
-  if (_gToken && Date.now() < _gTokenExp - 60000) return Promise.resolve(_gToken);
+  if (_gToken && Date.now() < _gTokenExp - 60000) { _gFresh = false; return Promise.resolve(_gToken); }
   return loadGsi().then(() => new Promise((resolve, reject) => {
     const tc = google.accounts.oauth2.initTokenClient({
       client_id: state.settings.gClientId,
       scope: DRIVE_SCOPES,
+      // preselect the account this shop already backs up to
+      hint: state.settings.syncEmail || undefined,
       callback: (resp) => {
         if (resp && resp.access_token) {
           _gToken = resp.access_token;
           _gTokenExp = Date.now() + (num(resp.expires_in) || 3600) * 1000;
+          _gFresh = true;
           resolve(_gToken);
         } else reject(new Error((resp && resp.error) || 'Google sign-in failed'));
       },
@@ -3176,11 +3215,20 @@ function getDriveToken(askConsent) {
 }
 
 async function driveSync(force) {
-  const firstTime = !state.settings.syncEmail;
   let token;
   try { token = await getDriveToken(false); }
   catch (e) { token = await getDriveToken(true); } // silent refresh failed → ask the user
-  if (firstTime) { await fetchGoogleEmail(token); updateSyncUI(); }
+  if (_gFresh) {
+    // a newly issued token: make sure it is the SAME Google account this shop
+    // backs up to, so data never lands in a different account's Drive
+    const email = await fetchGoogleEmail(token);
+    const expected = state.settings.syncEmail;
+    if (email && expected && email !== expected) {
+      _gToken = null;
+      throw new Error('you chose ' + email + ' but this shop backs up to ' + expected + ' — please pick ' + expected);
+    }
+    if (email && !expected) { state.settings.syncEmail = email; persistQuiet(); updateSyncUI(); }
+  }
   const fileId = await driveFileId(token);
   const remote = (fileId && force !== 'push') ? await driveDownload(token, fileId) : null;
   await applySyncDecision(remote, force, () => driveUpload(token, fileId), 'your Google Drive');
@@ -3191,9 +3239,10 @@ async function fetchGoogleEmail(token) {
     const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + token } });
     if (res.ok) {
       const j = await res.json();
-      if (j.email) { state.settings.syncEmail = j.email; persistQuiet(); }
+      return j.email || '';
     }
   } catch (e) {}
+  return '';
 }
 
 async function driveFileId(token) {
@@ -3369,6 +3418,114 @@ function saveSyncSetup() {
 }
 
 
+/* VyaparOpen — auth.js : WhatsApp-style login (mobile number + OTP) and the
+   first-login "allow Google backup" step. Login is per-device and stored
+   outside the synced state, like a SIM registration.
+
+   Honest note: a real SMS needs a paid SMS gateway + server (this app has
+   neither), so the OTP is generated on this device and shown on screen —
+   it works like an app lock. Plugging in an SMS service later only needs
+   sendOtp() to be pointed at it. */
+'use strict';
+
+const LOGIN_KEY = 'shopkeeper_login'; // device-local, never synced
+
+let _otp = '', _otpPhone = '', _otpAt = 0;
+
+function currentLogin() {
+  try { return JSON.parse(localStorage.getItem(LOGIN_KEY) || 'null'); } catch (e) { return null; }
+}
+
+function isLoggedIn() {
+  const l = currentLogin();
+  return !!(l && l.phone);
+}
+
+function renderLogin() {
+  document.body.classList.remove('modal-open');
+  el('app').innerHTML =
+    '<div class="login-wrap"><div class="login-card">' +
+    '<div class="login-logo">S</div>' +
+    '<h1 class="login-title">Shopkeeper</h1>' +
+    '<p class="sub" style="margin-bottom:18px">Billing · Inventory · Khata — free &amp; works offline</p>' +
+    '<label style="text-align:left">Mobile Number' +
+    '<div class="login-phone"><span>+91</span>' +
+    '<input id="lg_phone" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" autocomplete="tel"' +
+    ' onkeydown="if(event.key===\'Enter\')sendOtp()"></div></label>' +
+    '<button class="btn primary login-btn" onclick="sendOtp()">Get OTP</button>' +
+    '<p class="sub" style="margin-top:14px">Your number stays on this device — no account, no server.</p>' +
+    '</div></div>';
+  const p = el('lg_phone');
+  p.focus();
+}
+
+function sendOtp() {
+  const phone = el('lg_phone') ? el('lg_phone').value.replace(/\D/g, '') : _otpPhone;
+  if (!/^[6-9]\d{9}$/.test(phone)) { toast('Enter a valid 10-digit mobile number', 'error'); return; }
+  _otpPhone = phone;
+  _otp = String(Math.floor(100000 + Math.random() * 900000));
+  _otpAt = Date.now();
+  renderOtpStep();
+}
+
+function renderOtpStep() {
+  el('app').innerHTML =
+    '<div class="login-wrap"><div class="login-card">' +
+    '<div class="login-logo">S</div>' +
+    '<h1 class="login-title">Verify OTP</h1>' +
+    '<p class="sub">OTP sent to <strong>+91 ' + esc(_otpPhone) + '</strong></p>' +
+    '<div class="otp-note">Your OTP: <strong class="otp-code">' + esc(_otp) + '</strong>' +
+    '<div class="sub" style="margin-top:4px">Shown here because no SMS service is connected — it works like an app lock. An SMS gateway can be added later.</div></div>' +
+    '<label style="text-align:left">Enter OTP' +
+    '<input id="lg_otp" inputmode="numeric" maxlength="6" placeholder="6-digit OTP" style="letter-spacing:6px;text-align:center;font-size:18px"' +
+    ' onkeydown="if(event.key===\'Enter\')verifyOtp()"></label>' +
+    '<button class="btn primary login-btn" onclick="verifyOtp()">Verify &amp; Login</button>' +
+    '<div style="margin-top:12px;display:flex;justify-content:space-between">' +
+    '<a class="login-link" onclick="renderLogin()">← Change number</a>' +
+    '<a class="login-link" onclick="sendOtp()">Resend OTP</a></div>' +
+    '</div></div>';
+  el('lg_otp').focus();
+}
+
+function verifyOtp() {
+  const v = el('lg_otp').value.trim();
+  if (Date.now() - _otpAt > 5 * 60 * 1000) { toast('OTP expired — tap Resend OTP', 'error'); return; }
+  if (v !== _otp) { toast('Wrong OTP — please check and try again', 'error'); return; }
+  try { localStorage.setItem(LOGIN_KEY, JSON.stringify({ phone: _otpPhone, at: Date.now() })); } catch (e) {}
+  // remember the shop's number on first ever login
+  if (!state.settings.phone) { state.settings.phone = _otpPhone; persistQuiet(); }
+  _otp = '';
+  // WhatsApp-style: on first login, ask to allow Google backup before opening
+  if (!state.settings.gClientId && !state.settings.syncUrl) renderSyncAsk();
+  else { bootApp(); syncNow(); } // sync already set up → open and sync silently
+}
+
+function renderSyncAsk() {
+  el('app').innerHTML =
+    '<div class="login-wrap"><div class="login-card">' +
+    '<div style="font-size:44px">☁️</div>' +
+    '<h1 class="login-title">Back up to Google?</h1>' +
+    '<p class="sub" style="margin:10px 0 18px">Allow Shopkeeper to save your data to <strong>your own Google account</strong> ' +
+    '(like WhatsApp backup). Then your mobile and PC always show the same bills, stock and khata.</p>' +
+    '<button class="btn primary login-btn" onclick="allowSyncSetup()">Allow — Connect Google</button>' +
+    '<button class="btn ghost login-btn" style="margin-top:10px" onclick="bootApp()">Not now — open the app</button>' +
+    '<p class="sub" style="margin-top:14px">You can set this up any time from Settings or the 🔄 Sync button.</p>' +
+    '</div></div>';
+}
+
+function allowSyncSetup() {
+  bootApp();
+  syncNow(); // no setup saved yet → opens the Google connect wizard; else Continue with Google
+}
+
+function logout() {
+  confirmDialog('Log out of this device? Your data stays saved here and in your Google backup.', () => {
+    localStorage.removeItem(LOGIN_KEY);
+    renderLogin();
+  });
+}
+
+
 /* VyaparOpen — app.js : navigation + boot */
 'use strict';
 
@@ -3419,6 +3576,12 @@ function applyTheme() {
 }
 
 function boot() {
+  syncBootstrap(); // picks up a shared #gcid=… sync link on new devices
+  if (!isLoggedIn()) { renderLogin(); return; }
+  bootApp();
+}
+
+function bootApp() {
   const app = el('app');
   app.innerHTML =
     '<aside class="sidebar" id="sidebar">' +
@@ -3438,7 +3601,6 @@ function boot() {
     '</header><main id="view"></main></div>';
 
   applyTheme();
-  syncBootstrap(); // picks up a shared #gcid=… sync link on new devices
   updateSyncUI();
   const hash = location.hash.replace('#', '');
   if (NAV.some(n => n[0] === hash)) currentPage = hash;

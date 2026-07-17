@@ -8,7 +8,7 @@ const LAST_SYNC_KEY = 'shopkeeper_last_sync'; // kept outside state so syncing d
 const DRIVE_FILE_NAME = 'Shopkeeper Sync Data.json';
 const DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email';
 
-let _gToken = null, _gTokenExp = 0;
+let _gToken = null, _gTokenExp = 0, _gFresh = false;
 
 const APPS_SCRIPT_CODE =
 `function sheet_() {
@@ -157,15 +157,18 @@ function loadGsi() {
 }
 
 function getDriveToken(askConsent) {
-  if (_gToken && Date.now() < _gTokenExp - 60000) return Promise.resolve(_gToken);
+  if (_gToken && Date.now() < _gTokenExp - 60000) { _gFresh = false; return Promise.resolve(_gToken); }
   return loadGsi().then(() => new Promise((resolve, reject) => {
     const tc = google.accounts.oauth2.initTokenClient({
       client_id: state.settings.gClientId,
       scope: DRIVE_SCOPES,
+      // preselect the account this shop already backs up to
+      hint: state.settings.syncEmail || undefined,
       callback: (resp) => {
         if (resp && resp.access_token) {
           _gToken = resp.access_token;
           _gTokenExp = Date.now() + (num(resp.expires_in) || 3600) * 1000;
+          _gFresh = true;
           resolve(_gToken);
         } else reject(new Error((resp && resp.error) || 'Google sign-in failed'));
       },
@@ -178,11 +181,20 @@ function getDriveToken(askConsent) {
 }
 
 async function driveSync(force) {
-  const firstTime = !state.settings.syncEmail;
   let token;
   try { token = await getDriveToken(false); }
   catch (e) { token = await getDriveToken(true); } // silent refresh failed → ask the user
-  if (firstTime) { await fetchGoogleEmail(token); updateSyncUI(); }
+  if (_gFresh) {
+    // a newly issued token: make sure it is the SAME Google account this shop
+    // backs up to, so data never lands in a different account's Drive
+    const email = await fetchGoogleEmail(token);
+    const expected = state.settings.syncEmail;
+    if (email && expected && email !== expected) {
+      _gToken = null;
+      throw new Error('you chose ' + email + ' but this shop backs up to ' + expected + ' — please pick ' + expected);
+    }
+    if (email && !expected) { state.settings.syncEmail = email; persistQuiet(); updateSyncUI(); }
+  }
   const fileId = await driveFileId(token);
   const remote = (fileId && force !== 'push') ? await driveDownload(token, fileId) : null;
   await applySyncDecision(remote, force, () => driveUpload(token, fileId), 'your Google Drive');
@@ -193,9 +205,10 @@ async function fetchGoogleEmail(token) {
     const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + token } });
     if (res.ok) {
       const j = await res.json();
-      if (j.email) { state.settings.syncEmail = j.email; persistQuiet(); }
+      return j.email || '';
     }
   } catch (e) {}
+  return '';
 }
 
 async function driveFileId(token) {

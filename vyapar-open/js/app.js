@@ -48,6 +48,12 @@ function applyTheme() {
 }
 
 function boot() {
+  syncBootstrap(); // picks up a shared #gcid=… sync link on new devices
+  if (!isLoggedIn()) { renderLogin(); return; }
+  bootApp();
+}
+
+function bootApp() {
   const app = el('app');
   app.innerHTML =
     '<aside class="sidebar" id="sidebar">' +
@@ -67,7 +73,6 @@ function boot() {
     '</header><main id="view"></main></div>';
 
   applyTheme();
-  syncBootstrap(); // picks up a shared #gcid=… sync link on new devices
   updateSyncUI();
   const hash = location.hash.replace('#', '');
   if (NAV.some(n => n[0] === hash)) currentPage = hash;
