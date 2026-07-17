@@ -2968,8 +2968,8 @@ function renderSettings() {
     '<div class="card"><h3 class="card-title">☁️ Google Drive Sync</h3>' +
     '<p class="sub">' + syncStatusText(s) + '</p>' +
     '<div class="head-actions" style="margin-top:10px;flex-wrap:wrap">' +
-    '<button class="btn primary" onclick="openSyncSetup()">' + ((s.gClientId || s.syncUrl) ? 'Sync Settings' : 'Set Up Sync') + '</button>' +
-    ((s.gClientId || s.syncUrl) ? '<button class="btn ghost" onclick="syncNow(\'push\')">⬆ Upload Now</button>' +
+    '<button class="btn primary" onclick="openSyncSetup()">' + ((activeClientId() || s.syncUrl) ? 'Sync Settings' : 'Set Up Sync') + '</button>' +
+    ((activeClientId() || s.syncUrl) ? '<button class="btn ghost" onclick="syncNow(\'push\')">⬆ Upload Now</button>' +
       '<button class="btn ghost" onclick="syncNow(\'pull\')">⬇ Download Now</button>' : '') +
     '</div></div>' +
 
@@ -3042,6 +3042,16 @@ const LAST_SYNC_KEY = 'shopkeeper_last_sync'; // kept outside state so syncing d
 const DRIVE_FILE_NAME = 'Shopkeeper Sync Data.json';
 const DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email';
 
+/* The app's own Google registration, baked into the shipped file — exactly how
+   WhatsApp ships its registration inside the app so users never see it.
+   Empty in the open-source template; the setup wizard's "Download connected
+   website file" button fills it in and the owner re-uploads that file. */
+const BUILT_IN_CLIENT_ID = '';
+
+function activeClientId() {
+  return state.settings.gClientId || BUILT_IN_CLIENT_ID;
+}
+
 let _gToken = null, _gTokenExp = 0, _gFresh = false;
 
 const APPS_SCRIPT_CODE =
@@ -3089,12 +3099,12 @@ function syncBootstrap() {
     toast('Google sync link received — tap 🔄 Sync to connect');
   }
   // preload Google's sign-in library so the Sync click can open the popup instantly
-  if (state.settings.gClientId) loadGsi().catch(() => {});
+  if (activeClientId()) loadGsi().catch(() => {});
 }
 
 function lastSyncText() {
   const t = num(localStorage.getItem(LAST_SYNC_KEY));
-  if (!t) return (state.settings.gClientId || state.settings.syncUrl) ? 'Not synced yet' : '';
+  if (!t) return (activeClientId() || state.settings.syncUrl) ? 'Not synced yet' : '';
   const d = new Date(t);
   return 'Last sync: ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') +
     ' ' + fmtDate(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'));
@@ -3116,10 +3126,10 @@ function setSyncBusy(busy) {
 
 async function syncNow(force) {
   const s = state.settings;
-  if (!s.gClientId && !s.syncUrl) { openSyncSetup(); return; }
+  if (!activeClientId() && !s.syncUrl) { openSyncSetup(); return; }
   setSyncBusy(true);
   try {
-    if (s.gClientId) await driveSync(force);
+    if (activeClientId()) await driveSync(force);
     else await sheetSync(force);
     localStorage.setItem(LAST_SYNC_KEY, String(Date.now()));
   } catch (e) {
@@ -3194,7 +3204,7 @@ function getDriveToken(askConsent) {
   if (_gToken && Date.now() < _gTokenExp - 60000) { _gFresh = false; return Promise.resolve(_gToken); }
   return loadGsi().then(() => new Promise((resolve, reject) => {
     const tc = google.accounts.oauth2.initTokenClient({
-      client_id: state.settings.gClientId,
+      client_id: activeClientId(),
       scope: DRIVE_SCOPES,
       // preselect the account this shop already backs up to
       hint: state.settings.syncEmail || undefined,
@@ -3309,7 +3319,7 @@ async function pushStateToSheet() {
 /* ================= setup wizard ================= */
 
 function syncStatusText(s) {
-  if (s.gClientId) {
+  if (activeClientId()) {
     return s.syncEmail
       ? 'Connected to Google Drive as <strong>' + esc(s.syncEmail) + '</strong>. Click 🔄 Sync (top right) on any device — same data everywhere.'
       : 'Setup saved. Click 🔄 Sync (top right) → <strong>Continue with Google</strong> → Allow to connect this device.';
@@ -3368,14 +3378,22 @@ function openSyncSetup() {
       'Use your website copy (e.g. your Netlify link) for Google Drive sync — or the “Advanced” option below, which works everywhere.</p>';
   }
 
-  if (s.gClientId) {
-    const link = (isFile ? '' : location.origin + location.pathname) + '#gcid=' + s.gClientId;
+  if (activeClientId()) {
     body +=
-      '<div style="text-align:center;margin:16px 0"><button class="btn primary" style="font-size:15px;padding:12px 24px" onclick="closeModal();syncNow()">Continue with Google</button></div>' +
-      '<p class="sub"><strong>On your phone / other devices:</strong> open this link once, then tap 🔄 Sync:</p>' +
-      '<div style="display:flex;gap:6px;margin:6px 0"><input id="sy_link" readonly value="' + esc(link) + '" style="flex:1;font-size:11px">' +
-      '<button class="btn tiny ghost" onclick="el(\'sy_link\').select();document.execCommand(\'copy\');toast(\'Link copied\')">Copy</button></div>' +
-      '<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:600;font-size:13px">Change Google registration (Client ID)</summary>' + ownerSection + '</details>';
+      '<div style="text-align:center;margin:16px 0"><button class="btn primary" style="font-size:15px;padding:12px 24px" onclick="closeModal();syncNow()">Continue with Google</button></div>';
+    if (BUILT_IN_CLIENT_ID) {
+      // this website copy already carries the registration — nothing else needed
+      body += '<p class="sub" style="text-align:center">Every device that opens this website gets automatic Google sync — nothing to set up.</p>';
+    } else {
+      const link = (isFile ? '' : location.origin + location.pathname) + '#gcid=' + activeClientId();
+      body +=
+        '<p class="sub"><strong>Make it automatic for everyone:</strong> download your website file with Google built in, upload it to your site (e.g. Netlify) — then no device is ever asked for setup again:</p>' +
+        '<div style="text-align:center;margin:8px 0"><button class="btn ghost" onclick="downloadConnectedSite()">⬇ Download connected website file (index.html)</button></div>' +
+        '<p class="sub"><strong>Or on your phone:</strong> open this link once, then tap 🔄 Sync:</p>' +
+        '<div style="display:flex;gap:6px;margin:6px 0"><input id="sy_link" readonly value="' + esc(link) + '" style="flex:1;font-size:11px">' +
+        '<button class="btn tiny ghost" onclick="el(\'sy_link\').select();document.execCommand(\'copy\');toast(\'Link copied\')">Copy</button></div>';
+    }
+    body += '<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:600;font-size:13px">Change Google registration (Client ID)</summary>' + ownerSection + '</details>';
   } else {
     body += ownerSection;
   }
@@ -3389,6 +3407,27 @@ function openSyncSetup() {
     '</div>',
     true
   );
+}
+
+/* Build a copy of this website file with the owner's Google registration baked
+   in (like WhatsApp shipping its own registration inside the app). The owner
+   uploads it to their site once; after that no device ever sees setup. */
+async function downloadConnectedSite() {
+  const cid = activeClientId();
+  if (!cid) { toast('Save your Client ID first', 'error'); return; }
+  if (BUILT_IN_CLIENT_ID === cid) { toast('This website copy already has Google built in'); return; }
+  try {
+    const res = await fetch(location.href.split('#')[0], { cache: 'no-store' });
+    if (!res.ok) throw new Error('could not read the app file (' + res.status + ')');
+    let src = await res.text();
+    const needle = "BUILT_IN_CLIENT_ID = '" + "'";   // split so this line doesn't match itself
+    if (src.indexOf(needle) < 0) throw new Error('app template marker not found');
+    src = src.replace(needle, "BUILT_IN_CLIENT_ID = '" + cid + "'");
+    downloadFile('index.html', src, 'text/html;charset=utf-8');
+    toast('index.html downloaded — upload it to your website. Every device then syncs automatically.');
+  } catch (e) {
+    toast('Could not build the file: ' + e.message, 'error');
+  }
 }
 
 function saveClientId() {
