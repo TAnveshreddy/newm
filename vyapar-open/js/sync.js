@@ -8,17 +8,32 @@ const LAST_SYNC_KEY = 'shopkeeper_last_sync'; // kept outside state so syncing d
 const DRIVE_FILE_NAME = 'Shopkeeper Sync Data.json';
 const DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email';
 
-/* The app's own Google registration, baked into the shipped file — exactly how
-   WhatsApp ships its registration inside the app so users never see it.
-   Empty in the open-source template; the setup wizard's "Download connected
-   website file" button fills it in and the owner re-uploads that file. */
+/* The app's own Google registration (a Firebase project), baked into the
+   shipped file — exactly how WhatsApp ships its registration inside the app.
+   With this present, no user or device ever sees any setup: the first Sync
+   click goes straight to Google's "Continue with Google → Allow" popup.
+   A Firebase web apiKey is a public identifier, not a secret. */
+const FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyChSPt9U-4vSBvecTdre7E6XJI7ypi2Qlk',
+  authDomain: 'shopkeeper-poc.firebaseapp.com',
+  projectId: 'shopkeeper-poc',
+  appId: '1:762784521075:web:d774907da55cb978e24306'
+};
+
+/* Older alternative: a raw OAuth Client ID (used only if no Firebase config).
+   The wizard's "Download connected website file" button fills the marker. */
 const BUILT_IN_CLIENT_ID = '';
 
 function activeClientId() {
   return state.settings.gClientId || BUILT_IN_CLIENT_ID;
 }
 
-let _gToken = null, _gTokenExp = 0, _gFresh = false;
+/* is Google Drive sync ready without any user setup? */
+function driveReady() {
+  return !!(FIREBASE_CONFIG.apiKey || activeClientId());
+}
+
+let _gToken = null, _gTokenExp = 0, _gFresh = false, _gEmail = '';
 
 const APPS_SCRIPT_CODE =
 `function sheet_() {
@@ -65,12 +80,13 @@ function syncBootstrap() {
     toast('Google sync link received — tap 🔄 Sync to connect');
   }
   // preload Google's sign-in library so the Sync click can open the popup instantly
-  if (activeClientId()) loadGsi().catch(() => {});
+  if (FIREBASE_CONFIG.apiKey) loadFirebase().catch(() => {});
+  else if (activeClientId()) loadGsi().catch(() => {});
 }
 
 function lastSyncText() {
   const t = num(localStorage.getItem(LAST_SYNC_KEY));
-  if (!t) return (activeClientId() || state.settings.syncUrl) ? 'Not synced yet' : '';
+  if (!t) return (driveReady() || state.settings.syncUrl) ? 'Not synced yet' : '';
   const d = new Date(t);
   return 'Last sync: ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') +
     ' ' + fmtDate(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'));
@@ -92,11 +108,13 @@ function setSyncBusy(busy) {
 
 async function syncNow(force) {
   const s = state.settings;
-  if (!activeClientId() && !s.syncUrl) { openSyncSetup(); return; }
+  if (!driveReady() && !s.syncUrl) { openSyncSetup(); return; }
   setSyncBusy(true);
   try {
-    if (activeClientId()) await driveSync(force);
-    else await sheetSync(force);
+    // an Apps Script link the user set up explicitly takes priority; otherwise
+    // Google Drive via the built-in registration (zero setup)
+    if (s.syncUrl) await sheetSync(force);
+    else await driveSync(force);
     localStorage.setItem(LAST_SYNC_KEY, String(Date.now()));
   } catch (e) {
     toast('Sync failed: ' + e.message, 'error');
@@ -166,8 +184,56 @@ function loadGsi() {
   return window._gsiLoading;
 }
 
+/* ---- Firebase path: the app ships its own registration, users just sign in ---- */
+function loadFirebase() {
+  if (window.firebase && firebase.auth) return Promise.resolve(initFb());
+  if (window._fbLoading) return window._fbLoading;
+  window._fbLoading = new Promise((resolve, reject) => {
+    const fail = () => { window._fbLoading = null; reject(new Error('could not load Google sign-in (check internet)')); };
+    const s1 = document.createElement('script');
+    s1.src = 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js';
+    s1.onload = () => {
+      const s2 = document.createElement('script');
+      s2.src = 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js';
+      s2.onload = resolve;
+      s2.onerror = fail;
+      document.head.appendChild(s2);
+    };
+    s1.onerror = fail;
+    document.head.appendChild(s1);
+  }).then(initFb);
+  return window._fbLoading;
+}
+
+function initFb() {
+  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+}
+
+async function getFirebaseToken() {
+  await loadFirebase();
+  const provider = new firebase.auth.GoogleAuthProvider();
+  provider.addScope('https://www.googleapis.com/auth/drive.file');
+  if (state.settings.syncEmail) provider.setCustomParameters({ login_hint: state.settings.syncEmail });
+  let result;
+  try {
+    result = await firebase.auth().signInWithPopup(provider);
+  } catch (e) {
+    throw new Error(e && (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request')
+      ? 'the Google sign-in window was closed'
+      : 'Google sign-in did not complete' + (e && e.code ? ' (' + e.code + ')' : ''));
+  }
+  const cred = result && result.credential;
+  if (!cred || !cred.accessToken) throw new Error('Google did not grant access');
+  _gToken = cred.accessToken;
+  _gTokenExp = Date.now() + 55 * 60 * 1000; // Google access tokens last ~1 hour
+  _gFresh = true;
+  _gEmail = (result.user && result.user.email) || '';
+  return _gToken;
+}
+
 function getDriveToken(askConsent) {
   if (_gToken && Date.now() < _gTokenExp - 60000) { _gFresh = false; return Promise.resolve(_gToken); }
+  if (FIREBASE_CONFIG.apiKey) return getFirebaseToken();
   return loadGsi().then(() => new Promise((resolve, reject) => {
     const tc = google.accounts.oauth2.initTokenClient({
       client_id: activeClientId(),
@@ -192,12 +258,16 @@ function getDriveToken(askConsent) {
 
 async function driveSync(force) {
   let token;
-  try { token = await getDriveToken(false); }
-  catch (e) { token = await getDriveToken(true); } // silent refresh failed → ask the user
+  if (FIREBASE_CONFIG.apiKey) {
+    token = await getDriveToken(false); // firebase shows its own popup; never re-prompt on failure
+  } else {
+    try { token = await getDriveToken(false); }
+    catch (e) { token = await getDriveToken(true); } // silent refresh failed → ask the user
+  }
   if (_gFresh) {
     // a newly issued token: make sure it is the SAME Google account this shop
     // backs up to, so data never lands in a different account's Drive
-    const email = await fetchGoogleEmail(token);
+    const email = _gEmail || await fetchGoogleEmail(token);
     const expected = state.settings.syncEmail;
     if (email && expected && email !== expected) {
       _gToken = null;
@@ -285,7 +355,7 @@ async function pushStateToSheet() {
 /* ================= setup wizard ================= */
 
 function syncStatusText(s) {
-  if (activeClientId()) {
+  if (driveReady() && !s.syncUrl) {
     return s.syncEmail
       ? 'Connected to Google Drive as <strong>' + esc(s.syncEmail) + '</strong>. Click 🔄 Sync (top right) on any device — same data everywhere.'
       : 'Setup saved. Click 🔄 Sync (top right) → <strong>Continue with Google</strong> → Allow to connect this device.';
@@ -343,6 +413,20 @@ function openSyncSetup() {
   if (isFile) {
     body += '<p class="sub" style="color:#d92027"><strong>⚠ Note:</strong> Google sign-in cannot open when the app is opened as a file from your computer. ' +
       'Use your website copy (e.g. your Netlify link) for Google Drive sync — or the “Advanced” option below, which works everywhere.</p>';
+  }
+
+  if (FIREBASE_CONFIG.apiKey) {
+    body +=
+      '<div style="text-align:center;margin:16px 0"><button class="btn primary" style="font-size:15px;padding:12px 24px" onclick="closeModal();syncNow()">Continue with Google</button></div>' +
+      '<p class="sub" style="text-align:center">This app is already registered with Google — every device syncs automatically, nothing to set up.</p>' +
+      advancedSection;
+    openModal(
+      '<div class="modal-head"><h3>☁️ Sync with Google</h3><button class="x" onclick="closeModal()">×</button></div>' +
+      '<div class="modal-body">' + body + '</div>' +
+      '<div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Cancel</button></div>',
+      true
+    );
+    return;
   }
 
   if (activeClientId()) {

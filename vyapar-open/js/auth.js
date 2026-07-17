@@ -76,8 +76,8 @@ function verifyOtp() {
   if (!state.settings.phone) { state.settings.phone = _otpPhone; persistQuiet(); }
   _otp = '';
   // WhatsApp-style: on first login, ask to allow Google backup before opening
-  if (!state.settings.gClientId && !state.settings.syncUrl) renderSyncAsk();
-  else { bootApp(); syncNow(); } // sync already set up → open and sync silently
+  if (!state.settings.syncEmail && !state.settings.syncUrl) renderSyncAsk();
+  else { bootApp(); syncNow(); } // already connected before → open and sync
 }
 
 function renderSyncAsk() {
@@ -87,7 +87,7 @@ function renderSyncAsk() {
     '<h1 class="login-title">Back up to Google?</h1>' +
     '<p class="sub" style="margin:10px 0 18px">Allow Shopkeeper to save your data to <strong>your own Google account</strong> ' +
     '(like WhatsApp backup). Then your mobile and PC always show the same bills, stock and khata.</p>' +
-    '<button class="btn primary login-btn" onclick="allowSyncSetup()">Allow — Connect Google</button>' +
+    '<button class="btn primary login-btn" onclick="allowSyncSetup()">Continue with Google</button>' +
     '<button class="btn ghost login-btn" style="margin-top:10px" onclick="bootApp()">Not now — open the app</button>' +
     '<p class="sub" style="margin-top:14px">You can set this up any time from Settings or the 🔄 Sync button.</p>' +
     '</div></div>';
@@ -95,7 +95,7 @@ function renderSyncAsk() {
 
 function allowSyncSetup() {
   bootApp();
-  syncNow(); // no setup saved yet → opens the Google connect wizard; else Continue with Google
+  syncNow(); // built-in registration → Google's own account popup opens directly
 }
 
 function logout() {

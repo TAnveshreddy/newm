@@ -26,8 +26,8 @@ function renderSettings() {
     '<div class="card"><h3 class="card-title">☁️ Google Drive Sync</h3>' +
     '<p class="sub">' + syncStatusText(s) + '</p>' +
     '<div class="head-actions" style="margin-top:10px;flex-wrap:wrap">' +
-    '<button class="btn primary" onclick="openSyncSetup()">' + ((activeClientId() || s.syncUrl) ? 'Sync Settings' : 'Set Up Sync') + '</button>' +
-    ((activeClientId() || s.syncUrl) ? '<button class="btn ghost" onclick="syncNow(\'push\')">⬆ Upload Now</button>' +
+    '<button class="btn primary" onclick="openSyncSetup()">' + ((driveReady() || s.syncUrl) ? 'Sync Settings' : 'Set Up Sync') + '</button>' +
+    ((driveReady() || s.syncUrl) ? '<button class="btn ghost" onclick="syncNow(\'push\')">⬆ Upload Now</button>' +
       '<button class="btn ghost" onclick="syncNow(\'pull\')">⬇ Download Now</button>' : '') +
     '</div></div>' +
 
