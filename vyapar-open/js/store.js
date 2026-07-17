@@ -33,7 +33,10 @@ function defaultState() {
       theme: 'light',
       terms: 'Thanks for doing business with us!',
       upiId: '',
-      signatureName: ''
+      signatureName: '',
+      gClientId: '',   // Google OAuth Client ID for Drive sync
+      syncUrl: '',     // legacy Apps Script web-app link sync
+      syncEmail: ''
     },
     counters: { SALE: 1, SALE_RETURN: 1, ESTIMATE: 1, PURCHASE: 1, PURCHASE_RETURN: 1, PAYMENT_IN: 1, PAYMENT_OUT: 1, EXPENSE: 1 },
     parties: [],

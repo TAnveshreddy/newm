@@ -67,6 +67,7 @@ function boot() {
     '</header><main id="view"></main></div>';
 
   applyTheme();
+  syncBootstrap(); // picks up a shared #gcid=… sync link on new devices
   updateSyncUI();
   const hash = location.hash.replace('#', '');
   if (NAV.some(n => n[0] === hash)) currentPage = hash;
