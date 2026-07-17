@@ -3325,11 +3325,26 @@ async function fetchGoogleEmail(token) {
   return '';
 }
 
+/* turn a Drive REST error into a message a shop owner can act on */
+async function driveHttpError(res, what) {
+  let msg = what + ' failed (' + res.status + ')';
+  try {
+    const body = await res.text();
+    if (res.status === 403 && /accessNotConfigured|has not been used|is disabled/i.test(body)) {
+      msg = 'Google Drive is not switched ON for this app yet — open console.cloud.google.com → APIs & Services → Library → search "Google Drive API" → Enable, wait 2 minutes, then Sync again';
+    } else {
+      const j = JSON.parse(body);
+      if (j.error && j.error.message) msg = what + ' failed: ' + j.error.message;
+    }
+  } catch (e) {}
+  return new Error(msg);
+}
+
 async function driveFileId(token) {
   const q = encodeURIComponent("name='" + DRIVE_FILE_NAME + "' and trashed=false");
   const res = await fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id)&pageSize=1',
     { headers: { Authorization: 'Bearer ' + token } });
-  if (!res.ok) throw new Error('Google Drive search failed (' + res.status + ')');
+  if (!res.ok) throw await driveHttpError(res, 'Google Drive search');
   const j = await res.json();
   return j.files && j.files[0] ? j.files[0].id : null;
 }
@@ -3337,7 +3352,7 @@ async function driveFileId(token) {
 async function driveDownload(token, fileId) {
   const res = await fetch('https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media',
     { headers: { Authorization: 'Bearer ' + token } });
-  if (!res.ok) throw new Error('Google Drive download failed (' + res.status + ')');
+  if (!res.ok) throw await driveHttpError(res, 'Google Drive download');
   try { return JSON.parse(await res.text()); } catch (e) { return null; }
 }
 
@@ -3360,7 +3375,7 @@ async function driveUpload(token, fileId) {
         '\r\n--' + bnd + '\r\nContent-Type: application/json\r\n\r\n' + body + '\r\n--' + bnd + '--'
     });
   }
-  if (!res.ok) throw new Error('Google Drive upload failed (' + res.status + ')');
+  if (!res.ok) throw await driveHttpError(res, 'Google Drive upload');
 }
 
 /* ================= legacy: Apps Script web app link ================= */
