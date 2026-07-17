@@ -303,9 +303,10 @@ function openSyncSetup() {
   const origin = isFile ? 'https://your-site.netlify.app' : location.origin;
 
   const ownerSection =
-    '<p class="sub" style="margin-top:6px"><strong>One-time registration (only once, on this first device).</strong> ' +
-    'Google requires every app to be registered by its owner before it can show the “Continue with Google” screen. ' +
-    'It is all clicking on Google\'s website — no code:</p>' +
+    '<div class="otp-note" style="text-align:left;margin:10px 0"><strong>👤 This page is only for the app owner — and only once.</strong><br>' +
+    'Your staff and other devices will <strong>never</strong> see it. After this step they simply tap Sync → choose their Google email → Allow (like WhatsApp backup).</div>' +
+    '<p class="sub" style="margin-top:6px"><strong>Why this step exists:</strong> Google shows the “Continue with Google” screen only for registered apps — ' +
+    'WhatsApp registered theirs once as a company; here you register yours. It is all clicking on Google\'s website — no code:</p>' +
     '<ol style="padding-left:18px;line-height:1.9;font-size:13.5px">' +
     '<li>Open <strong>console.cloud.google.com</strong> and sign in with your Google email</li>' +
     '<li>Project list (top bar) → <strong>New project</strong> → name it <em>Shopkeeper</em> → Create → select it</li>' +
