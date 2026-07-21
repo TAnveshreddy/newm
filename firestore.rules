@@ -1,0 +1,53 @@
+rules_version = '2';
+
+// Shopkeeper — Firestore security rules
+// Deploy: Firebase Console → Firestore Database → Rules → paste → Publish
+// (or `firebase deploy --only firestore:rules` with the Firebase CLI).
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // ---- User profiles (admin-managed account state) ----
+    match /users/{uid} {
+      // A user can read their own profile; admins can read everyone's.
+      allow read: if request.auth.uid == uid || isAdmin();
+
+      // On first login a user creates their own profile, but only as a plain
+      // 'user' on the 'free' plan and active — they cannot self-provision as
+      // admin or on a paid plan.
+      allow create: if request.auth.uid == uid
+        && request.resource.data.role == 'user'
+        && request.resource.data.plan == 'free'
+        && request.resource.data.active == true;
+
+      // Admins can change anything. A normal user may update their own profile
+      // only if they do NOT change the admin-controlled fields
+      // (role / plan / active) — those are the admin's to set.
+      allow update: if isAdmin() ||
+        (request.auth.uid == uid
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.plan == resource.data.plan
+          && request.resource.data.active == resource.data.active);
+
+      // Only admins can delete accounts.
+      allow delete: if isAdmin();
+    }
+
+    // ---- Per-user business data ----
+    // Everything under userData/{uid} belongs to that user. The user has full
+    // read/write on their own subtree; admins may read/write any user's data.
+    match /userData/{uid}/{document=**} {
+      allow read, write: if request.auth.uid == uid || isAdmin();
+    }
+  }
+}
