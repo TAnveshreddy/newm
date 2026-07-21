@@ -1,0 +1,101 @@
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+
+import { AuthService } from '../../core/services/auth.service';
+import { BusinessStore } from '../../core/services/business-store.service';
+import { ThemeService } from '../../core/services/theme.service';
+
+interface NavItem {
+  path: string;
+  icon: string;
+  label: string;
+  admin?: boolean;
+}
+
+/**
+ * Authenticated application shell: fixed dark sidebar + top bar with a
+ * `<router-outlet>` for lazy-loaded features. Presentational only — all data
+ * comes from injected services.
+ */
+@Component({
+  selector: 'app-shell',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  template: `
+    <div class="app-layout" [class.nav-open]="menuOpen()">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="logo">S</div>
+          <div>
+            <div class="brand-name">Shopkeeper</div>
+            <div class="brand-biz">{{ store.settings().businessName }}</div>
+          </div>
+        </div>
+        <nav>
+          @for (n of visibleNav(); track n.path) {
+            <a class="nav-item" [routerLink]="n.path" routerLinkActive="active" (click)="menuOpen.set(false)">
+              <span class="ico">{{ n.icon }}</span>{{ n.label }}
+            </a>
+          }
+        </nav>
+        <div class="sidebar-foot">Synced across your devices</div>
+      </aside>
+
+      <div class="main">
+        <header class="topbar">
+          <button class="hamburger" (click)="menuOpen.set(!menuOpen())" aria-label="Menu">☰</button>
+          <div class="topbar-title">{{ store.settings().businessName }}</div>
+          <button class="icon-btn" (click)="theme.toggle()" title="Toggle theme">
+            {{ theme.mode() === 'dark' ? '☀️' : '🌙' }}
+          </button>
+          <div class="user-chip" title="{{ auth.profile()?.email || auth.profile()?.phone }}">
+            <span class="avatar">{{ initial() }}</span>
+            <span class="user-meta">
+              <span class="user-name">{{ displayName() }}</span>
+              <span class="user-role">{{ auth.profile()?.role || 'user' }}</span>
+            </span>
+          </div>
+          <button class="btn ghost tiny" (click)="logout()">Log out</button>
+        </header>
+        <main class="view"><router-outlet></router-outlet></main>
+      </div>
+    </div>
+  `,
+})
+export class ShellComponent {
+  readonly auth = inject(AuthService);
+  readonly store = inject(BusinessStore);
+  readonly theme = inject(ThemeService);
+  private readonly router = inject(Router);
+
+  readonly menuOpen = signal(false);
+
+  private readonly nav: NavItem[] = [
+    { path: '/dashboard', icon: '🏠', label: 'Dashboard' },
+    { path: '/billing', icon: '🧾', label: 'Billing' },
+    { path: '/inventory', icon: '📦', label: 'Inventory' },
+    { path: '/parties', icon: '📒', label: 'Khata' },
+    { path: '/reports', icon: '📊', label: 'Reports' },
+    { path: '/settings', icon: '⚙️', label: 'Settings' },
+    { path: '/admin', icon: '🛡️', label: 'Admin', admin: true },
+  ];
+
+  visibleNav(): NavItem[] {
+    const admin = this.auth.isAdmin();
+    return this.nav.filter((n) => !n.admin || admin);
+  }
+
+  displayName(): string {
+    const p = this.auth.profile();
+    return p?.displayName || p?.phone || p?.email || 'User';
+  }
+  initial(): string {
+    return (this.displayName()[0] || 'U').toUpperCase();
+  }
+
+  async logout(): Promise<void> {
+    await this.auth.logout();
+    this.router.navigate(['/login']);
+  }
+}
