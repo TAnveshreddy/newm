@@ -5,7 +5,14 @@
   <title>Shopkeeper — Billing · Inventory · Khata</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f1c3d">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- Warm up TLS to Firebase endpoints so the first auth/Firestore calls after
+       login are faster (DNS + TCP + TLS happen during initial paint). -->
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://securetoken.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://www.googleapis.com">
 </head>
 <body>
   <app-root></app-root>
