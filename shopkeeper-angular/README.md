@@ -100,8 +100,10 @@ domain to **Authentication → Authorized domains**.
 | Reports (ranged P&L + transactions) | ✅ |
 | Settings (profile, preferences, account) | ✅ |
 | Admin console (users, roles, plans, activate/delete) | ✅ |
-| Estimates / Purchases / Returns / Payments / Expenses forms | ⏳ next (schema + store already support them) |
-| Invoice PDF/print, barcode label sheet | ⏳ next |
+| Purchases / Estimates / Payments / Expenses / Returns | ✅ (generic `features/transactions`) |
+| Invoice print (GST) | ✅ (PrintService, from Billing & lists) |
+| Barcode label sheet (Code 128) | ✅ (Inventory → Labels) |
 
-These remaining items reuse the same `BusinessStore` + models and slot into the
-existing `features/` structure without architectural changes.
+All transaction pages are served by one generic, config-driven
+`TransactionsComponent`, so purchases/estimates/payments/expenses/returns share
+a single tested implementation.

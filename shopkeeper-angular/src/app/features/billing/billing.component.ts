@@ -3,9 +3,10 @@ import { FormsModule } from '@angular/forms';
 
 import { BusinessStore } from '../../core/services/business-store.service';
 import { ToastService } from '../../core/services/toast.service';
+import { PrintService } from '../../core/services/print.service';
 import { InrPipe } from '../../shared/pipes/inr.pipe';
 import { Item, TxnLine, Transaction } from '../../core/models';
-import { num, round2, todayISO } from '../../core/util/num';
+import { num, round2, todayISO, makeId } from '../../core/util/num';
 
 const PAY_MODES = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Credit'];
 
@@ -67,7 +68,8 @@ const PAY_MODES = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Credit'];
         </div>
       </div>
       <div class="head-actions" style="justify-content:flex-end;margin-top:12px">
-        <button class="btn primary" (click)="save()" [disabled]="!lines().length">💾 Save Bill</button>
+        <button class="btn ghost" (click)="save(false)" [disabled]="!lines().length">💾 Save Bill</button>
+        <button class="btn primary" (click)="save(true)" [disabled]="!lines().length">🖨 Save &amp; Print</button>
       </div>
     </div>
   `,
@@ -75,6 +77,7 @@ const PAY_MODES = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Credit'];
 export class BillingComponent {
   readonly store = inject(BusinessStore);
   private readonly toast = inject(ToastService);
+  private readonly print = inject(PrintService);
 
   readonly payModes = PAY_MODES;
   readonly customer = signal('');
@@ -136,13 +139,13 @@ export class BillingComponent {
   removeLine(i: number): void { this.lines.update((ls) => ls.filter((_, idx) => idx !== i)); }
   clear(): void { this.lines.set([]); this.customer.set(''); this.mobile.set(''); this.paid.set(null); }
 
-  async save(): Promise<void> {
+  async save(printAfter: boolean): Promise<void> {
     if (!this.lines().length) return;
     const party = this.store.parties().find(
       (p) => p.type !== 'supplier' && p.name.toLowerCase() === this.customer().trim().toLowerCase(),
     );
     const txn: Transaction = {
-      id: '', type: 'SALE', number: this.store.nextNumber('SALE'), date: todayISO(),
+      id: makeId(), type: 'SALE', number: this.store.nextNumber('SALE'), date: todayISO(),
       partyId: party?.id ?? null, lines: this.lines(),
       subtotal: this.subtotal(), discount: 0, total: this.total(),
       paid: this.paid() == null ? this.total() : num(this.paid()),
@@ -151,6 +154,7 @@ export class BillingComponent {
     try {
       await this.store.saveTxn(txn);
       this.toast.success('Bill ' + txn.number + ' saved');
+      if (printAfter) this.print.invoice(txn);
       this.clear();
     } catch (e) {
       this.toast.error('Could not save: ' + (e as Error).message);

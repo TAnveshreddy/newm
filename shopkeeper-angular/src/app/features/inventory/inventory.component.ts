@@ -3,9 +3,13 @@ import { FormsModule } from '@angular/forms';
 
 import { BusinessStore } from '../../core/services/business-store.service';
 import { ToastService } from '../../core/services/toast.service';
+import { PrintService } from '../../core/services/print.service';
+import { BarcodeService } from '../../core/services/barcode.service';
 import { InrPipe } from '../../shared/pipes/inr.pipe';
 import { Item, ItemType } from '../../core/models';
-import { makeId } from '../../core/util/num';
+import { num } from '../../core/util/num';
+
+interface LabelPick { item: Item; copies: number; on: boolean; }
 
 const UNITS = ['PCS', 'BOX', 'KG', 'GRAM', 'LITRE', 'ML', 'BAG', 'BOTTLE', 'PACKET', 'METER', 'SERVICE'];
 const GST_RATES = [0, 5, 12, 18, 28];
@@ -23,6 +27,7 @@ type Draft = Partial<Item> & { name: string; type: ItemType };
       <div class="head-actions">
         <input class="search" placeholder="📷 Scan barcode…" [(ngModel)]="scan" (keyup.enter)="onScan()" autocomplete="off" />
         <input class="search" placeholder="Search products…" [(ngModel)]="queryText" />
+        <button class="btn ghost" (click)="openLabels()">🏷️ Labels</button>
         <button class="btn primary" (click)="openNew()">+ Add Product</button>
       </div>
     </div>
@@ -96,11 +101,45 @@ type Draft = Partial<Item> & { name: string; type: ItemType };
         </div>
       </div>
     }
+
+    @if (labels(); as picks) {
+      <div class="modal-overlay" (mousedown)="closeLabels($event)">
+        <div class="modal">
+          <div class="modal-head"><h3>🏷️ Print Barcode Labels</h3><button class="x" (click)="labels.set(null)">×</button></div>
+          <div class="modal-body">
+            <p class="sub">Pick products and how many labels each. Products without a barcode get one generated automatically.</p>
+            <div class="head-actions" style="margin:6px 0">
+              <button class="btn ghost tiny" (click)="selectAll(true)">Select all</button>
+              <button class="btn ghost tiny" (click)="selectAll(false)">Clear</button>
+              <button class="btn ghost tiny" (click)="copiesFromStock()">Copies = stock</button>
+            </div>
+            <div class="table-wrap" style="max-height:340px;overflow-y:auto"><table>
+              <thead><tr><th></th><th>Product</th><th>Barcode</th><th class="r">Price</th><th>Copies</th></tr></thead>
+              <tbody>
+                @for (p of picks; track p.item.id) {
+                  <tr><td><input type="checkbox" [(ngModel)]="p.on" /></td>
+                    <td><strong>{{ p.item.name }}</strong></td>
+                    <td class="sub">{{ p.item.barcode || 'auto' }}</td>
+                    <td class="r">{{ p.item.salePrice | inr }}</td>
+                    <td><input class="qty" type="number" min="1" [(ngModel)]="p.copies" /></td></tr>
+                }
+              </tbody>
+            </table></div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn ghost" (click)="labels.set(null)">Cancel</button>
+            <button class="btn primary" (click)="printLabels()">🖨 Print Labels</button>
+          </div>
+        </div>
+      </div>
+    }
   `,
 })
 export class InventoryComponent {
   readonly store = inject(BusinessStore);
   private readonly toast = inject(ToastService);
+  private readonly print = inject(PrintService);
+  private readonly barcode = inject(BarcodeService);
 
   readonly units = UNITS;
   readonly gstRates = GST_RATES;
@@ -108,6 +147,7 @@ export class InventoryComponent {
   readonly queryText = signal('');
   readonly scan = signal('');
   readonly draft = signal<Draft | null>(null);
+  readonly labels = signal<LabelPick[] | null>(null);
 
   readonly filtered = computed(() => {
     const q = this.queryText().trim().toLowerCase();
@@ -155,10 +195,37 @@ export class InventoryComponent {
   genBarcode(): void {
     const d = this.draft();
     if (!d) return;
-    let code: string;
-    do { code = String(Math.floor(200000000000 + Math.random() * 799999999999)); }
-    while (this.store.items().some((i) => (i.barcode ?? '') === code));
+    const code = this.barcode.generate(this.store.items().map((i) => i.barcode ?? ''));
     this.draft.set({ ...d, barcode: code });
+  }
+
+  // ---- barcode label printing ----
+  openLabels(): void {
+    const products = this.store.items().filter((i) => i.type !== 'service');
+    if (!products.length) { this.toast.error('Add some products first'); return; }
+    this.labels.set(products.map((item) => ({ item, copies: 1, on: true })));
+  }
+  closeLabels(e: MouseEvent): void { if ((e.target as HTMLElement).classList.contains('modal-overlay')) this.labels.set(null); }
+  selectAll(on: boolean): void { this.labels.update((ls) => (ls ? ls.map((p) => ({ ...p, on })) : ls)); }
+  copiesFromStock(): void {
+    this.labels.update((ls) => ls ? ls.map((p) => ({ ...p, copies: Math.max(1, Math.round(this.store.itemStock(p.item.id)) || 1) })) : ls);
+  }
+
+  async printLabels(): Promise<void> {
+    const picks = (this.labels() ?? []).filter((p) => p.on);
+    if (!picks.length) { this.toast.error('Select at least one product'); return; }
+    // assign + persist a barcode to any selected product that lacks one
+    const existing = this.store.items().map((i) => i.barcode ?? '');
+    for (const p of picks) {
+      if (!(p.item.barcode ?? '').trim()) {
+        const code = this.barcode.generate(existing);
+        existing.push(code);
+        p.item = { ...p.item, barcode: code };
+        await this.store.saveItem(p.item as Item);
+      }
+    }
+    this.print.labels(picks.map((p) => ({ item: p.item, copies: Math.max(1, Math.min(200, num(p.copies) || 1)) })));
+    this.labels.set(null);
   }
 
   onScan(): void {

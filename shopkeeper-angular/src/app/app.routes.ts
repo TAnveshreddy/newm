@@ -46,6 +46,36 @@ export const routes: Routes = [
           import('./features/parties/parties.component').then((m) => m.PartiesComponent),
       },
       {
+        path: 'purchases',
+        title: 'Purchases · Shopkeeper',
+        data: { tx: { title: 'Purchases', subtitle: 'Purchase bills from suppliers', show: ['PURCHASE'], create: ['PURCHASE'] } },
+        loadComponent: () => import('./features/transactions/transactions.component').then((m) => m.TransactionsComponent),
+      },
+      {
+        path: 'estimates',
+        title: 'Estimates · Shopkeeper',
+        data: { tx: { title: 'Estimates', subtitle: 'Quotations for customers', show: ['ESTIMATE'], create: ['ESTIMATE'] } },
+        loadComponent: () => import('./features/transactions/transactions.component').then((m) => m.TransactionsComponent),
+      },
+      {
+        path: 'payments',
+        title: 'Payments · Shopkeeper',
+        data: { tx: { title: 'Payments', subtitle: 'Money received and paid out', show: ['PAYMENT_IN', 'PAYMENT_OUT'], create: ['PAYMENT_IN', 'PAYMENT_OUT'] } },
+        loadComponent: () => import('./features/transactions/transactions.component').then((m) => m.TransactionsComponent),
+      },
+      {
+        path: 'expenses',
+        title: 'Expenses · Shopkeeper',
+        data: { tx: { title: 'Expenses', subtitle: 'Business expenses', show: ['EXPENSE'], create: ['EXPENSE'] } },
+        loadComponent: () => import('./features/transactions/transactions.component').then((m) => m.TransactionsComponent),
+      },
+      {
+        path: 'returns',
+        title: 'Returns · Shopkeeper',
+        data: { tx: { title: 'Returns', subtitle: 'Sale & purchase returns', show: ['SALE_RETURN', 'PURCHASE_RETURN'], create: ['SALE_RETURN', 'PURCHASE_RETURN'] } },
+        loadComponent: () => import('./features/transactions/transactions.component').then((m) => m.TransactionsComponent),
+      },
+      {
         path: 'reports',
         title: 'Reports · Shopkeeper',
         loadComponent: () =>

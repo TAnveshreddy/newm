@@ -148,6 +148,16 @@ export class BusinessStore {
     return TXN_TYPES[type].prefix + '-' + String(this.counters()[type]).padStart(4, '0');
   }
 
+  // ---- status ----
+  txnStatus(t: Transaction): 'Paid' | 'Partial' | 'Unpaid' | 'Open' | 'Converted' {
+    const cfg = TXN_TYPES[t.type];
+    if (t.type === 'ESTIMATE') return t.convertedTo ? 'Converted' : 'Open';
+    if (cfg.balance === 0 || t.type === 'PAYMENT_IN' || t.type === 'PAYMENT_OUT') return 'Paid';
+    const dueAmt = num(t.total) - num(t.paid);
+    if (dueAmt <= 0.005) return 'Paid';
+    return num(t.paid) > 0 ? 'Partial' : 'Unpaid';
+  }
+
   // ---- mutations (write straight through to Firestore) ----
   saveItem(item: Partial<Item> & { name: string; type: Item['type'] }): Promise<void> {
     const rec: Item = {
