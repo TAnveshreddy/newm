@@ -10,16 +10,16 @@
 /* VyaparOpen — style.css */
 /* Touch&Tint-inspired theme: red primary accents, teal sidebar, white cards */
 :root {
-  --page: #eef4f5;
+  --page: #f4f6fb;
   --surface: #ffffff;
   --ink: #16232a;
   --ink-2: #4c5b63;
   --muted: #84939b;
-  --grid: #e2eaec;
-  --baseline: #c2d0d4;
-  --border: rgba(14, 68, 80, 0.10);
-  --primary: #d92027;
-  --primary-strong: #b0161c;
+  --grid: #eef1f6;
+  --baseline: #dde3ec;
+  --border: rgba(20, 34, 64, 0.09);
+  --primary: #2563eb;
+  --primary-strong: #1d4ed8;
   --accent: #14a3b8;
   --accent-strong: #0d8093;
   --good: #006300;
@@ -32,9 +32,9 @@
   --bad-ink: #a02c2c;
   --info-bg: #dff4f7;
   --info-ink: #0d8093;
-  --sidebar-bg: #14a3b8;
-  --sidebar-ink: #eaf7f9;
-  --shadow: 0 1px 3px rgba(14, 68, 80, 0.10);
+  --sidebar-bg: #0f1c3d;
+  --sidebar-ink: #aeb9d4;
+  --shadow: 0 1px 3px rgba(20, 34, 64, 0.08);
 }
 :root[data-theme="dark"] {
   --page: #0c1214;
@@ -45,8 +45,8 @@
   --grid: #263135;
   --baseline: #35454a;
   --border: rgba(255, 255, 255, 0.10);
-  --primary: #ef5350;
-  --primary-strong: #f28b89;
+  --primary: #3b82f6;
+  --primary-strong: #60a5fa;
   --accent: #2cb5c9;
   --accent-strong: #6ed0de;
   --good: #0ca30c;
@@ -59,8 +59,8 @@
   --bad-ink: #f0a3a3;
   --info-bg: #0e3238;
   --info-ink: #6ed0de;
-  --sidebar-bg: #0a333b;
-  --sidebar-ink: #a8c6cc;
+  --sidebar-bg: #0c1730;
+  --sidebar-ink: #9fabc9;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
@@ -82,22 +82,23 @@ body.modal-open { overflow: hidden; }
   display: flex; flex-direction: column;
   position: sticky; top: 0; height: 100vh;
 }
-.brand { display: flex; gap: 10px; align-items: center; padding: 16px 14px; background: var(--primary); border-bottom: 1px solid rgba(255,255,255,0.15); }
+.brand { display: flex; gap: 11px; align-items: center; padding: 18px 16px; border-bottom: 1px solid rgba(255,255,255,0.07); }
 .logo {
-  width: 36px; height: 36px; border-radius: 50%; flex: 0 0 36px;
-  background: #fff; color: var(--primary); font-weight: 800; font-size: 20px;
+  width: 38px; height: 38px; border-radius: 11px; flex: 0 0 38px;
+  background: var(--primary); color: #fff; font-weight: 800; font-size: 20px;
   display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 12px rgba(37,99,235,0.35);
 }
-.brand-name { font-weight: 700; color: #fff; }
-.brand-biz { font-size: 11.5px; color: #ffe3e3; opacity: 0.95; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sidebar nav { flex: 1; padding: 8px 0; overflow-y: auto; }
+.brand-name { font-weight: 800; color: #fff; letter-spacing: -0.2px; }
+.brand-biz { font-size: 11.5px; color: var(--sidebar-ink); opacity: 0.9; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar nav { flex: 1; padding: 10px 0; overflow-y: auto; }
 .nav-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 9px 16px; cursor: pointer; font-size: 13.5px;
-  border-left: 3px solid transparent; user-select: none;
+  display: flex; align-items: center; gap: 11px;
+  margin: 2px 10px; padding: 9px 12px; cursor: pointer; font-size: 13.5px;
+  border-radius: 10px; user-select: none;
 }
-.nav-item:hover { background: rgba(255,255,255,0.14); color: #fff; }
-.nav-item.active { background: rgba(255,255,255,0.22); color: #fff; border-left-color: #fff; font-weight: 700; }
+.nav-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
+.nav-item.active { background: var(--primary); color: #fff; font-weight: 700; box-shadow: 0 4px 12px rgba(37,99,235,0.35); }
 .nav-item .ico { width: 20px; text-align: center; }
 .sidebar-foot { padding: 12px 16px; font-size: 11px; opacity: 0.8; border-top: 1px solid rgba(255,255,255,0.08); }
 
@@ -135,6 +136,58 @@ main#view { padding: 20px 24px 60px; max-width: 1200px; width: 100%; margin: 0 a
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .welcome h3 { margin: 0 0 6px; }
 .welcome p { margin: 0; color: var(--ink-2); }
+
+/* ---------- dashboard (front page) ---------- */
+.kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-bottom: 18px; }
+@media (max-width: 1150px) { .kpis { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 620px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px 18px; box-shadow: var(--shadow); }
+.kpi-top { display: flex; align-items: center; gap: 12px; }
+.kpi-ico { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 21px; flex: 0 0 46px; }
+.kpi-label { font-size: 12.5px; color: var(--muted); }
+.kpi-value { font-size: 23px; font-weight: 800; letter-spacing: -0.4px; line-height: 1.15; }
+.kpi-sub { margin-top: 11px; font-size: 12px; font-weight: 600; }
+.kpi-sub .muted { color: var(--muted); font-weight: 500; }
+.tone-blue   { background: #e7efff; color: #2563eb; }
+.tone-green  { background: #e2f6ec; color: #0a9d54; }
+.tone-indigo { background: #ecebfe; color: #5b57d6; }
+.tone-amber  { background: #fef1dc; color: #d98a10; }
+.tone-red    { background: #fde7e7; color: #e0483f; }
+:root[data-theme="dark"] .tone-blue   { background: #16264a; color: #7aa5ff; }
+:root[data-theme="dark"] .tone-green  { background: #123626; color: #58d69a; }
+:root[data-theme="dark"] .tone-indigo { background: #241f4d; color: #9c98f5; }
+:root[data-theme="dark"] .tone-amber  { background: #3a2c12; color: #f0b657; }
+:root[data-theme="dark"] .tone-red    { background: #3a1717; color: #f39189; }
+.delta.up   { color: #0a9d54; }
+.delta.down { color: #e0483f; }
+.klink { color: var(--primary); font-weight: 600; cursor: pointer; font-size: 12.5px; }
+.klink:hover { text-decoration: underline; }
+
+.dash-grid { display: grid; grid-template-columns: 1.55fr 1fr; gap: 16px; }
+.card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.card-head h3 { margin: 0; font-size: 16px; }
+.card-head .sub { margin-top: 2px; }
+.mini-select { font-size: 12.5px; padding: 5px 9px; border-radius: 9px; border: 1px solid var(--baseline); background: var(--surface); color: var(--ink); width: auto; }
+
+.biz-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--grid); }
+.biz-row:last-child { border-bottom: none; }
+.biz-left { display: flex; align-items: center; gap: 11px; }
+.biz-ico { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.biz-name { font-size: 13.5px; color: var(--ink-2); }
+.biz-val { font-weight: 800; }
+.biz-delta { font-size: 11.5px; font-weight: 600; margin-left: 8px; }
+
+.txn-list { display: flex; flex-direction: column; }
+.txn-item { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--grid); }
+.txn-item:last-child { border-bottom: none; }
+.txn-ico { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex: 0 0 38px; }
+.txn-main { flex: 1; min-width: 0; }
+.txn-title { font-weight: 600; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.txn-meta { font-size: 11.5px; color: var(--muted); }
+.txn-amt { font-weight: 800; white-space: nowrap; font-size: 13.5px; }
+.ls-thumb { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 15px; background: var(--info-bg); color: var(--info-ink); flex: 0 0 34px; }
+.ls-cell { display: flex; align-items: center; gap: 10px; }
+@media (max-width: 900px) { .dash-grid { grid-template-columns: 1fr; } }
 
 /* ---------- tables ---------- */
 .table-wrap { overflow-x: auto; }
@@ -3063,90 +3116,188 @@ function exportDetailedSales() {
 /* VyaparOpen — dashboard.js */
 'use strict';
 
+/* ---- dashboard metric helpers ---- */
+function dashSum(startISO, endISO) {
+  let sales = 0, profit = 0, purch = 0, exp = 0, bills = 0;
+  for (const t of state.txns) {
+    if (!inRange(t.date, startISO, endISO)) continue;
+    if (t.type === 'SALE') { sales += num(t.total); profit += txnProfit(t); bills++; }
+    else if (t.type === 'SALE_RETURN') { profit += txnProfit(t); }
+    else if (t.type === 'PURCHASE') { purch += num(t.total); }
+    else if (t.type === 'EXPENSE') { exp += num(t.total); }
+  }
+  return { sales: sales, profit: profit, purch: purch, exp: exp, bills: bills };
+}
+
+function dashDelta(cur, prev, abs) {
+  if (abs) {
+    const d = Math.round(cur) - Math.round(prev);
+    if (!d) return '<span class="muted">no change</span>';
+    return '<span class="delta ' + (d > 0 ? 'up' : 'down') + '">' + (d > 0 ? '↑ ' : '↓ ') + Math.abs(d) + '</span>';
+  }
+  if (!prev) return cur ? '<span class="delta up">↑ new</span>' : '<span class="muted">—</span>';
+  const pct = Math.round((cur - prev) / Math.abs(prev) * 1000) / 10;
+  if (!pct) return '<span class="muted">no change</span>';
+  return '<span class="delta ' + (pct > 0 ? 'up' : 'down') + '">' + (pct > 0 ? '↑ ' : '↓ ') + Math.abs(pct) + '%</span>';
+}
+
+function dashPeriodData() {
+  const p = window._dashPeriod || 'thisMonth';
+  const now = new Date(); const Y = now.getFullYear(), Mo = now.getMonth();
+  const iso = (y, m, d) => y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+  if (p === 'thisYear') {
+    const bars = [];
+    for (let m = 0; m < 12; m++) {
+      let s = 0;
+      for (const t of state.txns) {
+        if (t.type !== 'SALE') continue;
+        const dt = new Date(t.date + 'T00:00:00');
+        if (dt.getFullYear() === Y && dt.getMonth() === m) s += num(t.total);
+      }
+      bars.push({ label: monthName(m), value: s });
+    }
+    return { label: 'Year ' + Y, start: iso(Y, 0, 1), end: iso(Y, 11, 31), prevStart: iso(Y - 1, 0, 1), prevEnd: iso(Y - 1, 11, 31), bars: bars };
+  }
+  let y = Y, m = Mo;
+  if (p === 'lastMonth') { m = Mo - 1; if (m < 0) { m = 11; y = Y - 1; } }
+  const days = new Date(y, m + 1, 0).getDate();
+  const start = iso(y, m, 1), end = iso(y, m, days);
+  let py = y, pm = m - 1; if (pm < 0) { pm = 11; py = y - 1; }
+  const pdays = new Date(py, pm + 1, 0).getDate();
+  const byDay = {};
+  for (let i = 0; i < days; i++) byDay[addDays(start, i)] = 0;
+  for (const t of state.txns) if (t.type === 'SALE' && byDay[t.date] !== undefined) byDay[t.date] += num(t.total);
+  const bars = Object.keys(byDay).sort().map(dt => ({ label: dt.slice(8), value: byDay[dt] }));
+  return { label: monthName(m) + ' ' + y, start: start, end: end, prevStart: iso(py, pm, 1), prevEnd: iso(py, pm, pdays), bars: bars };
+}
+
+function dashPeriodSelect() {
+  const p = window._dashPeriod || 'thisMonth';
+  const opt = (v, l) => '<option value="' + v + '"' + (p === v ? ' selected' : '') + '>' + l + '</option>';
+  return '<select class="mini-select" onchange="_dashPeriod=this.value;renderDashboard()">' +
+    opt('thisMonth', 'This Month') + opt('lastMonth', 'Last Month') + opt('thisYear', 'This Year') + '</select>';
+}
+
+function timeAgo(ts) {
+  const s = (Date.now() - ts) / 1000;
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + ' min ago';
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+  const d = Math.floor(s / 86400);
+  if (d === 1) return 'Yesterday';
+  if (d < 7) return d + ' days ago';
+  const dt = new Date(ts);
+  return fmtDate(dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0'));
+}
+
+/* ---- dashboard component builders ---- */
+function kpiCard(tone, icon, label, value, sub) {
+  return '<div class="kpi"><div class="kpi-top"><div class="kpi-ico tone-' + tone + '">' + icon + '</div>' +
+    '<div><div class="kpi-label">' + esc(label) + '</div><div class="kpi-value">' + value + '</div></div></div>' +
+    '<div class="kpi-sub">' + sub + '</div></div>';
+}
+
+function bizRow(tone, icon, name, val, delta) {
+  return '<div class="biz-row"><div class="biz-left"><div class="biz-ico tone-' + tone + '">' + icon + '</div>' +
+    '<span class="biz-name">' + esc(name) + '</span></div>' +
+    '<div class="r"><span class="biz-val">' + fmtMoney(val) + '</span><span class="biz-delta">' + delta + '</span></div></div>';
+}
+
+function lowStockTableHTML(low) {
+  if (!low.length) return '<p class="empty" style="padding:22px">🎉 All items are well stocked.</p>';
+  const rows = low.slice(0, 6).map(it => {
+    const stock = itemStock(it.id);
+    return '<tr class="rowlink" onclick="openItemDetail(\'' + it.id + '\')">' +
+      '<td><div class="ls-cell"><div class="ls-thumb">📦</div><strong>' + esc(it.name) + '</strong></div></td>' +
+      '<td>' + esc(it.category || '—') + '</td>' +
+      '<td class="r">' + fmtQty(stock) + ' ' + esc(it.unit) + '</td>' +
+      '<td class="r">' + fmtQty(it.minStock) + '</td>' +
+      '<td class="r">' + (stock <= 0 ? '<span class="badge bad">No Stock</span>' : '<span class="badge warn">Low Stock</span>') + '</td></tr>';
+  }).join('');
+  return '<div class="table-wrap"><table><thead><tr><th>Item</th><th>Category</th><th class="r">Available</th><th class="r">Reorder</th><th class="r">Status</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+
+function recentTxnsHTML(list) {
+  if (!list.length) return '<p class="empty" style="padding:22px">No transactions yet.</p>';
+  const cfg = {
+    SALE:            { ic: '🛒', tone: 'green',  label: 'Sale',             sign: '+' },
+    SALE_RETURN:     { ic: '↩️', tone: 'red',    label: 'Sale Return',      sign: '-' },
+    PURCHASE:        { ic: '📦', tone: 'blue',   label: 'Purchase',         sign: '-' },
+    PURCHASE_RETURN: { ic: '↩️', tone: 'blue',   label: 'Purchase Return',  sign: '+' },
+    PAYMENT_IN:      { ic: '⬇️', tone: 'green',  label: 'Payment Received', sign: '+' },
+    PAYMENT_OUT:     { ic: '⬆️', tone: 'red',    label: 'Payment Made',     sign: '-' },
+    EXPENSE:         { ic: '🧾', tone: 'red',    label: 'Expense',          sign: '-' }
+  };
+  return '<div class="txn-list">' + list.map(t => {
+    const c = cfg[t.type] || { ic: '•', tone: 'blue', label: t.type, sign: '' };
+    const who = t.partyId ? partyName(t.partyId) : (t.category || (t.type === 'SALE' ? 'Cash Sale' : ''));
+    const when = t.createdAt ? timeAgo(t.createdAt) : fmtDate(t.date);
+    return '<div class="txn-item"><div class="txn-ico tone-' + c.tone + '">' + c.ic + '</div>' +
+      '<div class="txn-main"><div class="txn-title">' + esc(c.label + (who ? ' · ' + who : '')) + '</div>' +
+      '<div class="txn-meta">' + esc((t.number || '') + ' · ' + when) + '</div></div>' +
+      '<div class="txn-amt ' + (c.sign === '+' ? 'pos' : c.sign === '-' ? 'neg' : '') + '">' + c.sign + ' ' + fmtMoney(t.total, false) + '</div></div>';
+  }).join('') + '</div>';
+}
+
+function welcomeCardHTML() {
+  return '<div class="card welcome"><h3>👋 Welcome to Shopkeeper!</h3>' +
+    '<p>Your free business manager — billing, inventory, payments &amp; GST reports, synced across your devices.</p>' +
+    '<div class="head-actions" style="margin-top:12px">' +
+    '<button class="btn primary" onclick="go(\'settings\')">1. Set up your business profile</button>' +
+    '<button class="btn ghost" onclick="openItemForm()">2. Add products</button>' +
+    '<button class="btn ghost" onclick="go(\'billing\')">3. Start billing</button>' +
+    '<button class="btn ghost" onclick="confirmDemo()">Or load demo data</button></div></div>';
+}
+
 function renderDashboard() {
   const today = todayStr();
+  const yday = addDays(today, -1);
   const totals = totalsReceivablePayable();
-
-  // today's figures
-  let todaySales = 0, todayProfit = 0, todayBills = 0;
-  for (const t of state.txns) {
-    if (t.date !== today) continue;
-    if (t.type === 'SALE') { todaySales += num(t.total); todayProfit += txnProfit(t); todayBills++; }
-    if (t.type === 'SALE_RETURN') { todayProfit += txnProfit(t); }
-  }
-
-  // monthly sales (daily bars for the current month)
-  const d = new Date();
-  const mStart = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01';
-  const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-  const byDay = {};
-  for (let i = 0; i < daysInMonth; i++) byDay[addDays(mStart, i)] = 0;
-  let monthSales = 0;
-  for (const t of state.txns) {
-    if (t.type === 'SALE' && inRange(t.date, mStart, null) && byDay[t.date] !== undefined) {
-      byDay[t.date] += num(t.total);
-      if (t.date <= today) monthSales += num(t.total);
-    }
-  }
-  const chartData = Object.keys(byDay).sort().map(dt => ({ label: dt.slice(8), value: byDay[dt] }));
-
+  const tSum = dashSum(today, today);
+  const ySum = dashSum(yday, yday);
   const low = lowStockItems();
-  const recentBills = state.txns.filter(t => t.type === 'SALE')
-    .sort((a, b) => b.createdAt - a.createdAt).slice(0, 8);
-
-  const billRows = recentBills.map(t => {
-    const st = txnStatus(t);
-    return '<tr class="rowlink" onclick="viewTxn(\'' + t.id + '\')">' +
-      '<td>' + fmtDate(t.date) + '</td><td>' + esc(t.number) + '</td>' +
-      '<td>' + esc(partyName(t.partyId)) + '</td>' +
-      '<td class="r">' + fmtMoney(t.total) + '</td>' +
-      '<td><span class="badge ' + (st === 'Paid' ? 'ok' : st === 'Partial' ? 'warn' : 'bad') + '">' + st + '</span></td></tr>';
-  }).join('') || '<tr><td colspan="5" class="empty">No bills yet — create your first bill!</td></tr>';
-
-  const dradio = (val, label) =>
-    '<label class="radio-opt"><input type="radio" name="dash_st_filter" value="' + val + '"' +
-    ((window._dashStockF || 'all') === val ? ' checked' : '') + ' onchange="_dashStockF=this.value;renderDashStockTable()"> ' + label + '</label>';
-
+  const period = dashPeriodData();
+  const cur = dashSum(period.start, period.end);
+  const prev = dashSum(period.prevStart, period.prevEnd);
+  const recent = state.txns.slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).slice(0, 6);
   const empty = state.txns.length === 0 && state.parties.length === 0 && state.items.length === 0;
 
   el('view').innerHTML =
-    '<div class="page-head"><h2>Dashboard</h2><div class="head-actions">' +
+    '<div class="page-head"><div><h2>Dashboard</h2><div class="sub">Overview of your business</div></div><div class="head-actions">' +
     '<button class="btn primary" onclick="go(\'billing\')">+ New Bill</button>' +
     '<button class="btn ghost" onclick="openTxnForm(\'PURCHASE\')">+ Purchase</button>' +
     '<button class="btn ghost" onclick="openTxnForm(\'PAYMENT_IN\')">+ Payment In</button>' +
     '<button class="btn ghost" onclick="openTxnForm(\'EXPENSE\')">+ Expense</button></div></div>' +
-    (empty ?
-      '<div class="card welcome"><h3>👋 Welcome to Shopkeeper!</h3>' +
-      '<p>Your free, open-source business manager — billing, inventory, payments &amp; GST reports. All data stays on this device.</p>' +
-      '<div class="head-actions" style="margin-top:12px">' +
-      '<button class="btn primary" onclick="go(\'settings\')">1. Set up your business profile</button>' +
-      '<button class="btn ghost" onclick="openItemForm()">2. Add products</button>' +
-      '<button class="btn ghost" onclick="go(\'billing\')">3. Start billing</button>' +
-      '<button class="btn ghost" onclick="confirmDemo()">Or load demo data</button></div></div>' : '') +
-    '<div class="cards">' +
-    '<div class="card stat"><div class="stat-label">Today\'s Sales</div><div class="stat-value">' + fmtMoney(todaySales) + '</div></div>' +
-    '<div class="card stat"><div class="stat-label">Today\'s Profit</div><div class="stat-value ' + (todayProfit >= 0 ? 'pos' : 'neg') + '">' + fmtMoney(todayProfit) + '</div></div>' +
-    '<div class="card stat"><div class="stat-label">Bills Created Today</div><div class="stat-value">' + todayBills + '</div></div>' +
-    '<div class="card stat"><div class="stat-label">Low Stock Items</div><div class="stat-value ' + (low.length ? 'neg' : '') + '">' + low.length + '</div></div>' +
-    '<div class="card stat"><div class="stat-label">To Collect</div><div class="stat-mid pos">' + fmtMoney(totals.receivable) + '</div></div>' +
-    '<div class="card stat"><div class="stat-label">To Pay</div><div class="stat-mid neg">' + fmtMoney(totals.payable) + '</div></div>' +
-    '</div>' +
-    '<div class="card"><h3 class="card-title">Monthly Sales — ' + monthName(d.getMonth()) + ' ' + d.getFullYear() + ' <span class="sub">(total ' + fmtMoney(monthSales) + ')</span></h3>' +
-    svgBarChart(chartData, { height: 220 }) + '</div>' +
-    '<div class="card"><div class="page-head" style="margin-bottom:8px"><h3 class="card-title" style="margin:0">Stock Availability ' +
-    (low.length ? '<span class="badge bad">' + low.length + ' need attention</span>' : '') + '</h3>' +
-    '<div class="head-actions">' +
-    '<input id="dash_stocksearch" class="search" placeholder="Search item / brand…" value="' + esc(window._dashStockQ || '') + '" oninput="_dashStockQ=this.value;renderDashStockTable()">' +
-    '<span class="radio-group">' + dradio('all', 'All') + dradio('stock', 'Stock') + dradio('nostock', 'No Stock') + '</span>' +
-    '<button class="btn tiny ghost" onclick="repState.key=\'stock\';go(\'reports\')">Full report →</button></div></div>' +
-    '<div id="dashStockWrap"></div>' +
-    '</div>' +
-    '<div class="card"><div class="page-head" style="margin-bottom:8px"><h3 class="card-title" style="margin:0">Recent Bills</h3>' +
-    '<button class="btn tiny ghost" onclick="go(\'billing\')">View all →</button></div>' +
-    '<div class="table-wrap"><table><thead><tr><th>Date</th><th>Bill No</th><th>Customer</th><th class="r">Amount</th><th>Status</th></tr></thead><tbody>' +
-    billRows + '</tbody></table></div></div>';
+    (empty ? welcomeCardHTML() : '') +
 
-  renderDashStockTable();
+    '<div class="kpis">' +
+    kpiCard('blue', '🛍️', "Today's Sales", fmtMoney(tSum.sales), dashDelta(tSum.sales, ySum.sales) + ' <span class="muted">vs yesterday</span>') +
+    kpiCard('green', '📈', "Today's Profit", fmtMoney(tSum.profit), dashDelta(tSum.profit, ySum.profit) + ' <span class="muted">vs yesterday</span>') +
+    kpiCard('indigo', '🧾', 'Bills Created Today', String(tSum.bills), dashDelta(tSum.bills, ySum.bills, true) + ' <span class="muted">vs yesterday</span>') +
+    kpiCard('amber', '📦', 'Low Stock Items', String(low.length), '<span class="klink" onclick="go(\'items\')">View items</span>') +
+    kpiCard('green', '⬇️', 'To Collect', fmtMoney(totals.receivable), '<span class="klink" onclick="go(\'parties\')">View details</span>') +
+    kpiCard('red', '⬆️', 'To Pay', fmtMoney(totals.payable), '<span class="klink" onclick="go(\'payments\')">View details</span>') +
+    '</div>' +
+
+    '<div class="dash-grid">' +
+    '<div class="card"><div class="card-head"><div><h3>Sales Overview</h3><div class="sub">' + period.label + ' · Total ' + fmtMoney(cur.sales) + '</div></div>' +
+    dashPeriodSelect() + '</div>' +
+    svgBarChart(period.bars, { height: 240 }) + '</div>' +
+    '<div class="card"><div class="card-head"><h3>Business Summary</h3>' + dashPeriodSelect() + '</div>' +
+    bizRow('blue', '🛍️', 'Total Sales', cur.sales, dashDelta(cur.sales, prev.sales)) +
+    bizRow('green', '📈', 'Total Profit', cur.profit, dashDelta(cur.profit, prev.profit)) +
+    bizRow('amber', '🛒', 'Total Purchases', cur.purch, dashDelta(cur.purch, prev.purch)) +
+    bizRow('red', '🧾', 'Total Expenses', cur.exp, dashDelta(cur.exp, prev.exp)) +
+    '<div style="margin-top:12px"><span class="klink" onclick="go(\'reports\')">View full report →</span></div>' +
+    '</div></div>' +
+
+    '<div class="dash-grid" style="margin-top:16px">' +
+    '<div class="card"><div class="card-head"><h3>Low Stock Items ' + (low.length ? '<span class="badge bad">' + low.length + ' need attention</span>' : '') + '</h3>' +
+    '<span class="klink" onclick="go(\'items\')">View all items →</span></div>' +
+    lowStockTableHTML(low) + '</div>' +
+    '<div class="card"><div class="card-head"><h3>Recent Transactions</h3><span class="klink" onclick="go(\'reports\')">View all →</span></div>' +
+    recentTxnsHTML(recent) + '</div>' +
+    '</div>';
 }
 
 /* Dashboard stock-availability table — same search + All/Stock/No Stock filter
