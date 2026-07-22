@@ -4,11 +4,12 @@ import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/rou
 import { AuthService } from '../../core/services/auth.service';
 import { BusinessStore } from '../../core/services/business-store.service';
 import { ThemeService } from '../../core/services/theme.service';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 interface NavItem {
   path: string;
   icon: string;
-  label: string;
+  labelKey: string;
   admin?: boolean;
 }
 
@@ -21,7 +22,7 @@ interface NavItem {
   selector: 'app-shell',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, TPipe],
   template: `
     <div class="app-layout" [class.nav-open]="menuOpen()">
       <aside class="sidebar">
@@ -35,7 +36,7 @@ interface NavItem {
         <nav>
           @for (n of visibleNav(); track n.path) {
             <a class="nav-item" [routerLink]="n.path" routerLinkActive="active" (click)="menuOpen.set(false)">
-              <span class="ico">{{ n.icon }}</span>{{ n.label }}
+              <span class="ico">{{ n.icon }}</span>{{ n.labelKey | t }}
             </a>
           }
         </nav>
@@ -56,7 +57,7 @@ interface NavItem {
               <span class="user-role">{{ auth.profile()?.role || 'user' }}</span>
             </span>
           </div>
-          <button class="btn ghost tiny" (click)="logout()">Log out</button>
+          <button class="btn ghost tiny" (click)="logout()">{{ 'common.logout' | t }}</button>
         </header>
         <main class="view"><router-outlet></router-outlet></main>
       </div>
@@ -72,13 +73,13 @@ export class ShellComponent {
   readonly menuOpen = signal(false);
 
   private readonly nav: NavItem[] = [
-    { path: '/dashboard', icon: '🏠', label: 'Dashboard' },
-    { path: '/billing', icon: '🧾', label: 'Billing' },
-    { path: '/inventory', icon: '📦', label: 'Inventory' },
-    { path: '/parties', icon: '📒', label: 'Khata' },
-    { path: '/reports', icon: '📊', label: 'Reports' },
-    { path: '/settings', icon: '⚙️', label: 'Settings' },
-    { path: '/admin', icon: '🛡️', label: 'Admin', admin: true },
+    { path: '/dashboard', icon: '🏠', labelKey: 'nav.dashboard' },
+    { path: '/billing', icon: '🧾', labelKey: 'nav.billing' },
+    { path: '/inventory', icon: '📦', labelKey: 'nav.inventory' },
+    { path: '/parties', icon: '📒', labelKey: 'nav.khata' },
+    { path: '/reports', icon: '📊', labelKey: 'nav.reports' },
+    { path: '/settings', icon: '⚙️', labelKey: 'nav.settings' },
+    { path: '/admin', icon: '🛡️', labelKey: 'nav.admin', admin: true },
   ];
 
   visibleNav(): NavItem[] {

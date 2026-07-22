@@ -5,35 +5,43 @@ import { BusinessStore } from '../../core/services/business-store.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { ToastService } from '../../core/services/toast.service';
+import { TranslateService } from '../../core/i18n/translate.service';
+import { LANGUAGES, Lang } from '../../core/i18n/translations';
+import { TPipe } from '../../core/i18n/t.pipe';
 import { BusinessSettings } from '../../core/models';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule],
+  imports: [FormsModule, TPipe],
   template: `
-    <div class="page-head"><div><h2>Settings</h2><div class="sub">Business profile &amp; account</div></div></div>
+    <div class="page-head"><div><h2>{{ 'set.title' | t }}</h2></div></div>
 
     <div class="grid-2">
       <div class="card">
-        <h3 class="card-title">Business Profile (shown on invoices)</h3>
+        <h3 class="card-title">{{ 'set.businessProfile' | t }}</h3>
         <div class="form-grid">
-          <label class="span2">Business Name<input [(ngModel)]="draft().businessName" /></label>
+          <label class="span2">{{ 'set.businessName' | t }}<input [(ngModel)]="draft().businessName" /></label>
           <label class="span2">Address<textarea rows="2" [(ngModel)]="draft().address"></textarea></label>
           <label>Phone<input [(ngModel)]="draft().phone" /></label>
           <label>Email<input [(ngModel)]="draft().email" /></label>
           <label>GSTIN<input [(ngModel)]="draft().gstin" /></label>
           <label>UPI ID<input [(ngModel)]="draft().upiId" /></label>
         </div>
-        <div style="margin-top:12px"><button class="btn primary" (click)="save()">Save Profile</button></div>
+        <div style="margin-top:12px"><button class="btn primary" (click)="save()">{{ 'set.saveProfile' | t }}</button></div>
       </div>
 
       <div>
         <div class="card">
-          <h3 class="card-title">Preferences</h3>
-          <label class="switch-row"><input type="checkbox" [(ngModel)]="draft().taxEnabled" (change)="save()" /> Enable GST on transactions</label>
-          <label class="switch-row"><input type="checkbox" [checked]="theme.mode()==='dark'" (change)="theme.toggle()" /> Dark theme</label>
+          <h3 class="card-title">{{ 'set.preferences' | t }}</h3>
+          <label class="fld">🌐 {{ 'lang.label' | t }}
+            <select [value]="i18n.lang()" (change)="setLang($any($event.target).value)">
+              @for (l of languages; track l.code) { <option [value]="l.code">{{ l.label }} ({{ l.english }})</option> }
+            </select>
+          </label>
+          <label class="switch-row" style="margin-top:10px"><input type="checkbox" [(ngModel)]="draft().taxEnabled" (change)="save()" /> {{ 'set.gstEnable' | t }}</label>
+          <label class="switch-row"><input type="checkbox" [checked]="theme.mode()==='dark'" (change)="theme.toggle()" /> {{ 'set.darkTheme' | t }}</label>
         </div>
 
         <div class="card">
@@ -62,7 +70,11 @@ export class SettingsComponent {
   readonly store = inject(BusinessStore);
   readonly auth = inject(AuthService);
   readonly theme = inject(ThemeService);
+  readonly i18n = inject(TranslateService);
   private readonly toast = inject(ToastService);
+
+  readonly languages = LANGUAGES;
+  setLang(code: Lang): void { this.i18n.setLang(code); }
 
   readonly draft = signal<BusinessSettings>({ ...this.store.settings() });
 

@@ -5,6 +5,7 @@ import { BusinessStore } from '../../core/services/business-store.service';
 import { KpiCardComponent } from '../../shared/components/kpi-card.component';
 import { BarChartComponent, BarDatum } from '../../shared/components/bar-chart.component';
 import { InrPipe } from '../../shared/pipes/inr.pipe';
+import { TPipe } from '../../core/i18n/t.pipe';
 import { Transaction } from '../../core/models';
 import { num, todayISO, addDays } from '../../core/util/num';
 
@@ -17,73 +18,73 @@ interface Sums { sales: number; profit: number; purch: number; exp: number; bill
   selector: 'app-dashboard',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, KpiCardComponent, BarChartComponent, InrPipe],
+  imports: [RouterLink, KpiCardComponent, BarChartComponent, InrPipe, TPipe],
   template: `
     <div class="page-head">
-      <div><h2>Dashboard</h2><div class="sub">Overview of your business</div></div>
+      <div><h2>{{ 'nav.dashboard' | t }}</h2><div class="sub">{{ 'dash.overview' | t }}</div></div>
       <div class="head-actions">
-        <a class="btn primary" routerLink="/billing">+ New Bill</a>
-        <a class="btn ghost" routerLink="/parties">+ Party</a>
-        <a class="btn ghost" routerLink="/inventory">+ Product</a>
+        <a class="btn primary" routerLink="/billing">+ {{ 'dash.newBill' | t }}</a>
+        <a class="btn ghost" routerLink="/parties">+ {{ 'khata.addParty' | t }}</a>
+        <a class="btn ghost" routerLink="/inventory">+ {{ 'inv.addProduct' | t }}</a>
       </div>
     </div>
 
     <div class="kpis">
-      <app-kpi-card tone="blue" icon="🛍️" label="Today's Sales" [value]="today().sales | inr">
-        <span [innerHTML]="delta(today().sales, yday().sales)"></span> <span class="muted">vs yesterday</span>
+      <app-kpi-card tone="blue" icon="🛍️" [label]="'dash.todaySales' | t" [value]="today().sales | inr">
+        <span [innerHTML]="delta(today().sales, yday().sales)"></span> <span class="muted">{{ 'dash.vsYesterday' | t }}</span>
       </app-kpi-card>
-      <app-kpi-card tone="green" icon="📈" label="Today's Profit" [value]="today().profit | inr">
-        <span [innerHTML]="delta(today().profit, yday().profit)"></span> <span class="muted">vs yesterday</span>
+      <app-kpi-card tone="green" icon="📈" [label]="'dash.todayProfit' | t" [value]="today().profit | inr">
+        <span [innerHTML]="delta(today().profit, yday().profit)"></span> <span class="muted">{{ 'dash.vsYesterday' | t }}</span>
       </app-kpi-card>
-      <app-kpi-card tone="indigo" icon="🧾" label="Bills Created Today" [value]="today().bills">
-        <span [innerHTML]="delta(today().bills, yday().bills, true)"></span> <span class="muted">vs yesterday</span>
+      <app-kpi-card tone="indigo" icon="🧾" [label]="'dash.billsToday' | t" [value]="today().bills">
+        <span [innerHTML]="delta(today().bills, yday().bills, true)"></span> <span class="muted">{{ 'dash.vsYesterday' | t }}</span>
       </app-kpi-card>
-      <app-kpi-card tone="amber" icon="📦" label="Low Stock Items" [value]="store.lowStockItems().length">
-        <a class="klink" routerLink="/inventory">View items</a>
+      <app-kpi-card tone="amber" icon="📦" [label]="'dash.lowStock' | t" [value]="store.lowStockItems().length">
+        <a class="klink" routerLink="/inventory">{{ 'dash.viewItems' | t }}</a>
       </app-kpi-card>
-      <app-kpi-card tone="green" icon="⬇️" label="To Collect" [value]="store.receivablePayable().receivable | inr">
-        <a class="klink" routerLink="/parties">View details</a>
+      <app-kpi-card tone="green" icon="⬇️" [label]="'dash.toCollect' | t" [value]="store.receivablePayable().receivable | inr">
+        <a class="klink" routerLink="/parties">{{ 'dash.viewDetails' | t }}</a>
       </app-kpi-card>
-      <app-kpi-card tone="red" icon="⬆️" label="To Pay" [value]="store.receivablePayable().payable | inr">
-        <a class="klink" routerLink="/parties">View details</a>
+      <app-kpi-card tone="red" icon="⬆️" [label]="'dash.toPay' | t" [value]="store.receivablePayable().payable | inr">
+        <a class="klink" routerLink="/parties">{{ 'dash.viewDetails' | t }}</a>
       </app-kpi-card>
     </div>
 
     <div class="dash-grid">
       <div class="card">
         <div class="card-head">
-          <div><h3>Sales Overview</h3><div class="sub">{{ periodLabel() }} · Total {{ cur().sales | inr }}</div></div>
+          <div><h3>{{ 'dash.salesOverview' | t }}</h3><div class="sub">{{ periodLabel() }} · {{ 'common.total' | t }} {{ cur().sales | inr }}</div></div>
           <select class="mini-select" [value]="period()" (change)="setPeriod($any($event.target).value)">
-            <option value="thisMonth">This Month</option>
-            <option value="lastMonth">Last Month</option>
-            <option value="thisYear">This Year</option>
+            <option value="thisMonth">{{ 'dash.thisMonth' | t }}</option>
+            <option value="lastMonth">{{ 'dash.lastMonth' | t }}</option>
+            <option value="thisYear">{{ 'dash.thisYear' | t }}</option>
           </select>
         </div>
         <app-bar-chart [data]="bars()" [height]="240"></app-bar-chart>
       </div>
 
       <div class="card">
-        <div class="card-head"><h3>Business Summary</h3></div>
-        <div class="biz-row"><div class="biz-left"><div class="biz-ico tone-blue">🛍️</div><span class="biz-name">Total Sales</span></div>
+        <div class="card-head"><h3>{{ 'dash.businessSummary' | t }}</h3></div>
+        <div class="biz-row"><div class="biz-left"><div class="biz-ico tone-blue">🛍️</div><span class="biz-name">{{ 'dash.totalSales' | t }}</span></div>
           <div><span class="biz-val">{{ cur().sales | inr }}</span><span class="biz-delta" [innerHTML]="delta(cur().sales, prev().sales)"></span></div></div>
-        <div class="biz-row"><div class="biz-left"><div class="biz-ico tone-green">📈</div><span class="biz-name">Total Profit</span></div>
+        <div class="biz-row"><div class="biz-left"><div class="biz-ico tone-green">📈</div><span class="biz-name">{{ 'dash.totalProfit' | t }}</span></div>
           <div><span class="biz-val">{{ cur().profit | inr }}</span><span class="biz-delta" [innerHTML]="delta(cur().profit, prev().profit)"></span></div></div>
-        <div class="biz-row"><div class="biz-left"><div class="biz-ico tone-amber">🛒</div><span class="biz-name">Total Purchases</span></div>
+        <div class="biz-row"><div class="biz-left"><div class="biz-ico tone-amber">🛒</div><span class="biz-name">{{ 'dash.totalPurchases' | t }}</span></div>
           <div><span class="biz-val">{{ cur().purch | inr }}</span><span class="biz-delta" [innerHTML]="delta(cur().purch, prev().purch)"></span></div></div>
-        <div class="biz-row"><div class="biz-left"><div class="biz-ico tone-red">🧾</div><span class="biz-name">Total Expenses</span></div>
+        <div class="biz-row"><div class="biz-left"><div class="biz-ico tone-red">🧾</div><span class="biz-name">{{ 'dash.totalExpenses' | t }}</span></div>
           <div><span class="biz-val">{{ cur().exp | inr }}</span><span class="biz-delta" [innerHTML]="delta(cur().exp, prev().exp)"></span></div></div>
-        <div style="margin-top:12px"><a class="klink" routerLink="/reports">View full report →</a></div>
+        <div style="margin-top:12px"><a class="klink" routerLink="/reports">{{ 'dash.viewReport' | t }} →</a></div>
       </div>
     </div>
 
     <div class="dash-grid" style="margin-top:16px">
       <div class="card">
-        <div class="card-head"><h3>Low Stock Items
-          @if (store.lowStockItems().length) { <span class="badge bad">{{ store.lowStockItems().length }} need attention</span> }
-        </h3><a class="klink" routerLink="/inventory">View all items →</a></div>
+        <div class="card-head"><h3>{{ 'dash.lowStock' | t }}
+          @if (store.lowStockItems().length) { <span class="badge bad">{{ store.lowStockItems().length }} {{ 'dash.needAttention' | t }}</span> }
+        </h3><a class="klink" routerLink="/inventory">{{ 'dash.viewAllItems' | t }} →</a></div>
         @if (store.lowStockItems().length) {
           <div class="table-wrap"><table>
-            <thead><tr><th>Item</th><th>Category</th><th class="r">Available</th><th class="r">Reorder</th><th class="r">Status</th></tr></thead>
+            <thead><tr><th>{{ 'dash.item' | t }}</th><th>{{ 'dash.category' | t }}</th><th class="r">{{ 'dash.available' | t }}</th><th class="r">{{ 'dash.reorder' | t }}</th><th class="r">{{ 'dash.status' | t }}</th></tr></thead>
             <tbody>
               @for (it of store.lowStockItems().slice(0, 6); track it.id) {
                 <tr><td><div class="ls-cell"><div class="ls-thumb">📦</div><strong>{{ it.name }}</strong></div></td>
@@ -94,11 +95,11 @@ interface Sums { sales: number; profit: number; purch: number; exp: number; bill
               }
             </tbody>
           </table></div>
-        } @else { <p class="empty">🎉 All items are well stocked.</p> }
+        } @else { <p class="empty">🎉 {{ 'dash.wellStocked' | t }}</p> }
       </div>
 
       <div class="card">
-        <div class="card-head"><h3>Recent Transactions</h3><a class="klink" routerLink="/reports">View all →</a></div>
+        <div class="card-head"><h3>{{ 'dash.recentTxns' | t }}</h3><a class="klink" routerLink="/reports">{{ 'common.viewAll' | t }} →</a></div>
         @if (recent().length) {
           <div class="txn-list">
             @for (t of recent(); track t.id) {
@@ -114,7 +115,7 @@ interface Sums { sales: number; profit: number; purch: number; exp: number; bill
               </div>
             }
           </div>
-        } @else { <p class="empty">No transactions yet.</p> }
+        } @else { <p class="empty">{{ 'dash.noTxns' | t }}</p> }
       </div>
     </div>
   `,
