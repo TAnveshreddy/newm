@@ -27,6 +27,22 @@ const PAY_MODES = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Credit'];
         <label>Payment Mode<select [(ngModel)]="mode">@for (m of payModes; track m) { <option [value]="m">{{ m }}</option> }</select></label>
       </div>
 
+      <div class="add-item-row" style="display:grid;grid-template-columns:1fr 1.4fr 1fr 1.4fr auto;gap:10px;align-items:end;margin-top:12px">
+        <label>Category
+          <select [(ngModel)]="catFilter" (ngModelChange)="onCat()">
+            <option value="">All Categories</option>
+            @for (c of categories(); track c) { <option [value]="c">{{ c }}</option> }
+          </select></label>
+        <label>Item
+          <select [(ngModel)]="itemSel" (ngModelChange)="itemSelected($event)">
+            <option value="">— select item —</option>
+            @for (it of itemsInCat(); track it.id) { <option [value]="it.id">{{ it.name }}@if (it.brand) { ({{ it.brand }}) }</option> }
+          </select></label>
+        <label>Brand<input [(ngModel)]="brand" placeholder="Auto-fills from item" /></label>
+        <label>Product Description<input [(ngModel)]="desc" placeholder="Prints on invoice" /></label>
+        <button class="btn primary" (click)="addSelected()">+ Add to Bill</button>
+      </div>
+
       <label class="fld" style="margin-top:10px">📷 Scan Barcode
         <input [(ngModel)]="scan" (keyup.enter)="onScan()" placeholder="Click here, then scan — item is added automatically" autocomplete="off" /></label>
 
@@ -48,7 +64,8 @@ const PAY_MODES = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Credit'];
         <tbody>
           @for (l of lines(); track l.itemId; let i = $index) {
             <tr>
-              <td><strong>{{ l.name }}</strong><div class="sub">{{ l.unit }}</div></td>
+              <td><strong>{{ l.name }}</strong>
+                <div class="sub">{{ lineSub(l) }}</div></td>
               <td class="r"><input class="qty" type="number" min="1" [ngModel]="l.qty" (ngModelChange)="setQty(i, $event)" /></td>
               <td class="r"><input class="qty" type="number" [ngModel]="l.rate" (ngModelChange)="setRate(i, $event)" /></td>
               <td class="r">{{ l.taxRate || 0 }}%</td>
@@ -88,7 +105,23 @@ export class BillingComponent {
   readonly paid = signal<number | null>(null);
   readonly lines = signal<TxnLine[]>([]);
 
+  // structured add-item row
+  readonly catFilter = signal('');
+  readonly itemSel = signal('');
+  readonly brand = signal('');
+  readonly desc = signal('');
+
   readonly customers = computed(() => this.store.parties().filter((p) => p.type !== 'supplier'));
+
+  readonly categories = computed(() =>
+    [...new Set(this.store.items().map((i) => i.category).filter((c): c is string => !!c))].sort(),
+  );
+  readonly itemsInCat = computed(() => {
+    const cat = this.catFilter();
+    return this.store.items()
+      .filter((i) => !cat || i.category === cat)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  });
 
   readonly matches = computed(() => {
     const q = this.queryText().trim().toLowerCase();
@@ -109,6 +142,43 @@ export class BillingComponent {
   lineTotal(l: TxnLine): number {
     const base = num(l.qty) * num(l.rate);
     return round2(base + (this.store.settings().taxEnabled ? (base * num(l.taxRate)) / 100 : 0));
+  }
+
+  lineSub(l: TxnLine): string {
+    return [l.brand, l.unit, l.description].filter((x) => !!x).join(' · ');
+  }
+
+  onCat(): void {
+    this.itemSel.set('');
+    this.brand.set('');
+    this.desc.set('');
+  }
+
+  itemSelected(id: string): void {
+    const it = this.store.getItem(id);
+    this.brand.set(it?.brand ?? '');
+    this.desc.set(it?.description ?? '');
+  }
+
+  /** "+ Add to Bill" — adds the selected item with the chosen brand/description. */
+  addSelected(): void {
+    const it = this.store.getItem(this.itemSel());
+    if (!it) { this.toast.error('Select an item first'); return; }
+    const brand = this.brand().trim();
+    const desc = this.desc().trim();
+    this.lines.update((ls) => {
+      const found = ls.find((l) => l.itemId === it.id && (l.brand ?? '') === brand && (l.description ?? '') === desc);
+      if (found) return ls.map((l) => (l === found ? { ...l, qty: num(l.qty) + 1 } : l));
+      return [...ls, {
+        itemId: it.id, name: it.name, hsn: it.hsn, unit: it.unit, qty: 1,
+        rate: num(it.salePrice), disc: 0,
+        taxRate: this.store.settings().taxEnabled ? num(it.taxRate) : 0,
+        brand, description: desc, cost: num(it.purchasePrice),
+      }];
+    });
+    this.itemSel.set('');
+    this.brand.set('');
+    this.desc.set('');
   }
 
   add(it: Item): void {
