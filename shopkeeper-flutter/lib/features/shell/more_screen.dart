@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/state/providers.dart';
-import '../transactions/transactions_screen.dart';
 
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
@@ -45,17 +44,6 @@ class MoreScreen extends ConsumerWidget {
               ),
             ),
           ),
-          _txnTile(context, Icons.shopping_cart_outlined, 'Purchases',
-              const TxPageConfig(title: 'Purchases', show: ['PURCHASE'], create: ['PURCHASE'])),
-          _txnTile(context, Icons.description_outlined, 'Estimates',
-              const TxPageConfig(title: 'Estimates', show: ['ESTIMATE'], create: ['ESTIMATE'])),
-          _txnTile(context, Icons.payments_outlined, 'Payments',
-              const TxPageConfig(title: 'Payments', show: ['PAYMENT_IN', 'PAYMENT_OUT'], create: ['PAYMENT_IN', 'PAYMENT_OUT'])),
-          _txnTile(context, Icons.money_off, 'Expenses',
-              const TxPageConfig(title: 'Expenses', show: ['EXPENSE'], create: ['EXPENSE'])),
-          _txnTile(context, Icons.assignment_return_outlined, 'Returns',
-              const TxPageConfig(title: 'Returns', show: ['SALE_RETURN', 'PURCHASE_RETURN'], create: ['SALE_RETURN', 'PURCHASE_RETURN'])),
-          const Divider(),
           if (isAdmin)
             ListTile(
               leading: const Icon(Icons.shield_outlined),
@@ -70,17 +58,6 @@ class MoreScreen extends ConsumerWidget {
             onTap: () => ref.read(authServiceProvider).signOut(),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _txnTile(BuildContext context, IconData icon, String label, TxPageConfig config) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(label),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => TransactionsScreen(config: config)),
       ),
     );
   }
