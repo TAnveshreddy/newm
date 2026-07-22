@@ -50,6 +50,9 @@ dependencies:
   printing: ^5.13.3
   barcode_widget: ^2.0.4
 
+  # Persist the user's language choice
+  shared_preferences: ^2.3.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

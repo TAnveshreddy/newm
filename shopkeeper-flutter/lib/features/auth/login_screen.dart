@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/i18n/locale_provider.dart';
 import '../../core/state/providers.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -104,20 +105,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(height: 12),
                     const Text('Shopkeeper', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
                     const SizedBox(height: 4),
-                    Text('Billing · Inventory · Khata — synced across your devices',
+                    Text(ref.tr('login.sub'),
                         textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
                     const SizedBox(height: 20),
                     if (!_otpStep) ...[
                       OutlinedButton.icon(
                         onPressed: _busy ? null : _google,
                         icon: const Icon(Icons.g_mobiledata, size: 28),
-                        label: const Text('Continue with Google'),
+                        label: Text(ref.tr('login.google')),
                         style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(46)),
                       ),
                       const SizedBox(height: 14),
                       Row(children: [
                         const Expanded(child: Divider()),
-                        Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Text('OR', style: TextStyle(color: Colors.grey.shade500))),
+                        Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Text(ref.tr('login.or'), style: TextStyle(color: Colors.grey.shade500))),
                         const Expanded(child: Divider()),
                       ]),
                       const SizedBox(height: 14),
@@ -125,16 +126,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         controller: _phone,
                         keyboardType: TextInputType.phone,
                         maxLength: 10,
-                        decoration: const InputDecoration(prefixText: '+91  ', labelText: 'Mobile Number', counterText: ''),
+                        decoration: InputDecoration(prefixText: '+91  ', labelText: ref.tr('login.mobile'), counterText: ''),
                       ),
                       const SizedBox(height: 12),
                       FilledButton(
                         onPressed: _busy ? null : _sendOtp,
                         style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(46)),
-                        child: _busy ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Get OTP'),
+                        child: _busy ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2)) : Text(ref.tr('login.getOtp')),
                       ),
                     ] else ...[
-                      Text('Code sent to +91 ${_phone.text}', style: TextStyle(color: Colors.grey.shade600)),
+                      Text('${ref.tr('login.enterOtp')} · +91 ${_phone.text}', style: TextStyle(color: Colors.grey.shade600)),
                       const SizedBox(height: 12),
                       TextField(
                         controller: _otp,
@@ -142,15 +143,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         maxLength: 6,
                         textAlign: TextAlign.center,
                         style: const TextStyle(letterSpacing: 8, fontSize: 18),
-                        decoration: const InputDecoration(labelText: 'Enter OTP', counterText: ''),
+                        decoration: InputDecoration(labelText: ref.tr('login.enterOtp'), counterText: ''),
                       ),
                       const SizedBox(height: 12),
                       FilledButton(
                         onPressed: _busy ? null : _verify,
                         style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(46)),
-                        child: const Text('Verify & Login'),
+                        child: Text(ref.tr('login.verify')),
                       ),
-                      TextButton(onPressed: () => setState(() => _otpStep = false), child: const Text('← Change number')),
+                      TextButton(onPressed: () => setState(() => _otpStep = false), child: Text(ref.tr('login.change'))),
                     ],
                   ],
                 ),

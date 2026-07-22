@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/i18n/locale_provider.dart';
+import '../../core/i18n/translations.dart';
 import '../../core/state/providers.dart';
 
 class MoreScreen extends ConsumerWidget {
@@ -31,7 +33,7 @@ class MoreScreen extends ConsumerWidget {
                     const SizedBox(width: 12),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(ident, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                      Text('Signed in', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                      Text(ref.tr('more.signedIn'), style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
                     ])),
                   ]),
                   const SizedBox(height: 12),
@@ -44,20 +46,52 @@ class MoreScreen extends ConsumerWidget {
               ),
             ),
           ),
+          ListTile(
+            leading: const Icon(Icons.language),
+            title: Text(ref.tr('set.language')),
+            subtitle: Text(_langName(ref.watch(langProvider) ?? 'en')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _pickLanguage(context, ref),
+          ),
+          const Divider(),
           if (isAdmin)
             ListTile(
               leading: const Icon(Icons.shield_outlined),
-              title: const Text('Admin Console'),
-              subtitle: const Text('Manage users, roles & subscriptions'),
+              title: Text(ref.tr('nav.admin')),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push('/admin'),
             ),
           ListTile(
             leading: const Icon(Icons.logout),
-            title: const Text('Sign out'),
+            title: Text(ref.tr('common.logout')),
             onTap: () => ref.read(authServiceProvider).signOut(),
           ),
         ],
+      ),
+    );
+  }
+
+  String _langName(String code) {
+    final l = kLanguages.where((x) => x.code == code);
+    return l.isNotEmpty ? '${l.first.label} (${l.first.english})' : code;
+  }
+
+  void _pickLanguage(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: kLanguages.map((l) => ListTile(
+                title: Text(l.label),
+                subtitle: Text(l.english),
+                trailing: (ref.read(langProvider) ?? 'en') == l.code ? const Icon(Icons.check) : null,
+                onTap: () {
+                  ref.read(langProvider.notifier).setLang(l.code);
+                  Navigator.pop(context);
+                },
+              )).toList(),
+        ),
       ),
     );
   }

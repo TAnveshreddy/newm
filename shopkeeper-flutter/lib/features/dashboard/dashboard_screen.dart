@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/i18n/locale_provider.dart';
 import '../../core/models/models.dart';
 import '../../core/state/calc.dart';
 import '../../core/state/providers.dart';
@@ -43,8 +44,8 @@ class DashboardScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(14),
         children: [
-          const Text('Dashboard', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-          Text('Overview of your business', style: TextStyle(color: Colors.grey.shade600)),
+          Text(ref.tr('dash.title'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+          Text(ref.tr('dash.overview'), style: TextStyle(color: Colors.grey.shade600)),
           const SizedBox(height: 14),
           GridView.count(
             crossAxisCount: 2,
@@ -54,19 +55,19 @@ class DashboardScreen extends ConsumerWidget {
             crossAxisSpacing: 12,
             childAspectRatio: 1.55,
             children: [
-              KpiCard(icon: Icons.shopping_bag_outlined, tone: Tones.blue, label: "Today's Sales", value: money(todaySales)),
-              KpiCard(icon: Icons.trending_up, tone: Tones.green, label: "Today's Profit", value: money(todayProfit)),
-              KpiCard(icon: Icons.receipt_long_outlined, tone: Tones.indigo, label: 'Bills Today', value: '$todayBills'),
-              KpiCard(icon: Icons.inventory_2_outlined, tone: Tones.amber, label: 'Low Stock', value: '${low.length}'),
-              KpiCard(icon: Icons.south_west, tone: Tones.green, label: 'To Collect', value: money(rp.receivable)),
-              KpiCard(icon: Icons.north_east, tone: Tones.red, label: 'To Pay', value: money(rp.payable)),
+              KpiCard(icon: Icons.shopping_bag_outlined, tone: Tones.blue, label: ref.tr('dash.todaySales'), value: money(todaySales)),
+              KpiCard(icon: Icons.trending_up, tone: Tones.green, label: ref.tr('dash.todayProfit'), value: money(todayProfit)),
+              KpiCard(icon: Icons.receipt_long_outlined, tone: Tones.indigo, label: ref.tr('dash.billsToday'), value: '$todayBills'),
+              KpiCard(icon: Icons.inventory_2_outlined, tone: Tones.amber, label: ref.tr('dash.lowStock'), value: '${low.length}'),
+              KpiCard(icon: Icons.south_west, tone: Tones.green, label: ref.tr('dash.toCollect'), value: money(rp.receivable)),
+              KpiCard(icon: Icons.north_east, tone: Tones.red, label: ref.tr('dash.toPay'), value: money(rp.payable)),
             ],
           ),
           const SizedBox(height: 8),
           _Section(
-            title: 'Low Stock Items',
+            title: ref.tr('dash.lowStockItems'),
             child: low.isEmpty
-                ? const _Empty('🎉 All items are well stocked.')
+                ? _Empty(ref.tr('dash.wellStocked'))
                 : Column(
                     children: low.take(6).map((it) => ListTile(
                           dense: true,
@@ -79,9 +80,9 @@ class DashboardScreen extends ConsumerWidget {
                   ),
           ),
           _Section(
-            title: 'Recent Transactions',
+            title: ref.tr('dash.recentTxns'),
             child: recent.isEmpty
-                ? const _Empty('No transactions yet.')
+                ? _Empty(ref.tr('dash.noTxns'))
                 : Column(children: recent.take(6).map((t) => _txnTile(t, calc)).toList()),
           ),
         ],
