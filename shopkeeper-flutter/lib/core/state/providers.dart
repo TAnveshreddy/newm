@@ -5,11 +5,13 @@ import '../models/models.dart';
 import '../services/admin_service.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
+import '../services/pdf_service.dart';
 
 // ---- services ----
 final authServiceProvider = Provider<AuthService>((_) => AuthService());
 final firestoreServiceProvider = Provider<FirestoreService>((_) => FirestoreService());
 final adminServiceProvider = Provider<AdminService>((_) => AdminService());
+final pdfServiceProvider = Provider<PdfService>((_) => PdfService());
 
 // ---- auth ----
 final authStateProvider = StreamProvider<User?>((ref) => ref.watch(authServiceProvider).authState());

@@ -5,8 +5,10 @@ import '../../core/models/models.dart';
 import '../../core/state/calc.dart';
 import '../../core/state/providers.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/util/barcode_util.dart';
 import '../../core/util/money.dart';
 import '../../core/util/num_util.dart';
+import '../scan/scan_screen.dart';
 
 class InventoryScreen extends ConsumerStatefulWidget {
   const InventoryScreen({super.key});
@@ -30,7 +32,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Inventory')),
+      appBar: AppBar(title: const Text('Inventory'), actions: [
+        IconButton(icon: const Icon(Icons.qr_code_scanner), tooltip: 'Scan barcode', onPressed: () => _scan(items)),
+      ]),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(null),
         icon: const Icon(Icons.add),
@@ -77,18 +81,39 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     );
   }
 
-  void _openForm(Item? existing) {
+  Future<void> _scan(List<Item> items) async {
+    final code = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => const ScanScreen(title: 'Scan product barcode')),
+    );
+    if (code == null || !mounted) return;
+    final existing = items.where((i) => i.barcode.trim() == code.trim()).firstOrNull;
+    if (existing != null) {
+      _openForm(existing);
+    } else {
+      _openForm(null, prefillBarcode: code.trim());
+    }
+  }
+
+  void _openForm(Item? existing, {String? prefillBarcode}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (_) => _ItemForm(existing: existing),
+      builder: (_) => _ItemForm(existing: existing, prefillBarcode: prefillBarcode),
     );
+  }
+}
+
+extension _FirstOrNull<E> on Iterable<E> {
+  E? get firstOrNull {
+    final it = iterator;
+    return it.moveNext() ? it.current : null;
   }
 }
 
 class _ItemForm extends ConsumerStatefulWidget {
   final Item? existing;
-  const _ItemForm({this.existing});
+  final String? prefillBarcode;
+  const _ItemForm({this.existing, this.prefillBarcode});
   @override
   ConsumerState<_ItemForm> createState() => _ItemFormState();
 }
@@ -114,7 +139,7 @@ class _ItemFormState extends ConsumerState<_ItemForm> {
     _category = TextEditingController(text: e?.category ?? '');
     _brand = TextEditingController(text: e?.brand ?? '');
     _hsn = TextEditingController(text: e?.hsn ?? '');
-    _barcode = TextEditingController(text: e?.barcode ?? '');
+    _barcode = TextEditingController(text: e?.barcode ?? widget.prefillBarcode ?? '');
     _sale = TextEditingController(text: e != null ? '${e.salePrice}' : '');
     _purchase = TextEditingController(text: e != null ? '${e.purchasePrice}' : '');
     _openStock = TextEditingController(text: e != null ? '${e.openingStock}' : '0');
@@ -206,7 +231,22 @@ class _ItemFormState extends ConsumerState<_ItemForm> {
             Row(children: [
               Expanded(child: TextField(controller: _hsn, decoration: const InputDecoration(labelText: 'HSN'))),
               const SizedBox(width: 10),
-              Expanded(child: TextField(controller: _barcode, decoration: const InputDecoration(labelText: 'Barcode'))),
+              Expanded(
+                child: TextField(
+                  controller: _barcode,
+                  decoration: InputDecoration(
+                    labelText: 'Barcode',
+                    suffixIcon: IconButton(
+                      tooltip: 'Generate',
+                      icon: const Icon(Icons.auto_awesome, size: 18),
+                      onPressed: () {
+                        final existing = (ref.read(itemsProvider).value ?? const <Item>[]).map((i) => i.barcode);
+                        _barcode.text = generateBarcode(existing);
+                      },
+                    ),
+                  ),
+                ),
+              ),
             ]),
             const SizedBox(height: 10),
             Row(children: [

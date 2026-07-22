@@ -44,6 +44,12 @@ dependencies:
   go_router: ^14.2.7
   intl: ^0.19.0
 
+  # Camera barcode scanning + PDF invoice generation/printing
+  mobile_scanner: ^5.2.3
+  pdf: ^3.11.1
+  printing: ^5.13.3
+  barcode_widget: ^2.0.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

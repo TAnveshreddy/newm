@@ -6,6 +6,7 @@ import '../../core/models/models.dart';
 import '../../core/state/providers.dart';
 import '../../core/util/money.dart';
 import '../../core/util/num_util.dart';
+import '../scan/scan_screen.dart';
 
 class BillingScreen extends ConsumerStatefulWidget {
   const BillingScreen({super.key});
@@ -49,12 +50,29 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
     setState(() => _lines[i] = TxnLine(itemId: l.itemId, name: l.name, hsn: l.hsn, unit: l.unit, qty: q, rate: l.rate, taxRate: l.taxRate, cost: l.cost));
   }
 
-  Future<void> _save() async {
+  Future<void> _scan(bool taxEnabled) async {
+    final code = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => const ScanScreen(title: 'Scan to add to bill')),
+    );
+    if (code == null) return;
+    final items = ref.read(itemsProvider).value ?? const [];
+    final it = items.where((i) => i.barcode.trim() == code.trim()).firstOrNull;
+    if (!mounted) return;
+    if (it == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No item has barcode $code')));
+      return;
+    }
+    _add(it, taxEnabled);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added ${it.name}')));
+  }
+
+  Future<void> _save({bool printAfter = false}) async {
     final uid = ref.read(uidProvider);
     if (uid == null || _lines.isEmpty) return;
     final parties = ref.read(partiesProvider).value ?? const [];
     final counters = ref.read(countersProvider).value ?? const {};
-    final taxEnabled = (ref.read(settingsProvider).value ?? BusinessSettings()).taxEnabled;
+    final settings = ref.read(settingsProvider).value ?? BusinessSettings();
+    final taxEnabled = settings.taxEnabled;
     final party = parties.where((p) => p.type != 'supplier' && p.name.toLowerCase() == _customer.text.trim().toLowerCase()).firstOrNull;
     final n = (counters['SALE'] is num) ? (counters['SALE'] as num).toInt() : 1;
     final txn = Txn(
@@ -65,6 +83,12 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
       createdAt: DateTime.now().millisecondsSinceEpoch,
     );
     await ref.read(firestoreServiceProvider).saveTxn(uid, txn);
+    if (printAfter) {
+      await ref.read(pdfServiceProvider).printInvoice(
+            txn: txn, settings: settings,
+            partyName: party?.name ?? 'Cash Sale', taxEnabled: taxEnabled,
+          );
+    }
     if (mounted) {
       setState(() {
         _lines.clear();
@@ -83,6 +107,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Billing'), actions: [
+        IconButton(icon: const Icon(Icons.qr_code_scanner), tooltip: 'Scan barcode', onPressed: () => _scan(taxEnabled)),
         if (_lines.isNotEmpty) TextButton(onPressed: () => setState(_lines.clear), child: const Text('Clear')),
       ]),
       body: Column(
@@ -141,7 +166,9 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                   Text(money(_total(taxEnabled)), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                 ]),
                 const Spacer(),
-                FilledButton.icon(onPressed: _lines.isEmpty ? null : _save, icon: const Icon(Icons.save_outlined), label: const Text('Save Bill')),
+                OutlinedButton(onPressed: _lines.isEmpty ? null : () => _save(), child: const Text('Save')),
+                const SizedBox(width: 8),
+                FilledButton.icon(onPressed: _lines.isEmpty ? null : () => _save(printAfter: true), icon: const Icon(Icons.print_outlined), label: const Text('Save & Print')),
               ]),
             ),
           ),

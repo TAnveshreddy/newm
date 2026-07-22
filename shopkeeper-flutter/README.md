@@ -99,7 +99,11 @@ This writes `android/app/google-services.json` (and iOS plist) and refreshes
 | Billing (search-add, live GST totals, save) | ✅ |
 | Khata (parties, live balances) | ✅ |
 | Admin console (users, roles, plans, activate/delete) | ✅ |
-| Camera barcode scanning, invoice PDF, remaining txn forms | ⏳ next |
+| Camera barcode scanning (billing + inventory) | ✅ (mobile_scanner) |
+| Barcode generate | ✅ |
+| Invoice PDF (share / print) | ✅ (pdf + printing) |
+| Purchases / Estimates / Payments / Expenses / Returns | ✅ (generic transactions screen, via More) |
 
 Verified: `flutter analyze` is clean and `flutter build web` compiles the full
-app (all Dart + Firebase plugins).
+app (all Dart + Firebase + scanner/PDF plugins). Android/iOS camera permissions
+are declared in the manifests.
