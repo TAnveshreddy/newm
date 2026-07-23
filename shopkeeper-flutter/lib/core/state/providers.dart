@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/models.dart';
 import '../services/admin_service.dart';
 import '../services/auth_service.dart';
+import '../services/backup_service.dart';
 import '../services/firestore_service.dart';
 import '../services/pdf_service.dart';
 
@@ -12,6 +13,7 @@ final authServiceProvider = Provider<AuthService>((_) => AuthService());
 final firestoreServiceProvider = Provider<FirestoreService>((_) => FirestoreService());
 final adminServiceProvider = Provider<AdminService>((_) => AdminService());
 final pdfServiceProvider = Provider<PdfService>((_) => PdfService());
+final backupServiceProvider = Provider<BackupService>((_) => BackupService());
 
 // ---- auth ----
 final authStateProvider = StreamProvider<User?>((ref) => ref.watch(authServiceProvider).authState());

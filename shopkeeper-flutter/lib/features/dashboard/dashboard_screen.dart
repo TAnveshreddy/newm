@@ -40,7 +40,22 @@ class DashboardScreen extends ConsumerWidget {
     final recent = [...txns]..sort((a, b) => (b.createdAt ?? 0).compareTo(a.createdAt ?? 0));
 
     return Scaffold(
-      appBar: AppBar(title: Text(settings.businessName), titleTextStyle: Theme.of(context).textTheme.titleMedium),
+      appBar: AppBar(
+        title: Text(settings.businessName),
+        titleTextStyle: Theme.of(context).textTheme.titleMedium,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Chip(
+              avatar: const Icon(Icons.cloud_done_outlined, size: 16, color: Tones.green),
+              label: const Text('Synced', style: TextStyle(fontSize: 12)),
+              backgroundColor: Tones.green.withValues(alpha: 0.12),
+              side: BorderSide.none,
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(14),
         children: [

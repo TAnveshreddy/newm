@@ -53,6 +53,38 @@ class MoreScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _pickLanguage(context, ref),
           ),
+          ListTile(
+            leading: const Icon(Icons.cloud_download_outlined),
+            title: const Text('Download Backup'),
+            subtitle: const Text('Share all your data as a JSON file'),
+            onTap: () async {
+              final uid = ref.read(uidProvider);
+              if (uid != null) {
+                try {
+                  await ref.read(backupServiceProvider).export(uid);
+                } catch (e) {
+                  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Backup failed: $e')));
+                }
+              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.cloud_upload_outlined),
+            title: const Text('Restore from Backup'),
+            subtitle: const Text('Load data from a backup file'),
+            onTap: () async {
+              final uid = ref.read(uidProvider);
+              if (uid == null) return;
+              try {
+                final ok = await ref.read(backupServiceProvider).restore(uid);
+                if (ok && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Backup restored')));
+                }
+              } catch (e) {
+                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Restore failed: $e')));
+              }
+            },
+          ),
           const Divider(),
           if (isAdmin)
             ListTile(

@@ -53,6 +53,11 @@ dependencies:
   # Persist the user's language choice
   shared_preferences: ^2.3.2
 
+  # Backup export/restore (share a JSON file, pick a file to restore)
+  share_plus: ^10.0.2
+  path_provider: ^2.1.4
+  file_picker: ^8.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
