@@ -17,7 +17,8 @@ const PAY_MODES = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Credit'];
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormsModule, InrPipe, TPipe],
   template: `
-    <div class="page-head"><div><h2>{{ 'bill.title' | t }}</h2><div class="sub">{{ 'bill.createInvoice' | t }}</div></div>
+    <div class="page-head"><div><h2>{{ 'bill.title' | t }}</h2>
+      <div class="sub">@if (editing()) { <span class="badge info">Editing {{ editing()!.number }}</span> } @else { {{ 'bill.createInvoice' | t }} }</div></div>
       <div class="head-actions"><button class="btn ghost" (click)="clear()">{{ 'bill.clearBill' | t }}</button></div></div>
 
     <div class="card">
@@ -63,7 +64,7 @@ const PAY_MODES = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Credit'];
       <div class="table-wrap"><table>
         <thead><tr><th>{{ 'bill.product' | t }}</th><th class="r">{{ 'bill.qty' | t }}</th><th class="r">{{ 'bill.rate' | t }}</th><th class="r">{{ 'common.gst' | t }}%</th><th class="r">{{ 'common.total' | t }}</th><th></th></tr></thead>
         <tbody>
-          @for (l of lines(); track l.itemId; let i = $index) {
+          @for (l of lines(); track $index; let i = $index) {
             <tr>
               <td><strong>{{ l.name }}</strong>
                 <div class="sub">{{ lineSub(l) }}</div></td>
@@ -80,22 +81,62 @@ const PAY_MODES = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Credit'];
       <div class="bill-foot">
         <div class="totals-panel">
           <div class="tp-row"><span>{{ 'common.subtotal' | t }}</span><span>{{ subtotal() | inr }}</span></div>
-          @if (store.settings().taxEnabled) { <div class="tp-row"><span>{{ 'common.gst' | t }}</span><span>{{ tax() | inr }}</span></div> }
+          <div class="tp-row"><span>Discount on entire bill</span>
+            <span style="display:flex;gap:4px;align-items:center">
+              <input class="qty" type="number" min="0" [ngModel]="discount()" (ngModelChange)="discount.set($event)" style="width:66px" />
+              <select [ngModel]="discountType()" (ngModelChange)="discountType.set($event)" style="width:56px">
+                <option value="pct">%</option><option value="flat">₹</option></select>
+              <span class="muted">− {{ discountAmount() | inr }}</span>
+            </span>
+          </div>
+          @if (store.settings().taxEnabled) { <div class="tp-row"><span>{{ 'common.gst' | t }}</span><span>+ {{ tax() | inr }}</span></div> }
           <div class="tp-row grand"><span>{{ 'common.total' | t }}</span><span>{{ total() | inr }}</span></div>
-          <label class="fld">{{ 'bill.amountPaid' | t }}<input type="number" [(ngModel)]="paid" /></label>
+          <div class="tp-row"><span>Received</span>
+            <span style="display:flex;gap:6px;align-items:center">
+              <button class="btn tiny ghost" (click)="paid.set(total())">Full</button>
+              <input class="qty" type="number" [ngModel]="paid()" (ngModelChange)="paid.set($event)" style="width:96px" />
+            </span>
+          </div>
+          <div class="tp-row" style="color:var(--bad);font-weight:700"><span>Balance Due</span><span>{{ balanceDue() | inr }}</span></div>
         </div>
       </div>
       <div class="head-actions" style="justify-content:flex-end;margin-top:12px">
-        <button class="btn ghost" (click)="save(false)" [disabled]="!lines().length">💾 {{ 'bill.saveBill' | t }}</button>
+        <button class="btn ghost" (click)="save(false)" [disabled]="!lines().length">💾 {{ editing() ? 'Update Bill' : ('bill.saveBill' | t) }}</button>
         <button class="btn primary" (click)="save(true)" [disabled]="!lines().length">🖨 {{ 'bill.savePrint' | t }}</button>
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Recent Bills</h3>
+        <input class="search" placeholder="Search bill no / customer…" [ngModel]="billSearch()" (ngModelChange)="billSearch.set($event)" /></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Date</th><th>Bill No</th><th>Customer</th><th class="r">Total</th><th>Status</th><th class="r">Actions</th></tr></thead>
+        <tbody>
+          @for (t of recentBills(); track t.id) {
+            <tr>
+              <td>{{ fmtDate(t.date) }}</td>
+              <td>{{ t.number }}</td>
+              <td>{{ store.partyName(t.partyId) }}</td>
+              <td class="r">{{ t.total | inr }}</td>
+              <td><span class="badge" [class.ok]="status(t)==='Paid'" [class.warn]="status(t)==='Partial'" [class.bad]="status(t)==='Unpaid'">{{ status(t) }}</span></td>
+              <td class="r" style="white-space:nowrap">
+                <button class="btn tiny wa" (click)="whatsapp(t)">WhatsApp</button>
+                <button class="btn tiny ghost" (click)="print.invoice(t)">Print</button>
+                <button class="btn tiny ghost" (click)="edit(t)">Edit</button>
+                <button class="btn tiny danger-ghost" (click)="remove(t)">Delete</button>
+              </td>
+            </tr>
+          } @empty { <tr><td colspan="6" class="empty">No bills yet.</td></tr> }
+        </tbody>
+      </table></div>
+    </div>
   `,
+  styles: [`.btn.wa { background:#25D366; color:#fff; }`],
 })
 export class BillingComponent {
   readonly store = inject(BusinessStore);
   private readonly toast = inject(ToastService);
-  private readonly print = inject(PrintService);
+  readonly print = inject(PrintService);
 
   readonly payModes = PAY_MODES;
   readonly customer = signal('');
@@ -105,6 +146,10 @@ export class BillingComponent {
   readonly queryText = signal('');
   readonly paid = signal<number | null>(null);
   readonly lines = signal<TxnLine[]>([]);
+  readonly discount = signal<number>(0);
+  readonly discountType = signal<'pct' | 'flat'>('pct');
+  readonly editing = signal<Transaction | null>(null);
+  readonly billSearch = signal('');
 
   // structured add-item row
   readonly catFilter = signal('');
@@ -133,35 +178,49 @@ export class BillingComponent {
   });
 
   readonly subtotal = computed(() => round2(this.lines().reduce((s, l) => s + num(l.qty) * num(l.rate), 0)));
+  readonly discountAmount = computed(() => {
+    const st = this.subtotal();
+    const d = num(this.discount());
+    return this.discountType() === 'pct' ? round2((st * d) / 100) : Math.min(round2(d), st);
+  });
   readonly tax = computed(() =>
     this.store.settings().taxEnabled
       ? round2(this.lines().reduce((s, l) => s + (num(l.qty) * num(l.rate) * num(l.taxRate)) / 100, 0))
       : 0,
   );
-  readonly total = computed(() => round2(this.subtotal() + this.tax()));
+  readonly total = computed(() => round2(this.subtotal() - this.discountAmount() + this.tax()));
+  readonly paidVal = computed(() => (this.paid() == null ? this.total() : num(this.paid())));
+  readonly balanceDue = computed(() => round2(this.total() - this.paidVal()));
+
+  readonly recentBills = computed(() => {
+    const q = this.billSearch().trim().toLowerCase();
+    return this.store.txns()
+      .filter((t) => t.type === 'SALE')
+      .filter((t) => !q || (t.number ?? '').toLowerCase().includes(q) || this.store.partyName(t.partyId).toLowerCase().includes(q))
+      .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0))
+      .slice(0, 20);
+  });
 
   lineTotal(l: TxnLine): number {
     const base = num(l.qty) * num(l.rate);
     return round2(base + (this.store.settings().taxEnabled ? (base * num(l.taxRate)) / 100 : 0));
   }
-
   lineSub(l: TxnLine): string {
     return [l.brand, l.unit, l.description].filter((x) => !!x).join(' · ');
   }
-
-  onCat(): void {
-    this.itemSel.set('');
-    this.brand.set('');
-    this.desc.set('');
+  status(t: Transaction): string { return this.store.txnStatus(t); }
+  fmtDate(iso: string): string {
+    const [y, m, d] = (iso ?? '').split('-');
+    return d ? `${d}/${m}/${y}` : iso;
   }
 
+  onCat(): void { this.itemSel.set(''); this.brand.set(''); this.desc.set(''); }
   itemSelected(id: string): void {
     const it = this.store.getItem(id);
     this.brand.set(it?.brand ?? '');
     this.desc.set(it?.description ?? '');
   }
 
-  /** "+ Add to Bill" — adds the selected item with the chosen brand/description. */
   addSelected(): void {
     const it = this.store.getItem(this.itemSel());
     if (!it) { this.toast.error('Select an item first'); return; }
@@ -171,15 +230,12 @@ export class BillingComponent {
       const found = ls.find((l) => l.itemId === it.id && (l.brand ?? '') === brand && (l.description ?? '') === desc);
       if (found) return ls.map((l) => (l === found ? { ...l, qty: num(l.qty) + 1 } : l));
       return [...ls, {
-        itemId: it.id, name: it.name, hsn: it.hsn, unit: it.unit, qty: 1,
-        rate: num(it.salePrice), disc: 0,
+        itemId: it.id, name: it.name, hsn: it.hsn, unit: it.unit, qty: 1, rate: num(it.salePrice), disc: 0,
         taxRate: this.store.settings().taxEnabled ? num(it.taxRate) : 0,
         brand, description: desc, cost: num(it.purchasePrice),
       }];
     });
-    this.itemSel.set('');
-    this.brand.set('');
-    this.desc.set('');
+    this.itemSel.set(''); this.brand.set(''); this.desc.set('');
   }
 
   add(it: Item): void {
@@ -187,8 +243,7 @@ export class BillingComponent {
       const found = ls.find((l) => l.itemId === it.id);
       if (found) return ls.map((l) => (l.itemId === it.id ? { ...l, qty: num(l.qty) + 1 } : l));
       return [...ls, {
-        itemId: it.id, name: it.name, hsn: it.hsn, unit: it.unit, qty: 1,
-        rate: num(it.salePrice), disc: 0,
+        itemId: it.id, name: it.name, hsn: it.hsn, unit: it.unit, qty: 1, rate: num(it.salePrice), disc: 0,
         taxRate: this.store.settings().taxEnabled ? num(it.taxRate) : 0,
         brand: it.brand, description: it.description, cost: num(it.purchasePrice),
       }];
@@ -208,27 +263,76 @@ export class BillingComponent {
   setQty(i: number, v: number): void { this.lines.update((ls) => ls.map((l, idx) => (idx === i ? { ...l, qty: num(v) } : l))); }
   setRate(i: number, v: number): void { this.lines.update((ls) => ls.map((l, idx) => (idx === i ? { ...l, rate: num(v) } : l))); }
   removeLine(i: number): void { this.lines.update((ls) => ls.filter((_, idx) => idx !== i)); }
-  clear(): void { this.lines.set([]); this.customer.set(''); this.mobile.set(''); this.paid.set(null); }
+
+  clear(): void {
+    this.lines.set([]); this.customer.set(''); this.mobile.set(''); this.paid.set(null);
+    this.discount.set(0); this.discountType.set('pct'); this.editing.set(null);
+    this.itemSel.set(''); this.brand.set(''); this.desc.set('');
+  }
 
   async save(printAfter: boolean): Promise<void> {
     if (!this.lines().length) return;
     const party = this.store.parties().find(
       (p) => p.type !== 'supplier' && p.name.toLowerCase() === this.customer().trim().toLowerCase(),
     );
-    const txn: Transaction = {
-      id: makeId(), type: 'SALE', number: this.store.nextNumber('SALE'), date: todayISO(),
+    const base = {
       partyId: party?.id ?? null, lines: this.lines(),
-      subtotal: this.subtotal(), discount: 0, total: this.total(),
-      paid: this.paid() == null ? this.total() : num(this.paid()),
-      mode: this.mode(),
+      subtotal: this.subtotal(), discount: this.discountAmount(),
+      discountPct: this.discountType() === 'pct' ? num(this.discount()) : 0,
+      total: this.total(), paid: this.paidVal(), mode: this.mode(),
     };
+    const ed = this.editing();
+    let txn: Transaction;
     try {
-      await this.store.saveTxn(txn);
-      this.toast.success('Bill ' + txn.number + ' saved');
+      if (ed) {
+        txn = { ...ed, ...base };
+        await this.store.save('txns', txn);
+        this.toast.success('Bill ' + txn.number + ' updated');
+      } else {
+        txn = { id: makeId(), type: 'SALE', number: this.store.nextNumber('SALE'), date: todayISO(), createdAt: Date.now(), ...base };
+        await this.store.saveTxn(txn);
+        this.toast.success('Bill ' + txn.number + ' saved');
+      }
       if (printAfter) this.print.invoice(txn);
       this.clear();
     } catch (e) {
       this.toast.error('Could not save: ' + (e as Error).message);
     }
+  }
+
+  edit(t: Transaction): void {
+    this.editing.set(t);
+    this.lines.set((t.lines ?? []).map((l) => ({ ...l })));
+    const party = this.store.getParty(t.partyId);
+    this.customer.set(party?.name ?? '');
+    this.mobile.set(party?.phone ?? '');
+    this.mode.set(t.mode ?? 'Cash');
+    this.paid.set(num(t.paid));
+    if (num(t.discountPct) > 0) { this.discountType.set('pct'); this.discount.set(num(t.discountPct)); }
+    else { this.discountType.set('flat'); this.discount.set(num(t.discount)); }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  remove(t: Transaction): void {
+    if (!confirm('Delete bill ' + t.number + '?')) return;
+    this.store.deleteTxn(t.id).then(() => this.toast.success('Deleted'));
+  }
+
+  /** Share the bill with the customer on WhatsApp (opens WhatsApp with a text invoice). */
+  whatsapp(t: Transaction): void {
+    const s = this.store.settings();
+    const party = this.store.getParty(t.partyId);
+    const phone = (party?.phone ?? '').replace(/\D/g, '');
+    const due = round2(num(t.total) - num(t.paid));
+    let msg = `*${s.businessName}*\n`;
+    msg += `Invoice: ${t.number}\nDate: ${this.fmtDate(t.date)}\n\n`;
+    for (const l of t.lines ?? []) {
+      msg += `${l.name} × ${num(l.qty)} = ₹${(num(l.qty) * num(l.rate)).toFixed(2)}\n`;
+    }
+    msg += `\nTotal: ₹${num(t.total).toFixed(2)}\nReceived: ₹${num(t.paid).toFixed(2)}\nBalance Due: ₹${due.toFixed(2)}\n`;
+    if (s.upiId) msg += `\nPay via UPI: ${s.upiId}\n`;
+    msg += `\nThank you for your business!`;
+    const target = phone ? '91' + phone : '';
+    window.open(`https://wa.me/${target}?text=${encodeURIComponent(msg)}`, '_blank');
   }
 }
