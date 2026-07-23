@@ -4,6 +4,8 @@ import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/rou
 import { AuthService } from '../../core/services/auth.service';
 import { BusinessStore } from '../../core/services/business-store.service';
 import { ThemeService } from '../../core/services/theme.service';
+import { TranslateService } from '../../core/i18n/translate.service';
+import { LANGUAGES, Lang } from '../../core/i18n/translations';
 import { TPipe } from '../../core/i18n/t.pipe';
 
 interface NavItem {
@@ -50,6 +52,9 @@ interface NavItem {
           <span class="sync-chip" [class.offline]="!online()" [title]="online() ? 'Live-synced with the cloud' : 'Offline — changes sync when you reconnect'">
             {{ online() ? '☁️ Synced' : '⚠️ Offline' }}
           </span>
+          <select class="lang-select" title="Language" [value]="i18n.lang()" (change)="onLang($any($event.target).value)">
+            @for (l of languages; track l.code) { <option [value]="l.code">🌐 {{ l.label }}</option> }
+          </select>
           <button class="icon-btn" (click)="theme.toggle()" title="Toggle theme">
             {{ theme.mode() === 'dark' ? '☀️' : '🌙' }}
           </button>
@@ -71,7 +76,11 @@ export class ShellComponent {
   readonly auth = inject(AuthService);
   readonly store = inject(BusinessStore);
   readonly theme = inject(ThemeService);
+  readonly i18n = inject(TranslateService);
   private readonly router = inject(Router);
+
+  readonly languages = LANGUAGES;
+  onLang(code: Lang): void { this.i18n.setLang(code); }
 
   readonly menuOpen = signal(false);
   readonly online = signal(typeof navigator !== 'undefined' ? navigator.onLine : true);
