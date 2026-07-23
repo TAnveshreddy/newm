@@ -5,6 +5,7 @@ import { BusinessStore } from '../../core/services/business-store.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { ToastService } from '../../core/services/toast.service';
+import { BackupService } from '../../core/services/backup.service';
 import { TranslateService } from '../../core/i18n/translate.service';
 import { LANGUAGES, Lang } from '../../core/i18n/translations';
 import { TPipe } from '../../core/i18n/t.pipe';
@@ -45,6 +46,16 @@ import { BusinessSettings } from '../../core/models';
         </div>
 
         <div class="card">
+          <h3 class="card-title">💾 Backup &amp; Restore</h3>
+          <p class="sub">Your data is stored in the cloud and synced across devices. Download a copy for your records, or restore from a backup file.</p>
+          <div class="head-actions" style="margin-top:10px;flex-wrap:wrap">
+            <button class="btn primary" (click)="backup.exportJson()">⬇ Download Backup (JSON)</button>
+            <button class="btn ghost" (click)="fileInput.click()">⬆ Restore from Backup</button>
+            <input #fileInput type="file" accept=".json,application/json" hidden (change)="onRestore($event)" />
+          </div>
+        </div>
+
+        <div class="card">
           <h3 class="card-title">☁️ Account &amp; Subscription</h3>
           <p class="sub">Signed in as <strong>{{ identity() }}</strong></p>
           <div class="head-actions" style="margin:8px 0;flex-wrap:wrap">
@@ -71,10 +82,18 @@ export class SettingsComponent {
   readonly auth = inject(AuthService);
   readonly theme = inject(ThemeService);
   readonly i18n = inject(TranslateService);
+  readonly backup = inject(BackupService);
   private readonly toast = inject(ToastService);
 
   readonly languages = LANGUAGES;
   setLang(code: Lang): void { this.i18n.setLang(code); }
+
+  onRestore(e: Event): void {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) this.backup.restore(file);
+    input.value = '';
+  }
 
   readonly draft = signal<BusinessSettings>({ ...this.store.settings() });
 

@@ -47,6 +47,9 @@ interface NavItem {
         <header class="topbar">
           <button class="hamburger" (click)="menuOpen.set(!menuOpen())" aria-label="Menu">☰</button>
           <div class="topbar-title">{{ store.settings().businessName }}</div>
+          <span class="sync-chip" [class.offline]="!online()" [title]="online() ? 'Live-synced with the cloud' : 'Offline — changes sync when you reconnect'">
+            {{ online() ? '☁️ Synced' : '⚠️ Offline' }}
+          </span>
           <button class="icon-btn" (click)="theme.toggle()" title="Toggle theme">
             {{ theme.mode() === 'dark' ? '☀️' : '🌙' }}
           </button>
@@ -71,6 +74,14 @@ export class ShellComponent {
   private readonly router = inject(Router);
 
   readonly menuOpen = signal(false);
+  readonly online = signal(typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => this.online.set(true));
+      window.addEventListener('offline', () => this.online.set(false));
+    }
+  }
 
   private readonly nav: NavItem[] = [
     { path: '/dashboard', icon: '🏠', labelKey: 'nav.dashboard' },

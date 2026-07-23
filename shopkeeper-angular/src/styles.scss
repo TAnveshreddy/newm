@@ -47,6 +47,8 @@ body { font: 14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; background:
 .topbar-title { font-weight: 700; flex: 1; }
 .hamburger { display: none; background: none; border: 1px solid var(--grid); border-radius: 8px; font-size: 18px; padding: 3px 10px; color: var(--ink); cursor: pointer; }
 .icon-btn { background: none; border: 1px solid var(--baseline); border-radius: 8px; padding: 5px 9px; cursor: pointer; }
+.sync-chip { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--ok-bg); color: var(--ok-ink); white-space: nowrap; }
+.sync-chip.offline { background: var(--warn-bg); color: var(--warn-ink); }
 .user-chip { display: flex; align-items: center; gap: 8px; }
 .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; }
 .user-meta { display: flex; flex-direction: column; line-height: 1.1; }
