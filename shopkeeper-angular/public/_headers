@@ -1,0 +1,6 @@
+# Never cache the app shell, so new deploys (and fixes) are picked up
+# immediately without a hard refresh. Hashed JS/CSS chunks stay cacheable.
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
