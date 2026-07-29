@@ -12,7 +12,12 @@ import { LanguagePickerComponent } from './features/language/language-picker.com
   imports: [RouterOutlet, ToastComponent, LanguagePickerComponent],
   template: `
     @if (i18n.chosen()) {
-      <router-outlet></router-outlet>
+      <!-- Re-create the routed view whenever the language changes so every
+           OnPush screen re-renders in the new language (incl. back to English),
+           with no page reload. -->
+      @for (lang of [i18n.lang()]; track lang) {
+        <router-outlet></router-outlet>
+      }
     } @else {
       <app-language-picker></app-language-picker>
     }

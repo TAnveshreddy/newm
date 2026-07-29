@@ -22,19 +22,16 @@ export class TranslateService {
   }
 
   setLang(lang: Lang, persist = true): void {
-    const wasChosen = this.chosen();
-    const changed = lang !== this.lang();
     this.lang.set(lang);
     document.documentElement.setAttribute('lang', lang);
     if (persist) {
       try { localStorage.setItem(STORAGE_KEY, lang); } catch { /* ignore */ }
       this.chosen.set(true);
-      // A mid-session change must re-render the whole app. OnPush components read
-      // translations through a pipe, so the bullet-proof way to apply the new
-      // language everywhere is a reload (the choice is already persisted). This
-      // applies to EVERY target language, including switching back to English.
-      if (wasChosen && changed && typeof location !== 'undefined') location.reload();
     }
+    // No reload: the app re-renders reactively. AppComponent re-creates the
+    // routed view whenever `lang` changes (keyed @for), so every screen — nav,
+    // dashboard, forms — updates to the new language immediately, including
+    // switching back to English.
   }
 
   t(key: string): string {
