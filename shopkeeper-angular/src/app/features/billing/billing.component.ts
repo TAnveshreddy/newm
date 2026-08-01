@@ -71,15 +71,17 @@ const PAY_MODES = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Credit'];
               <td class="r"><input class="qty" type="number" min="1" [ngModel]="l.qty" (ngModelChange)="setQty(i, $event)" /></td>
               <td class="r"><input class="qty" type="number" [ngModel]="l.rate" (ngModelChange)="setRate(i, $event)" /></td>
               <td class="r">
-                <select class="qty" [ngModel]="taxSelectValue(l)" (ngModelChange)="onTaxSelect(i, $event)" style="width:80px">
-                  @for (r of gstRates; track r) { <option [ngValue]="r">{{ r }}%</option> }
-                  <option [ngValue]="-1">Custom…</option>
-                </select>
-                @if (isManualTax(l)) {
-                  <input class="qty" type="number" min="0" max="100" step="0.01"
-                         [ngModel]="l.taxRate" (ngModelChange)="setTax(i, $event)"
-                         placeholder="%" style="width:64px;margin-top:4px" />
-                }
+                <div class="gst-cell">
+                  <select class="gst-select" [ngModel]="taxSelectValue(l)" (ngModelChange)="onTaxSelect(i, $event)">
+                    @for (r of gstRates; track r) { <option [ngValue]="r">{{ r }}%</option> }
+                    <option [ngValue]="-1">Custom…</option>
+                  </select>
+                  @if (isManualTax(l)) {
+                    <input class="gst-manual" type="number" min="0" max="100" step="0.01"
+                           [ngModel]="l.taxRate" (ngModelChange)="setTax(i, $event)"
+                           placeholder="Enter %" />
+                  }
+                </div>
               </td>
               <td class="r">{{ lineTotal(l) | inr }}</td>
               <td class="r"><button class="btn tiny danger-ghost" (click)="removeLine(i)">×</button></td>
@@ -141,7 +143,22 @@ const PAY_MODES = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Credit'];
       </table></div>
     </div>
   `,
-  styles: [`.btn.wa { background:#25D366; color:#fff; }`],
+  styles: [`
+    .btn.wa { background:#25D366; color:#fff; }
+    /* GST per-line control — a clearly styled native dropdown (keeps the OS
+       caret via appearance:auto) with an optional manual % field below it. */
+    .gst-cell { display:inline-flex; flex-direction:column; gap:4px; align-items:flex-end; }
+    .gst-select {
+      appearance:auto; -webkit-appearance:auto; width:96px; padding:6px 8px;
+      border:1px solid var(--border); border-radius:8px;
+      background:var(--surface); color:var(--ink); font:inherit; cursor:pointer;
+    }
+    .gst-manual {
+      width:96px; padding:6px 8px; text-align:right; font:inherit;
+      border:1px solid var(--primary); border-radius:8px;
+      background:var(--surface); color:var(--ink);
+    }
+  `],
 })
 export class BillingComponent {
   readonly store = inject(BusinessStore);
