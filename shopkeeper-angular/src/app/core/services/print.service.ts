@@ -60,8 +60,13 @@ export class PrintService {
         @media print{body{padding:0}}
       </style></head><body>
       <div class="head">
-        <div><h1>${this.esc(s.businessName)}</h1><div class="mut">${this.esc(s.address ?? '')}</div>
-          <div class="mut">${s.gstin ? 'GSTIN: ' + this.esc(s.gstin) : ''} ${s.phone ? ' · ' + this.esc(s.phone) : ''}</div></div>
+        <div>
+          <h1>${this.esc(s.businessName)}</h1>
+          ${s.phone ? `<div class="mut">${this.esc(s.phone)}</div>` : ''}
+          ${s.email ? `<div class="mut">${this.esc(s.email)}</div>` : ''}
+          ${s.gstin ? `<div class="mut">GSTIN: ${this.esc(s.gstin)}</div>` : ''}
+          ${s.address ? `<div class="mut">${this.esc(s.address).replace(/\n/g, '<br>')}</div>` : ''}
+        </div>
         <div style="text-align:right"><div class="title">Invoice</div><div>#${this.esc(txn.number)}</div><div class="mut">${this.esc(txn.date)}</div></div>
       </div>
       <div class="two"><div><strong>Bill To:</strong><br>${this.esc(party?.name ?? 'Cash Sale')}<br>

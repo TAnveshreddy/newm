@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { BusinessStore } from '../../core/services/business-store.service';
@@ -22,7 +22,8 @@ import { BusinessSettings } from '../../core/models';
     <div class="grid-2">
       <div class="card">
         <h3 class="card-title">{{ 'set.businessProfile' | t }}</h3>
-        <div class="form-grid">
+        <p class="sub">These details appear on every invoice you print or share.</p>
+        <div class="form-grid" (input)="dirty.set(true)">
           <label class="span2">{{ 'set.businessName' | t }}<input [(ngModel)]="draft().businessName" /></label>
           <label class="span2">Address<textarea rows="2" [(ngModel)]="draft().address"></textarea></label>
           <label>Phone<input [(ngModel)]="draft().phone" /></label>
@@ -95,7 +96,22 @@ export class SettingsComponent {
     input.value = '';
   }
 
+  /** Working copy of the profile form. */
   readonly draft = signal<BusinessSettings>({ ...this.store.settings() });
+  /** Becomes true once the user edits the form, so the async profile load
+   *  below never clobbers in-progress edits. */
+  readonly dirty = signal(false);
+
+  constructor() {
+    // The profile streams in from Firestore (userData/{uid}/meta/settings)
+    // shortly after login. Keep the form in sync with the logged-in owner's
+    // saved profile until they start editing — so returning users see their
+    // real business details, not the defaults captured at construction.
+    effect(() => {
+      const loaded = this.store.settings();
+      if (!this.dirty()) this.draft.set({ ...loaded });
+    }, { allowSignalWrites: true });
+  }
 
   identity(): string {
     const p = this.auth.profile();
@@ -105,6 +121,7 @@ export class SettingsComponent {
   async save(): Promise<void> {
     try {
       await this.store.saveSettings(this.draft());
+      this.dirty.set(false);
       this.toast.success('Settings saved');
     } catch (e) {
       this.toast.error('Save failed: ' + (e as Error).message);
