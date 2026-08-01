@@ -40,6 +40,11 @@ export const appConfig: ApplicationConfig = {
         localCache: persistentLocalCache({
           tabManager: persistentMultipleTabManager(),
         }),
+        // Firestore rejects any field whose value is `undefined` (e.g. an item's
+        // optional hsn/brand/description, or an unpaid party on a cash sale).
+        // Ignore them instead of throwing so saving a bill never fails; the
+        // field is simply omitted from the stored document.
+        ignoreUndefinedProperties: true,
       }),
     ),
   ],

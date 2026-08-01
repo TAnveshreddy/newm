@@ -19,6 +19,27 @@ import {
 export type BusinessCollection = 'parties' | 'items' | 'txns' | 'adjustments';
 
 /**
+ * Recursively removes properties whose value is `undefined`. Firestore's
+ * `setDoc()` throws "Unsupported field value: undefined" for any such field
+ * (e.g. an item's optional hsn/brand/description on a bill line). Stripping
+ * them client-side keeps saves working even if a browser is running a cached
+ * bundle built before `ignoreUndefinedProperties` was enabled.
+ */
+function stripUndefined<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((v) => stripUndefined(v)) as unknown as T;
+  }
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (v !== undefined) out[k] = stripUndefined(v);
+    }
+    return out as T;
+  }
+  return value;
+}
+
+/**
  * Low-level, typed gateway to a user's business data. Every path is scoped to
  * `userData/{uid}/…`, matching the existing schema, so the same documents are
  * shared with the original app. Real-time reads use `collectionData`/`docData`
@@ -53,15 +74,15 @@ export class FirestoreDataService {
   }
 
   upsert(uid: string, name: BusinessCollection, record: { id: string }): Promise<void> {
-    return setDoc(doc(this.fs, `userData/${uid}/${name}`, record.id), record);
+    return setDoc(doc(this.fs, `userData/${uid}/${name}`, record.id), stripUndefined(record));
   }
   remove(uid: string, name: BusinessCollection, id: string): Promise<void> {
     return deleteDoc(doc(this.fs, `userData/${uid}/${name}`, id));
   }
   saveSettings(uid: string, settings: BusinessSettings): Promise<void> {
-    return setDoc(doc(this.fs, `userData/${uid}/meta/settings`), settings, { merge: true });
+    return setDoc(doc(this.fs, `userData/${uid}/meta/settings`), stripUndefined(settings), { merge: true });
   }
   saveCounters(uid: string, counters: Counters): Promise<void> {
-    return setDoc(doc(this.fs, `userData/${uid}/meta/counters`), counters, { merge: true });
+    return setDoc(doc(this.fs, `userData/${uid}/meta/counters`), stripUndefined(counters), { merge: true });
   }
 }
