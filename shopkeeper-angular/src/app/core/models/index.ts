@@ -83,6 +83,8 @@ export interface TxnLine {
   rate: number;
   disc?: number;
   taxRate?: number;
+  /** True when the GST % was typed manually rather than picked from a slab. */
+  taxManual?: boolean;
   brand?: string;
   description?: string;
   cost?: number;

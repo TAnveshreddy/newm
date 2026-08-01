@@ -70,7 +70,17 @@ const PAY_MODES = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Credit'];
                 <div class="sub">{{ lineSub(l) }}</div></td>
               <td class="r"><input class="qty" type="number" min="1" [ngModel]="l.qty" (ngModelChange)="setQty(i, $event)" /></td>
               <td class="r"><input class="qty" type="number" [ngModel]="l.rate" (ngModelChange)="setRate(i, $event)" /></td>
-              <td class="r">{{ l.taxRate || 0 }}%</td>
+              <td class="r">
+                <select class="qty" [ngModel]="taxSelectValue(l)" (ngModelChange)="onTaxSelect(i, $event)" style="width:80px">
+                  @for (r of gstRates; track r) { <option [ngValue]="r">{{ r }}%</option> }
+                  <option [ngValue]="-1">Custom…</option>
+                </select>
+                @if (isManualTax(l)) {
+                  <input class="qty" type="number" min="0" max="100" step="0.01"
+                         [ngModel]="l.taxRate" (ngModelChange)="setTax(i, $event)"
+                         placeholder="%" style="width:64px;margin-top:4px" />
+                }
+              </td>
               <td class="r">{{ lineTotal(l) | inr }}</td>
               <td class="r"><button class="btn tiny danger-ghost" (click)="removeLine(i)">×</button></td>
             </tr>
@@ -263,6 +273,24 @@ export class BillingComponent {
   setQty(i: number, v: number): void { this.lines.update((ls) => ls.map((l, idx) => (idx === i ? { ...l, qty: num(v) } : l))); }
   setRate(i: number, v: number): void { this.lines.update((ls) => ls.map((l, idx) => (idx === i ? { ...l, rate: num(v) } : l))); }
   removeLine(i: number): void { this.lines.update((ls) => ls.filter((_, idx) => idx !== i)); }
+
+  /** Standard Indian GST slabs offered in the dropdown; "Custom…" enables manual entry. */
+  readonly gstRates = [0, 5, 12, 18, 28];
+  isManualTax(l: TxnLine): boolean {
+    return l.taxManual === true || !this.gstRates.includes(num(l.taxRate));
+  }
+  /** Value bound to the slab dropdown: -1 means the manual field is in use. */
+  taxSelectValue(l: TxnLine): number { return this.isManualTax(l) ? -1 : num(l.taxRate); }
+  onTaxSelect(i: number, v: number): void {
+    this.lines.update((ls) => ls.map((l, idx) => {
+      if (idx !== i) return l;
+      // "Custom…" (-1) switches the row to manual entry; a slab sets the rate directly.
+      return v === -1 ? { ...l, taxManual: true } : { ...l, taxRate: num(v), taxManual: false };
+    }));
+  }
+  setTax(i: number, v: number): void {
+    this.lines.update((ls) => ls.map((l, idx) => (idx === i ? { ...l, taxRate: num(v), taxManual: true } : l)));
+  }
 
   clear(): void {
     this.lines.set([]); this.customer.set(''); this.mobile.set(''); this.paid.set(null);
