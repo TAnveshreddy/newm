@@ -29,7 +29,7 @@ const PAY_MODES = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Credit'];
         <label>{{ 'bill.payMode' | t }}<select [(ngModel)]="mode">@for (m of payModes; track m) { <option [value]="m">{{ m }}</option> }</select></label>
       </div>
 
-      <div class="add-item-row" style="display:grid;grid-template-columns:1fr 1.4fr 1fr 1.4fr auto;gap:10px;align-items:end;margin-top:12px">
+      <div class="add-item-row" style="display:grid;grid-template-columns:1fr 1.4fr 1fr 1.4fr 0.8fr auto;gap:10px;align-items:end;margin-top:12px">
         <label>{{ 'bill.category' | t }}
           <select [(ngModel)]="catFilter" (ngModelChange)="onCat()">
             <option value="">{{ 'bill.allCategories' | t }}</option>
@@ -42,6 +42,16 @@ const PAY_MODES = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Credit'];
           </select></label>
         <label>{{ 'bill.brand' | t }}<input [(ngModel)]="brand" [placeholder]="'bill.brandHint' | t" /></label>
         <label>{{ 'bill.desc' | t }}<input [(ngModel)]="desc" [placeholder]="'bill.descHint' | t" /></label>
+        <label>{{ 'common.gst' | t }}%
+          <select [ngModel]="newGstSelect()" (ngModelChange)="onNewGstSelect($event)">
+            @for (r of gstRates; track r) { <option [ngValue]="r">{{ r }}%</option> }
+            <option [ngValue]="-1">Custom…</option>
+          </select>
+          @if (newGstManual()) {
+            <input type="number" min="0" max="100" step="0.01" [ngModel]="newGst()"
+                   (ngModelChange)="setNewGst($event)" placeholder="Enter %" style="margin-top:6px" />
+          }
+        </label>
         <button class="btn primary" (click)="addSelected()">+ {{ 'bill.addToBill' | t }}</button>
       </div>
 
@@ -185,6 +195,15 @@ export class BillingComponent {
   readonly itemSel = signal('');
   readonly brand = signal('');
   readonly desc = signal('');
+  /** GST % applied to the next item added from the entry row. */
+  readonly newGst = signal<number>(18);
+  readonly newGstManual = signal(false);
+  newGstSelect(): number { return this.newGstManual() ? -1 : this.newGst(); }
+  onNewGstSelect(v: number): void {
+    if (v === -1) { this.newGstManual.set(true); }
+    else { this.newGstManual.set(false); this.newGst.set(num(v)); }
+  }
+  setNewGst(v: number): void { this.newGst.set(num(v)); }
 
   readonly customers = computed(() => this.store.parties().filter((p) => p.type !== 'supplier'));
 
@@ -248,6 +267,10 @@ export class BillingComponent {
     const it = this.store.getItem(id);
     this.brand.set(it?.brand ?? '');
     this.desc.set(it?.description ?? '');
+    // Prefill the GST dropdown with the item's saved rate; the owner can override.
+    const g = this.store.settings().taxEnabled ? num(it?.taxRate) : 0;
+    this.newGst.set(g);
+    this.newGstManual.set(!this.gstRates.includes(g));
   }
 
   addSelected(): void {
@@ -260,11 +283,12 @@ export class BillingComponent {
       if (found) return ls.map((l) => (l === found ? { ...l, qty: num(l.qty) + 1 } : l));
       return [...ls, {
         itemId: it.id, name: it.name, hsn: it.hsn, unit: it.unit, qty: 1, rate: num(it.salePrice), disc: 0,
-        taxRate: this.store.settings().taxEnabled ? num(it.taxRate) : 0,
+        taxRate: this.store.settings().taxEnabled ? num(this.newGst()) : 0,
+        taxManual: this.newGstManual(),
         brand, description: desc, cost: num(it.purchasePrice),
       }];
     });
-    this.itemSel.set(''); this.brand.set(''); this.desc.set('');
+    this.itemSel.set(''); this.brand.set(''); this.desc.set(''); this.newGst.set(18); this.newGstManual.set(false);
   }
 
   add(it: Item): void {
