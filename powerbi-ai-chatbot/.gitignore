@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+# Emitted from `tsc -b` on the vite config (source stays as vite.config.ts)
+frontend/vite.config.js
+frontend/vite.config.d.ts
+
+# Environment / secrets — never commit real config
+.env
+.env.*
+!.env.example
+appsettings.json
+appsettings.*.json
+!appsettings.example.json
+*.pem
+*.pfx
+
+# Coverage / test output
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
