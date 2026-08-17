@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/i18n/locale_provider.dart';
 import '../../core/i18n/translations.dart';
 import '../../core/state/providers.dart';
+import '../settings/business_profile_screen.dart';
 
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
@@ -45,6 +46,13 @@ class MoreScreen extends ConsumerWidget {
                 ],
               ),
             ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.storefront_outlined),
+            title: const Text('Business Profile'),
+            subtitle: const Text('Name, phone, GSTIN & address on invoices'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BusinessProfileScreen())),
           ),
           ListTile(
             leading: const Icon(Icons.language),

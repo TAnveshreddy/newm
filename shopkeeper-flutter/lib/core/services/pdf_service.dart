@@ -28,8 +28,10 @@ class PdfService {
               children: [
                 pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
                   pw.Text(settings.businessName, style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
-                  if (settings.address.isNotEmpty) pw.Text(settings.address, style: const pw.TextStyle(fontSize: 10)),
+                  if (settings.phone.isNotEmpty) pw.Text(settings.phone, style: const pw.TextStyle(fontSize: 10)),
+                  if (settings.email.isNotEmpty) pw.Text(settings.email, style: const pw.TextStyle(fontSize: 10)),
                   if (settings.gstin.isNotEmpty) pw.Text('GSTIN: ${settings.gstin}', style: const pw.TextStyle(fontSize: 10)),
+                  if (settings.address.isNotEmpty) pw.Text(settings.address, style: const pw.TextStyle(fontSize: 10)),
                 ]),
                 pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
                   pw.Text('INVOICE', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
@@ -54,6 +56,8 @@ class PdfService {
             pw.Align(
               alignment: pw.Alignment.centerRight,
               child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
+                pw.Text('Subtotal: ${money(txn.subtotal)}'),
+                if (txn.discount > 0) pw.Text('Discount: -${money(txn.discount)}'),
                 pw.Text('Total: ${money(txn.total)}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                 pw.Text('Paid: ${money(txn.paid)}'),
                 pw.Text('Balance Due: ${money(due)}'),

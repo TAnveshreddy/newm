@@ -178,6 +178,9 @@ class TxnLine {
   final double qty;
   final double rate;
   final double taxRate;
+  final bool taxManual; // GST typed manually vs. picked from a slab
+  final String brand;
+  final String description;
   final double cost;
 
   TxnLine({
@@ -188,6 +191,9 @@ class TxnLine {
     this.qty = 1,
     this.rate = 0,
     this.taxRate = 0,
+    this.taxManual = false,
+    this.brand = '',
+    this.description = '',
     this.cost = 0,
   });
 
@@ -199,13 +205,29 @@ class TxnLine {
         qty: _d(m['qty']),
         rate: _d(m['rate']),
         taxRate: _d(m['taxRate']),
+        taxManual: m['taxManual'] == true,
+        brand: (m['brand'] ?? '').toString(),
+        description: (m['description'] ?? '').toString(),
         cost: _d(m['cost']),
       );
 
   Map<String, dynamic> toMap() => {
         'itemId': itemId, 'name': name, 'hsn': hsn, 'unit': unit,
-        'qty': qty, 'rate': rate, 'taxRate': taxRate, 'cost': cost,
+        'qty': qty, 'rate': rate, 'taxRate': taxRate, 'taxManual': taxManual,
+        'brand': brand, 'description': description, 'cost': cost,
       };
+
+  TxnLine copyWith({
+    double? qty, double? rate, double? taxRate, bool? taxManual,
+    String? brand, String? description,
+  }) =>
+      TxnLine(
+        itemId: itemId, name: name, hsn: hsn, unit: unit,
+        qty: qty ?? this.qty, rate: rate ?? this.rate,
+        taxRate: taxRate ?? this.taxRate, taxManual: taxManual ?? this.taxManual,
+        brand: brand ?? this.brand, description: description ?? this.description,
+        cost: cost,
+      );
 }
 
 class Txn {
@@ -281,14 +303,18 @@ class BusinessSettings {
   final String businessName;
   final String address;
   final String phone;
+  final String email;
   final String gstin;
+  final String upiId;
   final bool taxEnabled;
 
   BusinessSettings({
     this.businessName = 'My Business',
     this.address = '',
     this.phone = '',
+    this.email = '',
     this.gstin = '',
+    this.upiId = '',
     this.taxEnabled = true,
   });
 
@@ -296,7 +322,28 @@ class BusinessSettings {
         businessName: (m['businessName'] ?? 'My Business').toString(),
         address: (m['address'] ?? '').toString(),
         phone: (m['phone'] ?? '').toString(),
+        email: (m['email'] ?? '').toString(),
         gstin: (m['gstin'] ?? '').toString(),
+        upiId: (m['upiId'] ?? '').toString(),
         taxEnabled: m['taxEnabled'] != false,
+      );
+
+  Map<String, dynamic> toMap() => {
+        'businessName': businessName, 'address': address, 'phone': phone,
+        'email': email, 'gstin': gstin, 'upiId': upiId, 'taxEnabled': taxEnabled,
+      };
+
+  BusinessSettings copyWith({
+    String? businessName, String? address, String? phone,
+    String? email, String? gstin, String? upiId, bool? taxEnabled,
+  }) =>
+      BusinessSettings(
+        businessName: businessName ?? this.businessName,
+        address: address ?? this.address,
+        phone: phone ?? this.phone,
+        email: email ?? this.email,
+        gstin: gstin ?? this.gstin,
+        upiId: upiId ?? this.upiId,
+        taxEnabled: taxEnabled ?? this.taxEnabled,
       );
 }

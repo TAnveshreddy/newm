@@ -58,4 +58,11 @@ class FirestoreService {
   }
 
   Future<void> deleteTxn(String uid, String id) => _col(uid, 'txns').doc(id).delete();
+
+  Future<void> saveSettings(String uid, BusinessSettings s) => _db
+      .collection('userData')
+      .doc(uid)
+      .collection('meta')
+      .doc('settings')
+      .set(s.toMap(), SetOptions(merge: true));
 }
