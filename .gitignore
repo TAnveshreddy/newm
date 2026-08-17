@@ -1,0 +1,7 @@
+# Generated deliverable archives (redundant copies of tracked source)
+shopkeeper-flutter-source.zip
+*-source.zip
+
+# Flutter build artifacts
+shopkeeper-flutter/build/
+shopkeeper-flutter/.dart_tool/
