@@ -1,0 +1,7 @@
+pandas>=2.0
+matplotlib>=3.7
+openpyxl>=3.1
+# Optional — only needed when using a real LLM for planning (LLM_API_KEY set):
+openai>=1.0
+# Dev / tests:
+pytest>=7.0
