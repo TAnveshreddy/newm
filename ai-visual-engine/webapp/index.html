@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Visual Chatbot</title>
+<style>
+  :root {
+    --bg:#f4f5f7; --surface:#fff; --border:#e2e5ea; --text:#1f2430; --muted:#6b7280;
+    --primary:#106ebe; --primary-dark:#0b5394; --user:#106ebe; --assistant:#eef1f5; --danger:#b42318;
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif; color:var(--text);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); }
+  .app { max-width:920px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column;
+         background:var(--surface); border-left:1px solid var(--border); border-right:1px solid var(--border); }
+  header { display:flex; justify-content:space-between; align-items:center; gap:12px;
+           padding:12px 20px; border-bottom:1px solid var(--border); }
+  .title { font-weight:600; font-size:18px; }
+  .dataset { font-size:12px; color:var(--muted); }
+  .upload-btn { font-size:13px; color:var(--primary); background:transparent; border:1px solid var(--border);
+                border-radius:6px; padding:6px 12px; cursor:pointer; }
+  .messages { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:14px; }
+  .msg { display:flex; }
+  .msg.user { justify-content:flex-end; }
+  .bubble { max-width:86%; padding:12px 16px; border-radius:12px; line-height:1.45; white-space:pre-wrap; }
+  .user .bubble { background:var(--user); color:#fff; border-bottom-right-radius:4px; }
+  .assistant .bubble { background:var(--assistant); border-bottom-left-radius:4px; max-width:94%; }
+  .visual { margin-top:12px; }
+  .visual img { max-width:100%; border:1px solid var(--border); border-radius:8px; background:#fff; }
+  .visual .cap { font-size:12px; color:var(--muted); margin:4px 0 2px; }
+  .fail { color:var(--danger); font-size:13px; margin-top:8px; }
+  .empty { padding:36px 24px; color:var(--muted); }
+  .empty ul { margin-top:8px; padding-left:18px; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .chip { font-size:13px; border:1px solid var(--border); background:#fafbfc; border-radius:16px;
+          padding:6px 12px; cursor:pointer; }
+  .chip:hover { background:#eef4fb; border-color:var(--primary); }
+  form { display:flex; gap:10px; padding:16px 20px; border-top:1px solid var(--border); }
+  textarea { flex:1; resize:none; border:1px solid var(--border); border-radius:8px; padding:10px 12px;
+             font-family:inherit; font-size:14px; }
+  button.send { background:var(--primary); color:#fff; border:none; border-radius:6px; padding:0 20px;
+                font-size:14px; cursor:pointer; }
+  button.send:disabled { opacity:.5; cursor:not-allowed; }
+  .spinner { width:15px; height:15px; border:2px solid var(--border); border-top-color:var(--primary);
+             border-radius:50%; animation:spin .8s linear infinite; display:inline-block; vertical-align:-2px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="title">AI Visual Chatbot</div>
+      <div class="dataset">Data: <span id="dataset">loading…</span></div>
+    </div>
+    <div>
+      <button class="upload-btn" onclick="document.getElementById('file').click()">Upload CSV / Excel</button>
+      <input id="file" type="file" accept=".csv,.xlsx,.xls" style="display:none" />
+    </div>
+  </header>
+
+  <div class="messages" id="messages">
+    <div class="empty" id="empty">
+      <p>Ask a question about your data and I'll build the charts.</p>
+      <div class="chips" id="chips"></div>
+    </div>
+  </div>
+
+  <form id="form">
+    <textarea id="input" rows="2" placeholder="e.g. Create a dashboard: total revenue, revenue by region, monthly revenue trend"></textarea>
+    <button class="send" id="send" type="submit">Send</button>
+  </form>
+</div>
+
+<script>
+const messages = document.getElementById('messages');
+const empty = document.getElementById('empty');
+const form = document.getElementById('form');
+const input = document.getElementById('input');
+const send = document.getElementById('send');
+const datasetEl = document.getElementById('dataset');
+const fileEl = document.getElementById('file');
+
+const EXAMPLES = [
+  "What is total revenue?",
+  "Revenue by region for 2025",
+  "Create a dashboard: total revenue, revenue by region, monthly revenue trend, revenue by category",
+  "Top 5 products by revenue",
+  "Show profit margin",
+];
+
+const chips = document.getElementById('chips');
+EXAMPLES.forEach(t => {
+  const c = document.createElement('div');
+  c.className = 'chip'; c.textContent = t;
+  c.onclick = () => { input.value = t; input.focus(); };
+  chips.appendChild(c);
+});
+
+function esc(s){ const d=document.createElement('div'); d.textContent=s??''; return d.innerHTML; }
+
+function addUser(text){
+  empty.style.display='none';
+  const el = document.createElement('div');
+  el.className='msg user';
+  el.innerHTML = `<div class="bubble">${esc(text)}</div>`;
+  messages.appendChild(el); scroll();
+}
+
+function addAssistant(data){
+  const el = document.createElement('div');
+  el.className='msg assistant';
+  let html = `<div class="bubble">${esc(data.message || '')}`;
+  (data.visuals||[]).forEach(v => {
+    if (v.ok) {
+      html += `<div class="visual"><div class="cap">${esc(v.title)} — ${esc(v.type)}</div><img src="${v.image}" alt="${esc(v.title)}"/></div>`;
+    } else {
+      html += `<div class="fail">⚠ ${esc(v.title)}: ${esc(v.error)}</div>`;
+    }
+  });
+  html += `</div>`;
+  el.innerHTML = html;
+  messages.appendChild(el); scroll();
+}
+
+let thinkingEl = null;
+function showThinking(){
+  thinkingEl = document.createElement('div');
+  thinkingEl.className='msg assistant';
+  thinkingEl.innerHTML = `<div class="bubble"><span class="spinner"></span> Building your charts…</div>`;
+  messages.appendChild(thinkingEl); scroll();
+}
+function clearThinking(){ if(thinkingEl){ thinkingEl.remove(); thinkingEl=null; } }
+function scroll(){ messages.scrollTop = messages.scrollHeight; }
+
+async function ask(prompt){
+  addUser(prompt);
+  send.disabled = true; showThinking();
+  try {
+    const res = await fetch('/api/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({prompt})
+    });
+    const data = await res.json();
+    clearThinking();
+    if (!res.ok) { addAssistant({message:'⚠ ' + (data.error||'Request failed')}); }
+    else { addAssistant(data); }
+  } catch(e){
+    clearThinking(); addAssistant({message:'⚠ Could not reach the server.'});
+  } finally { send.disabled = false; }
+}
+
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  const text = input.value.trim();
+  if (!text) return;
+  input.value=''; ask(text);
+});
+input.addEventListener('keydown', e => {
+  if (e.key==='Enter' && !e.shiftKey){ e.preventDefault(); form.requestSubmit(); }
+});
+
+fileEl.addEventListener('change', async () => {
+  if (!fileEl.files.length) return;
+  const fd = new FormData(); fd.append('file', fileEl.files[0]);
+  datasetEl.textContent = 'uploading…';
+  const res = await fetch('/api/upload', {method:'POST', body:fd});
+  const data = await res.json();
+  if (!res.ok){ datasetEl.textContent = 'upload failed'; addAssistant({message:'⚠ ' + (data.error||'Upload failed')}); return; }
+  datasetEl.textContent = data.name;
+  const cols = Object.values(data.datasets||{})[0] || {};
+  addAssistant({message:`Loaded "${data.name}". Measures: ${(cols.measures||[]).join(', ') || '—'}. Dimensions: ${(cols.dimensions||[]).join(', ') || '—'}. Ask me anything about it.`});
+});
+
+async function loadInfo(){
+  try {
+    const res = await fetch('/api/info'); const data = await res.json();
+    datasetEl.textContent = data.name || 'sample';
+  } catch { datasetEl.textContent = 'sample'; }
+}
+loadInfo();
+</script>
+</body>
+</html>

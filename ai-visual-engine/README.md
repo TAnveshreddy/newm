@@ -46,6 +46,23 @@ export LLM_MODEL=gpt-4.1             # optional
 export LLM_BASE_URL=https://...      # optional, for Azure/compatible endpoints
 ```
 
+## 1b. Web application (browser chat box)
+
+Prefer a UI over the terminal? A small web app is included: type a question in a
+chat box and the charts render on the page.
+
+```bash
+cd ai-visual-engine
+python3 -m pip install -r requirements.txt
+python3 webapp/app.py
+# then open http://localhost:8000
+```
+
+- Starts on the **sample dataset**; use **Upload CSV / Excel** to switch to your own file.
+- One prompt can produce a whole dashboard (KPI + charts) inline.
+- Endpoints: `GET /` (page), `POST /api/chat` `{prompt}`, `POST /api/upload` (file),
+  `GET /api/info`. The same `ai_report` engine does the work — this only adds the UI.
+
 ## 2. Run the tests
 
 ```bash
