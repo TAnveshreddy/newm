@@ -50,6 +50,19 @@ def test_date_parsing():
         parse_or_raise(pd.Series(["apple", "banana", "cherry"]))
 
 
+# 3b ------------------------------------------------------------------------
+def test_out_of_bounds_dates():
+    # Values that parse to an out-of-nanosecond-range year must become NaT,
+    # never crash (regression: pandas-3 OutOfBoundsDatetime on upload).
+    s = pd.Series(["2025-01-01", "1-04-01", "9999-12-31", "0001-01-01", "garbage"])
+    parsed, invalid = parse_dates(s)
+    assert str(parsed.dtype) == "datetime64[ns]"
+    assert invalid >= 1
+    # profiling a frame with such a column must not raise
+    df = pd.DataFrame({"OrderDate": s, "Region": list("ABCDE"), "Sales": [1, 2, 3, 4, 5]})
+    profile_dataset(df, "x")  # should not raise
+
+
 # 4 -------------------------------------------------------------------------
 def test_null_handling(messy_sales):
     clean, report = clean_dataframe(messy_sales)

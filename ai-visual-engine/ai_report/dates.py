@@ -14,6 +14,11 @@ from typing import Tuple
 
 import pandas as pd
 
+try:
+    from pandas.errors import OutOfBoundsDatetime
+except Exception:  # pragma: no cover - very old pandas
+    OutOfBoundsDatetime = Exception
+
 from .errors import DateParseError
 
 COMMON_FORMATS = [
@@ -35,42 +40,67 @@ DATE_CONFIDENCE = 0.8
 DATE_PARTS = ["Year", "Quarter", "Month", "Week", "Day"]
 
 
+def _coerce_ns(parsed: pd.Series) -> pd.Series:
+    """Coerce any parsed datetime series to datetime64[ns].
+
+    Out-of-range dates (e.g. year 1 or year 9999, which fit other resolutions
+    but overflow nanoseconds) become NaT instead of raising — pandas 3 otherwise
+    crashes when such a value is forced into a datetime64[ns] block.
+    """
+    if not pd.api.types.is_datetime64_any_dtype(parsed):
+        parsed = pd.to_datetime(parsed, errors="coerce")
+    try:
+        return parsed.astype("datetime64[ns]")
+    except (OutOfBoundsDatetime, OverflowError, ValueError, TypeError):
+        def clamp(v):
+            if pd.isna(v):
+                return pd.NaT
+            try:
+                return pd.Timestamp(v).as_unit("ns")
+            except (OutOfBoundsDatetime, OverflowError, ValueError, TypeError):
+                return pd.NaT
+        return pd.to_datetime(parsed.map(clamp), errors="coerce").astype("datetime64[ns]")
+
+
+def _safe_parse(values: pd.Series, **kwargs) -> pd.Series:
+    """Vectorized to_datetime that never raises and never overflows ns."""
+    try:
+        parsed = pd.to_datetime(values, errors="coerce", **kwargs)
+    except (ValueError, TypeError, OutOfBoundsDatetime, OverflowError):
+        parsed = pd.Series(pd.NaT, index=values.index, dtype="datetime64[ns]")
+    return _coerce_ns(parsed)
+
+
 def parse_dates(series: pd.Series) -> Tuple[pd.Series, int]:
     """Parse a series to datetime robustly.
 
-    Returns ``(parsed_series, invalid_count)``. Values that cannot be parsed
-    become ``NaT`` rather than raising.
+    Returns ``(parsed_series, invalid_count)``. Values that cannot be parsed —
+    or that are out of the representable range — become ``NaT`` rather than
+    raising.
     """
+    orig_notna = series.notna()
     if pd.api.types.is_datetime64_any_dtype(series):
-        return series, int(series.isna().sum())
+        result = _coerce_ns(series)
+        return result, int((result.isna() & orig_notna).sum())
 
-    non_null = series.dropna()
-    if non_null.empty:
-        return pd.to_datetime(series, errors="coerce"), 0
+    if not orig_notna.any():
+        return pd.Series(pd.NaT, index=series.index, dtype="datetime64[ns]"), 0
 
     # Fill each row with whichever known format parses it, so a column with
-    # MIXED formats (e.g. ISO + US + "Jan 04 2025") is parsed row-by-row.
+    # MIXED formats (e.g. ISO + US + "Jan 04 2025") is parsed row-by-row. Every
+    # attempt is clamped to datetime64[ns] (out-of-range -> NaT) before assign.
     result = pd.Series(pd.NaT, index=series.index, dtype="datetime64[ns]")
     for fmt in COMMON_FORMATS:
-        mask = result.isna() & series.notna()
+        mask = result.isna() & orig_notna
         if not mask.any():
             break
-        try:
-            attempt = pd.to_datetime(series[mask], format=fmt, errors="coerce")
-        except (ValueError, TypeError):
-            continue
-        result.loc[mask] = attempt
+        result.loc[mask] = _safe_parse(series[mask], format=fmt)
 
-    # Final fallback: dateutil per-element for anything still unparsed.
-    mask = result.isna() & series.notna()
+    mask = result.isna() & orig_notna
     if mask.any():
-        try:
-            attempt = pd.to_datetime(series[mask], errors="coerce", format="mixed")
-        except (ValueError, TypeError):
-            attempt = pd.to_datetime(series[mask], errors="coerce")
-        result.loc[mask] = attempt
+        result.loc[mask] = _safe_parse(series[mask], format="mixed")
 
-    invalid = int((result.isna() & series.notna()).sum())
+    invalid = int((result.isna() & orig_notna).sum())
     return result, invalid
 
 
