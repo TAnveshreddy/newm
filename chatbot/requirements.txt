@@ -1,0 +1,13 @@
+# The demo runs on the Python standard library only — no packages required.
+#   python3 backend/app.py
+#
+# The following are needed ONLY for the live Power BI / Entra ID path
+# (POWERBI_MODE=live).  Uncomment and `pip install -r requirements.txt`.
+#
+# msal>=1.28           # Microsoft Entra ID authentication (auth-code / device-code)
+# requests>=2.31       # calling the Power BI REST executeQueries endpoint
+#
+# The AI planner can optionally use the Anthropic API; it calls the HTTPS endpoint
+# with the standard library, so the `anthropic` package is not required. Just set:
+#   export ANTHROPIC_API_KEY=sk-ant-...
+#   export CHATBOT_LLM_MODEL=claude-sonnet-5   # optional

@@ -1,0 +1,31 @@
+User ID,Name,First Name,Last Name,Email,Role,Department,Country,Location,Phone,Join Date,Manager ID,Sales Target
+USER-001,Noah White,Noah,White,noah.white@company.com,Account Manager,East Region,Germany,Hamburg,+1-286-687-5839,2022-07-21,,186889
+USER-002,Hannah Anderson,Hannah,Anderson,hannah.anderson@company.com,Sales Director,International,France,Lyon,+1-270-997-1432,2018-01-28,,415266
+USER-003,Sophia Taylor,Sophia,Taylor,sophia.taylor@company.com,Regional Manager,West Region,Canada,Vancouver,+1-316-818-8737,2018-01-08,,130194
+USER-004,Joseph Taylor,Joseph,Taylor,joseph.taylor@company.com,Sales Executive,South Region,Canada,Toronto,+1-494-290-5680,2021-04-10,,241272
+USER-005,James Williams,James,Williams,james.williams@company.com,Sales Manager,South Region,Canada,Calgary,+1-707-374-4557,2018-01-19,,479613
+USER-006,Hannah Martin,Hannah,Martin,hannah.martin@company.com,Sales Director,South Region,UK,London,+1-502-578-4523,2020-11-27,USER-002,254637
+USER-007,Patricia Thompson,Patricia,Thompson,patricia.thompson@company.com,Sales Director,West Region,Germany,Frankfurt,+1-400-838-2109,2020-10-06,USER-003,457282
+USER-008,Olivia Miller,Olivia,Miller,olivia.miller@company.com,Regional Manager,West Region,Germany,Munich,+1-222-666-7534,2022-10-16,USER-001,128231
+USER-009,Liam Johnson,Liam,Johnson,liam.johnson@company.com,Sales Director,International,UAE,Abu Dhabi,+1-614-141-4376,2022-08-18,USER-004,492763
+USER-010,Hannah Brown,Hannah,Brown,hannah.brown@company.com,Account Manager,East Region,Germany,Berlin,+1-904-627-1228,2018-05-12,USER-003,467771
+USER-011,Ava Jackson,Ava,Jackson,ava.jackson@company.com,Sales Director,East Region,France,Toulouse,+1-618-120-4977,2022-10-24,USER-003,129079
+USER-012,Robert Brown,Robert,Brown,robert.brown@company.com,Regional Manager,International,UK,London,+1-692-838-2641,2020-01-28,USER-005,65705
+USER-013,Karen Wilson,Karen,Wilson,karen.wilson@company.com,Sales Executive,West Region,India,Mumbai,+1-267-875-7577,2021-05-18,USER-004,275139
+USER-014,Sarah Taylor,Sarah,Taylor,sarah.taylor@company.com,Sales Executive,East Region,India,Hyderabad,+1-878-172-4360,2022-02-04,USER-005,153650
+USER-015,Emily Moore,Emily,Moore,emily.moore@company.com,Sales Director,International,UK,Manchester,+1-738-793-9542,2022-12-22,USER-003,105800
+USER-016,Charles Miller,Charles,Miller,charles.miller@company.com,Sales Executive,South Region,India,Delhi,+1-433-567-1016,2021-09-08,USER-005,85639
+USER-017,Lisa Taylor,Lisa,Taylor,lisa.taylor@company.com,Sales Director,North Region,UK,London,+1-435-759-6965,2019-11-06,USER-002,389794
+USER-018,Jennifer Young,Jennifer,Young,jennifer.young@company.com,Regional Manager,East Region,Australia,Brisbane,+1-638-271-4832,2022-07-17,USER-004,432440
+USER-019,Patricia Davis,Patricia,Davis,patricia.davis@company.com,Regional Manager,North Region,Germany,Hamburg,+1-787-740-2467,2021-09-18,USER-002,334839
+USER-020,Olivia Davis,Olivia,Davis,olivia.davis@company.com,Sales Executive,South Region,France,Lyon,+1-691-554-1802,2019-10-03,USER-003,194029
+USER-021,Ryan Jones,Ryan,Jones,ryan.jones@company.com,Account Manager,South Region,Australia,Perth,+1-434-326-9444,2022-07-07,USER-001,293185
+USER-022,Robert Johnson,Robert,Johnson,robert.johnson@company.com,Sales Manager,South Region,USA,New York,+1-687-528-3280,2022-05-07,USER-005,475626
+USER-023,Liam Jackson,Liam,Jackson,liam.jackson@company.com,Account Manager,North Region,Canada,Toronto,+1-734-696-3541,2020-03-25,USER-001,268549
+USER-024,Emily Harris,Emily,Harris,emily.harris@company.com,Regional Manager,North Region,UAE,Ajman,+1-867-595-9904,2022-02-08,USER-005,457934
+USER-025,Liam Smith,Liam,Smith,liam.smith@company.com,Sales Director,West Region,Brazil,Brasília,+1-869-361-9259,2021-07-11,USER-002,274015
+USER-026,Liam Smith,Liam,Smith,liam.smith@company.com,Sales Executive,East Region,Germany,Berlin,+1-720-800-6725,2019-06-16,USER-004,423413
+USER-027,Thomas Miller,Thomas,Miller,thomas.miller@company.com,Regional Manager,International,France,Toulouse,+1-576-604-4574,2020-04-21,USER-003,102213
+USER-028,William Jones,William,Jones,william.jones@company.com,Account Manager,East Region,Brazil,Rio de Janeiro,+1-581-826-5392,2021-03-19,USER-001,236393
+USER-029,Michael Garcia,Michael,Garcia,michael.garcia@company.com,Sales Executive,East Region,UAE,Sharjah,+1-317-814-5780,2022-01-06,USER-004,104994
+USER-030,Richard Johnson,Richard,Johnson,richard.johnson@company.com,Regional Manager,International,UAE,Dubai,+1-346-891-3880,2020-06-20,USER-003,263810

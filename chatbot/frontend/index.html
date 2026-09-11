@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Power BI AI Analyst</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="vendor/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- ============ Connect screen ============ -->
+  <div id="connect" class="connect-wrap">
+    <div class="connect-card">
+      <div class="logo"><span class="mark">Bi</span> Power BI AI Analyst</div>
+      <h1>Connect to Power BI</h1>
+      <p class="sub">Sign in with your Microsoft work account. We use your identity to
+        find the Power BI datasets you're allowed to see — no passwords, API keys,
+        tokens, or dataset IDs required.</p>
+      <form id="connect-form">
+        <div class="field">
+          <label for="email">Work email</label>
+          <input id="email" type="email" placeholder="you@company.com" autocomplete="username" required />
+        </div>
+        <button class="btn-primary" id="connect-btn" type="submit">Connect to Power BI</button>
+      </form>
+      <div class="err" id="connect-err"></div>
+      <div class="ms-note">
+        <span class="ms-logo"><i></i><i></i><i></i><i></i></span>
+        Secured by Microsoft Entra ID · Row-Level Security enforced
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ App ============ -->
+  <div id="app" class="app hidden">
+    <aside class="sidebar">
+      <div class="sb-head">
+        <div class="logo"><span class="mark">Bi</span> AI Analyst</div>
+      </div>
+      <div class="sb-section">
+        <button class="newchat" id="newchat">＋ New conversation</button>
+      </div>
+      <div class="sb-section">
+        <h3>Connected model</h3>
+        <div class="model-pill"><span class="dot"></span><span id="model-name">—</span></div>
+        <div class="meta-line" id="model-meta">—</div>
+      </div>
+      <div class="sb-section" style="flex:1;">
+        <h3>Try asking</h3>
+        <div class="suggest" id="suggest"></div>
+      </div>
+      <div class="sb-section">
+        <h3>Semantic model</h3>
+        <div class="tables-list" id="tables-list"></div>
+      </div>
+      <div class="sb-foot" id="sb-foot">—</div>
+    </aside>
+
+    <section class="main">
+      <div class="topbar">
+        <div class="title"><span class="mark logo" style="width:26px;height:26px;font-size:13px;border-radius:6px;">Bi</span>
+          <span id="topbar-title">Sales Analytics</span>
+          <span class="badge" id="engine-badge">AI</span>
+        </div>
+        <div class="user-chip">
+          <span id="rls-badge" class="badge hidden">RLS on</span>
+          <span id="user-name">—</span>
+          <span class="avatar" id="user-avatar">?</span>
+        </div>
+      </div>
+
+      <div class="chat" id="chat"><div class="chat-inner" id="chat-inner"></div></div>
+
+      <div class="composer">
+        <div class="composer-inner">
+          <div class="chips" id="chips"></div>
+          <div class="composer-row">
+            <textarea id="input" rows="1" placeholder="Ask for a report… e.g. “Show profit growth by product for 2025 as a bar chart”"></textarea>
+            <button class="send" id="send" title="Send">➤</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="modal-root"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

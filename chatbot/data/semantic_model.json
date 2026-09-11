@@ -1,0 +1,655 @@
+{
+  "name": "SalesAnalyticsDashboard",
+  "factTable": "Sales",
+  "dateColumn": "Order Date",
+  "tables": [
+    {
+      "name": "Sales",
+      "columns": [
+        {
+          "name": "Order ID",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Order Date",
+          "dataType": "dateTime",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Year",
+          "dataType": "int64",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Month",
+          "dataType": "int64",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Quarter",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Customer ID",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Product ID",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "User ID",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Category",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Quantity",
+          "dataType": "int64",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Unit Price",
+          "dataType": "double",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Unit Cost",
+          "dataType": "double",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Gross Sales",
+          "dataType": "double",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Discount %",
+          "dataType": "double",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Discount Amount",
+          "dataType": "double",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Net Sales",
+          "dataType": "double",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Total Cost",
+          "dataType": "double",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Profit",
+          "dataType": "double",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Profit Margin %",
+          "dataType": "double",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Sales Channel",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Order Status",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Ship Date",
+          "dataType": "dateTime",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Payment Method",
+          "dataType": "string",
+          "summarizeBy": "none"
+        }
+      ],
+      "measures": [
+        {
+          "name": "Total Revenue",
+          "expression": "SUM(Sales[Net Sales])",
+          "formatString": "#,0.00",
+          "definition": "Sum of Net Sales (gross sales after discounts)."
+        },
+        {
+          "name": "Total Profit",
+          "expression": "SUM(Sales[Profit])",
+          "formatString": "#,0.00",
+          "definition": "Sum of Profit (Net Sales minus Total Cost)."
+        },
+        {
+          "name": "Total Orders",
+          "expression": "COUNTROWS(Sales)",
+          "formatString": "#,0",
+          "definition": ""
+        },
+        {
+          "name": "Total Returns",
+          "expression": "CALCULATE(COUNTROWS(Sales), Sales[Order Status]=\"Returned\")",
+          "formatString": "#,0",
+          "definition": ""
+        },
+        {
+          "name": "Total Customers",
+          "expression": "DISTINCTCOUNT(Sales[Customer ID])",
+          "formatString": "#,0",
+          "definition": ""
+        },
+        {
+          "name": "Avg Order Value",
+          "expression": "DIVIDE([Total Revenue], [Total Orders], 0)",
+          "formatString": "#,0.00",
+          "definition": "Total Revenue divided by number of orders."
+        },
+        {
+          "name": "Profit Margin %",
+          "expression": "DIVIDE([Total Profit], [Total Revenue], 0)",
+          "formatString": "0.00%",
+          "definition": "Total Profit divided by Total Revenue."
+        },
+        {
+          "name": "Return Rate %",
+          "expression": "DIVIDE([Total Returns], [Total Orders], 0)",
+          "formatString": "0.00%",
+          "definition": "Returned orders as a share of all orders."
+        },
+        {
+          "name": "Revenue YoY %",
+          "expression": "VAR cy = CALCULATE([Total Revenue], YEAR(Sales[Order Date]) = YEAR(TODAY()))\nVAR py = CALCULATE([Total Revenue], YEAR(Sales[Order Date]) = YEAR(TODAY())-1)\nRETURN DIVIDE(cy - py, py, 0)",
+          "formatString": "0.00%",
+          "definition": "Year-over-year growth of Total Revenue vs the same period last year."
+        },
+        {
+          "name": "Completed Orders",
+          "expression": "CALCULATE(COUNTROWS(Sales), Sales[Order Status]=\"Completed\")",
+          "formatString": "#,0",
+          "definition": ""
+        },
+        {
+          "name": "Pending Orders",
+          "expression": "CALCULATE(COUNTROWS(Sales), Sales[Order Status]=\"Pending\")",
+          "formatString": "#,0",
+          "definition": ""
+        },
+        {
+          "name": "Total Gross Sales",
+          "expression": "SUM(Sales[Gross Sales])",
+          "formatString": "#,0.00",
+          "definition": ""
+        },
+        {
+          "name": "Total Discount",
+          "expression": "SUM(Sales[Discount Amount])",
+          "formatString": "#,0.00",
+          "definition": ""
+        }
+      ],
+      "rowCount": 500,
+      "isFact": true
+    },
+    {
+      "name": "Customers",
+      "columns": [
+        {
+          "name": "Customer ID",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "First Name",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Last Name",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Email",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Phone",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Address",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "City",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Country",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Postal Code",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Segment",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Registration Date",
+          "dataType": "dateTime",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Credit Limit",
+          "dataType": "double",
+          "summarizeBy": "none"
+        }
+      ],
+      "measures": [
+        {
+          "name": "Avg Credit Limit",
+          "expression": "AVERAGE(Customers[Credit Limit])",
+          "formatString": "#,0.00",
+          "definition": ""
+        }
+      ],
+      "rowCount": 100,
+      "isFact": false
+    },
+    {
+      "name": "Users",
+      "columns": [
+        {
+          "name": "User ID",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Name",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "First Name",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Last Name",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Email",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Role",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Department",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Country",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Location",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Phone",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Join Date",
+          "dataType": "dateTime",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Manager ID",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Sales Target",
+          "dataType": "double",
+          "summarizeBy": "none"
+        }
+      ],
+      "measures": [
+        {
+          "name": "Target Achievement %",
+          "expression": "DIVIDE([Total Revenue], SUM(Users[Sales Target]), 0)",
+          "formatString": "0.00%",
+          "definition": "Total Revenue divided by the sum of sales-rep targets."
+        }
+      ],
+      "rowCount": 30,
+      "isFact": false
+    },
+    {
+      "name": "Products",
+      "columns": [
+        {
+          "name": "Product ID",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Product Name",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Category",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Sub Category",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Brand",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Unit Cost",
+          "dataType": "double",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Unit Price",
+          "dataType": "double",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Profit Margin %",
+          "dataType": "double",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Stock Quantity",
+          "dataType": "int64",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Reorder Level",
+          "dataType": "int64",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Supplier",
+          "dataType": "string",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Weight (kg)",
+          "dataType": "double",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Rating",
+          "dataType": "double",
+          "summarizeBy": "none"
+        }
+      ],
+      "measures": [],
+      "rowCount": 80,
+      "isFact": false
+    }
+  ],
+  "relationships": [
+    {
+      "name": "Sales_Customers",
+      "fromTable": "Sales",
+      "fromColumn": "Customer ID",
+      "toTable": "Customers",
+      "toColumn": "Customer ID",
+      "crossFilteringBehavior": "oneDirection",
+      "cardinality": "manyToOne"
+    },
+    {
+      "name": "Sales_Users",
+      "fromTable": "Sales",
+      "fromColumn": "User ID",
+      "toTable": "Users",
+      "toColumn": "User ID",
+      "crossFilteringBehavior": "oneDirection",
+      "cardinality": "manyToOne"
+    },
+    {
+      "name": "Sales_Products",
+      "fromTable": "Sales",
+      "fromColumn": "Product ID",
+      "toTable": "Products",
+      "toColumn": "Product ID",
+      "crossFilteringBehavior": "oneDirection",
+      "cardinality": "manyToOne"
+    }
+  ],
+  "synonyms": {
+    "Total Revenue": [
+      "revenue",
+      "sales",
+      "total sales",
+      "turnover",
+      "income",
+      "net sales",
+      "gmv"
+    ],
+    "Total Profit": [
+      "profit",
+      "earnings",
+      "net profit",
+      "margin value",
+      "gross profit"
+    ],
+    "Profit Margin %": [
+      "margin",
+      "profit margin",
+      "profitability",
+      "margin percent"
+    ],
+    "Total Orders": [
+      "orders",
+      "order count",
+      "number of orders",
+      "transactions",
+      "deals"
+    ],
+    "Total Customers": [
+      "customers",
+      "customer count",
+      "buyers",
+      "clients",
+      "unique customers"
+    ],
+    "Total Quantity": [
+      "quantity",
+      "units",
+      "units sold",
+      "volume",
+      "qty"
+    ],
+    "Avg Order Value": [
+      "aov",
+      "average order value",
+      "avg order",
+      "basket size"
+    ],
+    "Total Returns": [
+      "returns",
+      "returned orders"
+    ],
+    "Return Rate %": [
+      "return rate",
+      "returns rate",
+      "return percentage"
+    ],
+    "Revenue YoY %": [
+      "yoy",
+      "year over year",
+      "year on year",
+      "growth",
+      "sales growth",
+      "annual growth",
+      "yoy growth"
+    ],
+    "Profit YoY %": [
+      "profit growth",
+      "profit yoy",
+      "profit year over year"
+    ],
+    "Revenue YTD": [
+      "ytd",
+      "year to date",
+      "revenue ytd"
+    ],
+    "Target Achievement %": [
+      "target",
+      "quota",
+      "target achievement",
+      "attainment",
+      "vs target"
+    ],
+    "Country": [
+      "country",
+      "countries",
+      "nation",
+      "geography",
+      "region",
+      "geo",
+      "location"
+    ],
+    "Category": [
+      "category",
+      "categories",
+      "product category",
+      "product type"
+    ],
+    "Sub Category": [
+      "subcategory",
+      "sub category",
+      "sub-category"
+    ],
+    "Product Name": [
+      "product",
+      "products",
+      "item",
+      "sku",
+      "product name"
+    ],
+    "Segment": [
+      "segment",
+      "customer segment",
+      "customer type"
+    ],
+    "Sales Channel": [
+      "channel",
+      "sales channel",
+      "online",
+      "offline"
+    ],
+    "Payment Method": [
+      "payment",
+      "payment method",
+      "payment type"
+    ],
+    "Order Status": [
+      "status",
+      "order status",
+      "state"
+    ],
+    "Brand": [
+      "brand",
+      "brands",
+      "manufacturer"
+    ],
+    "Month": [
+      "month",
+      "monthly",
+      "by month"
+    ],
+    "Quarter": [
+      "quarter",
+      "quarterly",
+      "by quarter"
+    ],
+    "Year": [
+      "year",
+      "yearly",
+      "annual",
+      "by year"
+    ],
+    "City": [
+      "city",
+      "cities",
+      "town"
+    ],
+    "Supplier": [
+      "supplier",
+      "suppliers",
+      "vendor"
+    ],
+    "Role": [
+      "role",
+      "job title",
+      "position"
+    ],
+    "Name": [
+      "salesperson",
+      "sales rep",
+      "rep",
+      "agent",
+      "employee",
+      "user",
+      "seller"
+    ]
+  },
+  "definitions": {
+    "Total Revenue": "Sum of Net Sales (gross sales after discounts).",
+    "Total Profit": "Sum of Profit (Net Sales minus Total Cost).",
+    "Profit Margin %": "Total Profit divided by Total Revenue.",
+    "Revenue YoY %": "Year-over-year growth of Total Revenue vs the same period last year.",
+    "Profit YoY %": "Year-over-year growth of Total Profit vs the same period last year.",
+    "Avg Order Value": "Total Revenue divided by number of orders.",
+    "Return Rate %": "Returned orders as a share of all orders.",
+    "Target Achievement %": "Total Revenue divided by the sum of sales-rep targets."
+  }
+}
