@@ -113,6 +113,24 @@ country_filters = [f for f in r5["intent"]["filters"] if f["field"] in ("Country
 check("only-UK-India adds a single country filter", len(country_filters) == 1,
       f"got {country_filters}")
 
+# --- follow-up detection must not hijack fresh queries that contain "as a ..." ---
+_p = Planner(MODEL)
+check("'... as a stacked column chart' is NOT a follow-up",
+      _p._is_followup("orders by payment method and category as a stacked column chart") is False)
+check("'sales by category as a bar chart' is NOT a follow-up",
+      _p._is_followup("sales by category as a bar chart") is False)
+check("'change this to a pie chart' IS a follow-up", _p._is_followup("change this to a pie chart"))
+check("'show only UK and India' IS a follow-up", _p._is_followup("show only UK and India"))
+
+# fresh query issued WITH prior context must not inherit the previous chart
+r_prev = ANALYST.handle("monthly revenue trend for 2025 as an area chart", USER, None)
+prevctx = QueryIntent(**r_prev["intent"])
+r_fresh = ANALYST.handle("orders by payment method as a bar chart", USER, prevctx)
+check("fresh query ignores prior context (dimension)", r_fresh["intent"]["dimension"] == "Payment Method",
+      f"got {r_fresh['intent']['dimension']}")
+check("fresh query ignores prior context (measure)", "Total Orders" in r_fresh["intent"]["measures"],
+      f"got {r_fresh['intent']['measures']}")
+
 # --- DAX generation present ---
 r = ANALYST.handle("Show total sales by country", USER, None)
 check("DAX generated", "SUMMARIZECOLUMNS" in r["visuals"][0]["dax"])

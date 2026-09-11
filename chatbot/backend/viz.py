@@ -13,6 +13,7 @@ few HTML-rendered visuals: card, table, matrix).
 """
 from __future__ import annotations
 
+import re
 from typing import Optional
 
 from semantic_model import SemanticModel
@@ -201,9 +202,12 @@ def _explain(model, intent, result, chart) -> str:
         return f"{order_m} over {len(result.rows)} periods."
     top = result.rows[0]
     dim_field = result.columns[0]["name"]
+    n_cats = len({r.get(dim_field) for r in result.rows})
+    pretty = re.sub(r"(?<=[a-z])(?=[A-Z])", " ", chart).lower()
+    tail = (f" broken down by {result.series_field.lower()}" if result.series_field else "")
     return (f"Top {dim_field.lower()} is {top.get(dim_field)} at "
             f"{_human(model.measures[order_m].fmt, top.get(order_m))}. "
-            f"Showing {len(result.rows)} {dim_field.lower()} values as a {chart} chart.")
+            f"Showing {n_cats} {dim_field.lower()} values{tail} as a {pretty} chart.")
 
 
 # ---------- formatting helpers ----------

@@ -44,10 +44,13 @@ REPORT_TRIGGERS = ("dashboard", "ad-hoc report", "adhoc report", "ad hoc report"
                    "full report", "complete report", "report showing", "report with",
                    "sales report", "overview report")
 
-FOLLOWUP_TRIGGERS = ("change", "make it", "make this", "turn it", "turn this", "instead",
-                     "now filter", "add ", "also show", "also add", "remove", "only ",
-                     "switch to", "convert", "as a", "now show", "filter to", "filter it",
-                     "drill", "break it down", "group by")
+# A message is a follow-up modification only when it clearly refers to the current
+# visual — a referential pronoun (this/that/it), a leading modification verb, or a
+# short "only/filter/just" tweak.  Deliberately NOT triggered by generic phrases like
+# "as a … chart" or "… by …", which also appear in brand-new queries.
+FOLLOWUP_START = ("change", "make ", "turn ", "switch", "convert", "instead", "add ",
+                  "remove ", "drop ", "also ", "now ", "use ", "set ", "group by",
+                  "break it down", "drill")
 
 
 @dataclass
@@ -556,7 +559,13 @@ class Planner:
     @staticmethod
     def _is_followup(text: str) -> bool:
         low = text.lower().strip()
-        return any(low.startswith(t) or t in low for t in FOLLOWUP_TRIGGERS)
+        if re.search(r"\b(this|that|it)\b", low):          # refers to the current visual
+            return True
+        if any(low.startswith(s) for s in FOLLOWUP_START):  # leading modification verb
+            return True
+        if len(text.split()) <= 6 and re.search(r"\b(only|filter|just)\b", low):
+            return True
+        return False
 
     @property
     def using_llm(self) -> bool:
