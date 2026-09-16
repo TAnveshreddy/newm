@@ -59,6 +59,9 @@ class QueryEngine:
         k = measure.kind
         if k == "sum":
             return sum(r.get(measure.column) or 0 for r in rows)
+        if k == "avg":
+            vals = [r.get(measure.column) for r in rows if r.get(measure.column) is not None]
+            return (sum(vals) / len(vals)) if vals else 0
         if k == "count":
             return len(rows)
         if k == "distinct":
@@ -69,6 +72,10 @@ class QueryEngine:
         if k == "ratio":
             num = self._ratio_side(measure.numerator, rows)
             den = self._ratio_side(measure.denominator, rows)
+            return (num / den) if den else 0
+        if k == "ratio_m":  # ratio of two other measures (generic profile)
+            num = self._agg(self.model.measures[measure.numerator], rows)
+            den = self._agg(self.model.measures[measure.denominator], rows)
             return (num / den) if den else 0
         return None
 
@@ -148,7 +155,7 @@ class QueryEngine:
     # ---------- main ----------
     def execute(self, intent: QueryIntent) -> QueryResult:
         res = QueryResult()
-        res.measures = intent.measures or ["Total Revenue"]
+        res.measures = intent.measures or [next(iter(self.model.measures), "Total Revenue")]
         res.dimension = intent.dimension
 
         # validate measures exist

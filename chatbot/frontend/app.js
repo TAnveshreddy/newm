@@ -4,7 +4,8 @@
 
   const PALETTE = ["#118dff","#01b8aa","#f2c811","#d13438","#8764b8","#00a4ef",
                    "#107c10","#ff8c00","#e3008c","#5c2d91","#00b7c3","#ca5010"];
-  const state = { session: null, model: null, charts: new Map(), vseq: 0, busy: false };
+  const state = { session: null, model: null, charts: new Map(), vseq: 0, busy: false,
+                  datasets: [], dataset: null };
 
   const $ = (id) => document.getElementById(id);
   const api = (path, opts = {}) => fetch(path, {
@@ -39,9 +40,12 @@
       const { status, body } = await api("/api/connect", { method: "POST", body: JSON.stringify({ email }) });
       if (status !== 200 || !body.ok) throw new Error(body.error || "Sign-in failed.");
       state.session = body.session;
+      state.datasets = body.datasets || [];
+      state.dataset = body.dataset || null;
       $("user-name").textContent = body.user.name;
       $("user-avatar").textContent = (body.user.name[0] || "?").toUpperCase();
       if (body.rls) $("rls-badge").classList.remove("hidden");
+      populateDatasetPicker();
       await loadModel();
       $("connect").classList.add("hidden");
       $("app").classList.remove("hidden");
@@ -55,14 +59,21 @@
 
   async function loadModel() {
     const { body } = await api("/api/model");
+    loadModelInfo(body);
+  }
+
+  function loadModelInfo(body) {
     state.model = body;
+    if (body.dataset) state.dataset = body.dataset;
     $("model-name").textContent = body.name || "Semantic model";
     const nMeas = body.measures.length, nRel = body.relationships.length;
     $("model-meta").textContent = `${body.tables.length} tables · ${nRel} relationships · ${nMeas} measures`;
-    $("topbar-title").textContent = body.name || "Sales Analytics";
+    $("topbar-title").textContent = body.name || "Report";
     $("engine-badge").textContent = body.llm ? "Claude AI" : "AI (rule-based)";
-    if (!body.llm) $("engine-badge").classList.add("rule");
-    $("sb-foot").textContent = `Data covers ${body.years[0]}–${body.years[body.years.length-1]}.`;
+    $("engine-badge").classList.toggle("rule", !body.llm);
+    const yrs = body.years || [];
+    $("sb-foot").textContent = yrs.length ? `Data covers ${yrs[0]}–${yrs[yrs.length-1]}.` : "";
+    const sel = $("dataset-select"); if (sel && state.dataset) sel.value = state.dataset;
     // suggested prompts
     const sug = $("suggest"); sug.innerHTML = "";
     (body.suggestedPrompts || []).forEach((p) => {
@@ -82,6 +93,44 @@
       d.innerHTML = `<div class="t">${esc(t.name)} <span style="font-weight:400;color:var(--muted)">(${t.rowCount})</span></div>`;
       tl.appendChild(d);
     });
+  }
+
+  // ---------- report/dataset picker ----------
+  function populateDatasetPicker() {
+    const sel = $("dataset-select");
+    if (!sel) return;
+    sel.innerHTML = "";
+    state.datasets.forEach((d) => {
+      const o = document.createElement("option");
+      o.value = d.id; o.textContent = d.name || d.id;
+      if (d.id === state.dataset) o.selected = true;
+      sel.appendChild(o);
+    });
+    // only useful with >1 report, but always shown so users know which is active
+    sel.disabled = state.datasets.length < 2;
+    sel.onchange = () => selectDataset(sel.value);
+  }
+
+  async function selectDataset(id) {
+    if (state.busy || id === state.dataset) return;
+    state.busy = true;
+    try {
+      const { status, body } = await api("/api/select", {
+        method: "POST", body: JSON.stringify({ dataset: id }) });
+      if (status !== 200 || body.ok === false) throw new Error(body.error || "Could not switch report.");
+      // reset conversation for the new report
+      for (const [, c] of state.charts) c.destroy();
+      state.charts.clear();
+      $("chat-inner").innerHTML = "";
+      loadModelInfo(body);
+      const desc = (body.description || "").replace(/\.\s*$/, "");
+      bubble("ai", `<p>Switched to <strong>${esc(body.name)}</strong>${
+        desc ? ` — ${esc(desc)}` : ""}. Ask me anything about this report.</p>`);
+    } catch (err) {
+      bubble("ai", `<p>${esc(err.message)}</p>`);
+    } finally {
+      state.busy = false;
+    }
   }
 
   // ---------- chat ----------

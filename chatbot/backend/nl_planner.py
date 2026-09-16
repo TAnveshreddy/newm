@@ -137,9 +137,7 @@ class RulePlanner:
         team_ctx = any(w in low for w in ("rep", "salesperson", "sales person", "team",
                                           "employee", "agent", "seller"))
         combos: dict[str, list] = {}
-        for dim_name in ("Country", "Rep Country", "Category", "Segment", "Sales Channel",
-                         "Order Status", "Payment Method", "Brand", "Sub Category", "Role",
-                         "Department", "City", "Supplier"):
+        for dim_name in self.model.categorical_dimensions():
             if dim_name in exclude_dims:
                 continue
             for v in self.model.distinct_values(dim_name):
@@ -198,7 +196,7 @@ class RulePlanner:
             return self.RANKING_NOUNS[m.group(1)]
         return None
 
-    def _plan_single(self, text: str, default_measure: str = "Total Revenue") -> QueryIntent:
+    def _plan_single(self, text: str, default_measure: Optional[str] = None) -> QueryIntent:
         intent = QueryIntent(raw=text)
         low = text.lower()
         found = self.model.resolve_terms(text)
@@ -258,9 +256,9 @@ class RulePlanner:
         else:
             filters += value_filters
 
-        # Measures default
+        # Measures default (model-aware — never assume a sales measure exists)
         if not measures:
-            measures = [default_measure]
+            measures = [default_measure or self._primary_measure()]
 
         # Growth/YoY measure on a categorical breakdown reads better alongside its
         # base measure, ranked by the base measure, top 10 if high-cardinality.
@@ -310,72 +308,102 @@ class RulePlanner:
             if key in low and not found["measures"]:
                 intent.unresolved.append(label)
 
+    # ---- measure picking helpers (model-aware, so reports work for any model) ----
+    def _measure_of(self, *kinds, fmt=None, exclude=()):
+        for name, meas in self.model.measures.items():
+            if name in exclude:
+                continue
+            if kinds and meas.kind not in kinds:
+                continue
+            if fmt and meas.fmt != fmt:
+                continue
+            return name
+        return None
+
+    def _primary_measure(self) -> Optional[str]:
+        return (self._measure_of("sum", fmt="currency") or self._measure_of("sum")
+                or self._measure_of("count") or next(iter(self.model.measures), None))
+
+    def _yoy_measure(self) -> Optional[str]:
+        return self._measure_of("derived")
+
+    def _has(self, dim: str) -> bool:
+        return dim in self.model.dimensions
+
     def _plan_report(self, text: str) -> QueryIntent:
         intent = QueryIntent(raw=text, is_report=True, intent_kind="report")
         intent.report_title = self._report_title(text)
-        report_filters = self._year_filters(text)
+        rf = self._year_filters(text)
+        low = text.lower()
+        found = self.model.resolve_terms(text)
+
+        prim = self._primary_measure()
+        profit = self._measure_of("sum", fmt="currency", exclude={prim}) or prim
+        pct = self._measure_of("ratio", "ratio_m", fmt="percent")
+        cnt = self._measure_of("count") or self._measure_of("distinct")
+        yoy = self._yoy_measure()
+        cats = self.model.categorical_dimensions()
+        time_dim = "Month" if self._has("Month") else ("Year" if self._has("Year") else None)
 
         specs: list[dict] = []
-        low = text.lower()
+        # KPI cards — headline numbers (resolved ones first, then sensible defaults).
+        kpis: list[str] = []
+        for m in found["measures"] + [prim, profit, pct, cnt]:
+            if m and m in self.model.measures and m not in kpis:
+                kpis.append(m)
+        for m in kpis[:5]:
+            specs.append({"kind": "kpi", "measures": [m], "chart": "card", "filters": rf})
 
-        # KPI cards – always lead an ad-hoc report with headline numbers.
-        kpi_measures = []
-        found = self.model.resolve_terms(text)
-        for m in ("Total Revenue", "Total Profit", "Profit Margin %", "Total Orders",
-                  "Revenue YoY %"):
-            if m in found["measures"] or m in ("Total Revenue", "Total Profit"):
-                kpi_measures.append(m)
-        # de-dupe, keep order, cap at 5
-        seen = set()
-        kpi_measures = [m for m in kpi_measures if not (m in seen or seen.add(m))][:5]
-        for m in kpi_measures:
-            specs.append({"kind": "kpi", "measures": [m], "chart": "card",
-                          "filters": report_filters})
+        # Trend over time
+        if time_dim:
+            specs.append({"kind": "trend", "measures": [prim], "dimension": time_dim,
+                          "time_grain": self.model.dimensions[time_dim].time_grain,
+                          "chart": "line", "filters": rf, "title": f"{prim} Trend"})
 
-        # Monthly trend
-        if "trend" in low or "monthly" in low or "month" in low:
-            specs.append({"kind": "trend", "measures": ["Total Revenue"], "dimension": "Month",
-                          "time_grain": "month", "chart": "line", "filters": report_filters,
-                          "title": "Monthly Sales Trend"})
-        # By country
-        if "country" in low or "countries" in low or "region" in low:
-            specs.append({"kind": "breakdown", "measures": ["Total Revenue"], "dimension": "Country",
-                          "chart": "bar", "filters": report_filters, "title": "Sales by Country"})
-        # By category / product
-        if "category" in low:
-            specs.append({"kind": "breakdown", "measures": ["Total Revenue"], "dimension": "Category",
-                          "chart": "column", "filters": report_filters, "title": "Sales by Category"})
-        if "product" in low and "profit" in low:
-            specs.append({"kind": "breakdown", "measures": ["Total Profit", "Profit YoY %"],
-                          "dimension": "Product", "chart": "bar", "top_n": 10,
-                          "filters": report_filters, "title": "Profit Growth by Product (Top 10)"})
-        # Top customers
-        m = re.search(r"top\s+(\d+)\s+customer", low)
-        if m or "top customer" in low:
-            n = int(m.group(1)) if m else 10
-            specs.append({"kind": "table", "measures": ["Total Revenue", "Total Profit"],
+        # Keyword-driven breakdowns when those dimensions exist (nice for sales); else generic.
+        added_breakdown = False
+        if self._has("Country") and any(w in low for w in ("country", "countries", "region")):
+            specs.append({"kind": "breakdown", "measures": [prim], "dimension": "Country",
+                          "chart": "bar", "filters": rf, "title": f"{prim} by Country"})
+            added_breakdown = True
+        if self._has("Category") and "category" in low:
+            specs.append({"kind": "breakdown", "measures": [prim], "dimension": "Category",
+                          "chart": "column", "filters": rf, "title": f"{prim} by Category"})
+            added_breakdown = True
+        if self._has("Product") and "product" in low:
+            ms = [profit] + ([yoy] if yoy else [])
+            specs.append({"kind": "breakdown", "measures": ms, "dimension": "Product",
+                          "chart": "bar", "top_n": 10, "filters": rf,
+                          "title": f"{profit} by Product (Top 10)"})
+            added_breakdown = True
+        mcust = re.search(r"top\s+(\d+)\s+customer", low)
+        if self._has("Customer") and (mcust or "top customer" in low):
+            n = int(mcust.group(1)) if mcust else 10
+            specs.append({"kind": "table", "measures": [prim] + ([profit] if profit != prim else []),
                           "dimension": "Customer", "top_n": n, "chart": "table",
-                          "filters": report_filters, "title": f"Top {n} Customers by Revenue"})
+                          "filters": rf, "title": f"Top {n} Customers by {prim}"})
+            added_breakdown = True
 
-        # Fallback: if nothing matched beyond KPIs, add sensible defaults.
-        if len(specs) <= len(kpi_measures):
-            specs.append({"kind": "trend", "measures": ["Total Revenue"], "dimension": "Month",
-                          "time_grain": "month", "chart": "line", "filters": report_filters,
-                          "title": "Monthly Sales Trend"})
-            specs.append({"kind": "breakdown", "measures": ["Total Revenue"], "dimension": "Country",
-                          "chart": "bar", "filters": report_filters, "title": "Sales by Country"})
-            specs.append({"kind": "breakdown", "measures": ["Total Profit", "Profit YoY %"],
-                          "dimension": "Product", "chart": "bar", "top_n": 10,
-                          "filters": report_filters, "title": "Profit Growth by Product (Top 10)"})
+        # Generic fallback: use the model's own top dimensions.
+        if not added_breakdown:
+            if cats:
+                specs.append({"kind": "breakdown", "measures": [prim], "dimension": cats[0],
+                              "chart": "bar", "filters": rf, "title": f"{prim} by {cats[0]}"})
+            if len(cats) > 1:
+                ms = [profit] + ([yoy] if yoy else [])
+                specs.append({"kind": "breakdown", "measures": ms, "dimension": cats[1],
+                              "chart": "bar", "top_n": 10, "filters": rf,
+                              "title": f"{profit} by {cats[1]} (Top 10)"})
 
         intent.report_specs = specs
-        intent.filters = report_filters
+        intent.filters = rf
         return intent
 
     def _report_title(self, text: str) -> str:
         years = re.findall(r"\b(20\d{2})\b", text)
         yr = f" {years[0]}" if years else ""
-        return f"Ad-hoc Sales Report{yr}"
+        name = self.model.meta.get("name", "Report")
+        return f"Ad-hoc {name} Report{yr}"
 
     # ---- follow-up modification ----
     def modify(self, prev: QueryIntent, text: str) -> QueryIntent:
@@ -532,7 +560,7 @@ class LLMPlanner:
             if f.get("field") in self.model.dimensions or f.get("field") == "Year":
                 intent.filters.append(f)
         if not intent.measures and not intent.is_report and not intent.unresolved:
-            intent.measures = ["Total Revenue"]
+            intent.measures = [self.rule._primary_measure()]
         # If the LLM under-specified, let the rule planner backfill the report.
         if intent.is_report and not intent.report_specs:
             return self.rule._plan_report(text)

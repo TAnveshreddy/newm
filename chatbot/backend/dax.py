@@ -48,7 +48,7 @@ def generate_dax(model: SemanticModel, intent: QueryIntent) -> str:
                           + generate_dax(model, sub))
         return "\n\n".join(blocks)
 
-    measures = intent.measures or ["Total Revenue"]
+    measures = intent.measures or [next(iter(model.measures), "Total Revenue")]
     measure_defs = []
     for mname in measures:
         meas = model.measures.get(mname)

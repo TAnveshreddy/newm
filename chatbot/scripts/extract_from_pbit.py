@@ -229,7 +229,24 @@ DEFINITIONS = {
 }
 
 
-def build_semantic_model(model: dict[str, Any]) -> dict[str, Any]:
+def _pick_fact_and_date(mdl: dict) -> tuple[str, str]:
+    """Heuristic for a generic model: the fact is the 'from' side of the most
+    relationships; the date column is the first date column on that table."""
+    rels = mdl.get("relationships", [])
+    from collections import Counter
+    counts = Counter(r["fromTable"] for r in rels)
+    fact = counts.most_common(1)[0][0] if counts else (mdl["tables"][0]["name"] if mdl.get("tables") else "")
+    date_col = ""
+    for t in mdl.get("tables", []):
+        if t["name"] == fact:
+            for c in t.get("columns", []):
+                if c.get("dataType") in ("dateTime", "date"):
+                    date_col = c["name"]
+                    break
+    return fact, date_col
+
+
+def build_semantic_model(model: dict[str, Any], generic: bool = False) -> dict[str, Any]:
     mdl = model["model"]
     tables_meta = []
     for t in mdl.get("tables", []):
@@ -276,6 +293,22 @@ def build_semantic_model(model: dict[str, Any]) -> dict[str, Any]:
         for r in mdl.get("relationships", [])
     ]
 
+    if generic:
+        fact, date_col = _pick_fact_and_date(mdl)
+        return {
+            "name": mdl.get("name", "Report"),
+            "description": "",
+            "profile": "generic",
+            "factTable": fact,
+            "dateColumn": date_col,
+            "tables": tables_meta,
+            "relationships": relationships,
+            # The generic loader derives measures (from each table's DAX), dimensions
+            # (from the relationship graph) and synonyms (from field names) itself.
+            "synonyms": {},
+            "definitions": {},
+        }
+
     return {
         "name": mdl.get("name", "SalesAnalytics"),
         "factTable": "Sales",
@@ -297,13 +330,23 @@ def _flatten(expr: Any) -> str:
 #  Main
 # --------------------------------------------------------------------------- #
 def main() -> None:
-    pbit_path = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_PBIT
+    # Usage:
+    #   python scripts/extract_from_pbit.py [file.pbit]                  -> default sales dataset (data/)
+    #   python scripts/extract_from_pbit.py file.pbit --dataset <id>     -> a switchable report (datasets/<id>/, generic)
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    ds_id = None
+    if "--dataset" in sys.argv:
+        i = sys.argv.index("--dataset")
+        ds_id = sys.argv[i + 1] if i + 1 < len(sys.argv) else None
+    pbit_path = args[0] if args else DEFAULT_PBIT
     if not os.path.exists(pbit_path):
         raise SystemExit(f"PBIT not found: {pbit_path}")
 
-    os.makedirs(DATA_DIR, exist_ok=True)
+    generic = ds_id is not None
+    out_dir = os.path.join(os.path.dirname(HERE), "datasets", ds_id) if generic else DATA_DIR
+    os.makedirs(out_dir, exist_ok=True)
     model = read_model(pbit_path)
-    sm = build_semantic_model(model)
+    sm = build_semantic_model(model, generic=generic)
 
     import csv
 
@@ -314,7 +357,7 @@ def main() -> None:
         cols = parse_columns_from_mtable(expr)
         rows = parse_rows_from_mtable(expr)
         col_names = [c for c, _ in cols]
-        out_path = os.path.join(DATA_DIR, f"{name.lower()}.csv")
+        out_path = os.path.join(out_dir, f"{name.lower()}.csv")
         with open(out_path, "w", newline="", encoding="utf-8") as fh:
             w = csv.writer(fh)
             w.writerow(col_names)
@@ -328,9 +371,13 @@ def main() -> None:
     for tm in sm["tables"]:
         tm["rowCount"] = row_counts.get(tm["name"], 0)
 
-    with open(os.path.join(DATA_DIR, "semantic_model.json"), "w", encoding="utf-8") as fh:
+    with open(os.path.join(out_dir, "semantic_model.json"), "w", encoding="utf-8") as fh:
         json.dump(sm, fh, indent=2)
-    print(f"\nSemantic model -> {os.path.join(DATA_DIR, 'semantic_model.json')}")
+    print(f"\nSemantic model -> {os.path.join(out_dir, 'semantic_model.json')}")
+    if generic:
+        print(f"Profile: generic | dataset id: {ds_id} | factTable: {sm['factTable']} "
+              f"| dateColumn: {sm['dateColumn'] or '(none)'}")
+        print("It will appear in the chatbot's 'Switch report' picker on next server start.")
     print(f"Tables: {[t['name'] for t in sm['tables']]}")
     print(f"Relationships: {len(sm['relationships'])}")
     total_measures = sum(len(t['measures']) for t in sm['tables'])

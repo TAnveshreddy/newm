@@ -1,0 +1,484 @@
+{
+  "name": "HospitalAnalytics",
+  "description": "Hospital encounters, charges, length of stay and outcomes.",
+  "profile": "generic",
+  "factTable": "Encounters",
+  "dateColumn": "Admit Date",
+  "tables": [
+    {
+      "name": "Encounters",
+      "rowCount": 650,
+      "columns": [
+        {
+          "name": "Encounter ID",
+          "dataType": "string",
+          "sourceColumn": "Encounter ID",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Admit Date",
+          "dataType": "dateTime",
+          "sourceColumn": "Admit Date",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Patient ID",
+          "dataType": "string",
+          "sourceColumn": "Patient ID",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Provider ID",
+          "dataType": "string",
+          "sourceColumn": "Provider ID",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Department",
+          "dataType": "string",
+          "sourceColumn": "Department",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Diagnosis",
+          "dataType": "string",
+          "sourceColumn": "Diagnosis",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Encounter Type",
+          "dataType": "string",
+          "sourceColumn": "Encounter Type",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Length of Stay",
+          "dataType": "int64",
+          "sourceColumn": "Length of Stay",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Total Charges",
+          "dataType": "double",
+          "sourceColumn": "Total Charges",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Total Cost",
+          "dataType": "double",
+          "sourceColumn": "Total Cost",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Reimbursement",
+          "dataType": "double",
+          "sourceColumn": "Reimbursement",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Readmitted",
+          "dataType": "string",
+          "sourceColumn": "Readmitted",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Discharge Status",
+          "dataType": "string",
+          "sourceColumn": "Discharge Status",
+          "summarizeBy": "none"
+        }
+      ]
+    },
+    {
+      "name": "Patients",
+      "rowCount": 120,
+      "columns": [
+        {
+          "name": "Patient ID",
+          "dataType": "string",
+          "sourceColumn": "Patient ID",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "First Name",
+          "dataType": "string",
+          "sourceColumn": "First Name",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Last Name",
+          "dataType": "string",
+          "sourceColumn": "Last Name",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Gender",
+          "dataType": "string",
+          "sourceColumn": "Gender",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Age Group",
+          "dataType": "string",
+          "sourceColumn": "Age Group",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "City",
+          "dataType": "string",
+          "sourceColumn": "City",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "State",
+          "dataType": "string",
+          "sourceColumn": "State",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Insurance",
+          "dataType": "string",
+          "sourceColumn": "Insurance",
+          "summarizeBy": "none"
+        }
+      ]
+    },
+    {
+      "name": "Providers",
+      "rowCount": 25,
+      "columns": [
+        {
+          "name": "Provider ID",
+          "dataType": "string",
+          "sourceColumn": "Provider ID",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Provider Name",
+          "dataType": "string",
+          "sourceColumn": "Provider Name",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Specialty",
+          "dataType": "string",
+          "sourceColumn": "Specialty",
+          "summarizeBy": "none"
+        },
+        {
+          "name": "Department",
+          "dataType": "string",
+          "sourceColumn": "Department",
+          "summarizeBy": "none"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "name": "Enc_Patients",
+      "fromTable": "Encounters",
+      "fromColumn": "Patient ID",
+      "toTable": "Patients",
+      "toColumn": "Patient ID",
+      "crossFilteringBehavior": "oneDirection"
+    },
+    {
+      "name": "Enc_Providers",
+      "fromTable": "Encounters",
+      "fromColumn": "Provider ID",
+      "toTable": "Providers",
+      "toColumn": "Provider ID",
+      "crossFilteringBehavior": "oneDirection"
+    }
+  ],
+  "measureSpecs": [
+    {
+      "name": "Total Encounters",
+      "kind": "count",
+      "column": "*",
+      "format": "int",
+      "dax": "COUNTROWS(Encounters)",
+      "definition": "Number of encounters (visits/admissions)."
+    },
+    {
+      "name": "Total Charges",
+      "kind": "sum",
+      "column": "Total Charges",
+      "format": "currency",
+      "dax": "SUM(Encounters[Total Charges])",
+      "definition": "Total billed charges."
+    },
+    {
+      "name": "Total Cost",
+      "kind": "sum",
+      "column": "Total Cost",
+      "format": "currency",
+      "dax": "SUM(Encounters[Total Cost])",
+      "definition": "Total cost of care."
+    },
+    {
+      "name": "Total Reimbursement",
+      "kind": "sum",
+      "column": "Reimbursement",
+      "format": "currency",
+      "dax": "SUM(Encounters[Reimbursement])",
+      "definition": "Total amount reimbursed by payers."
+    },
+    {
+      "name": "Total Patients",
+      "kind": "distinct",
+      "column": "Patient ID",
+      "format": "int",
+      "dax": "DISTINCTCOUNT(Encounters[Patient ID])",
+      "definition": "Distinct patients seen."
+    },
+    {
+      "name": "Avg Length of Stay",
+      "kind": "avg",
+      "column": "Length of Stay",
+      "format": "number",
+      "dax": "AVERAGE(Encounters[Length of Stay])",
+      "definition": "Average length of stay in days."
+    },
+    {
+      "name": "Readmissions",
+      "kind": "count_where",
+      "where": [
+        "Readmitted",
+        "Yes"
+      ],
+      "format": "int",
+      "dax": "CALCULATE(COUNTROWS(Encounters), Encounters[Readmitted]=\"Yes\")",
+      "definition": "Encounters flagged as a readmission."
+    },
+    {
+      "name": "Readmission Rate %",
+      "kind": "ratio_m",
+      "numerator": "Readmissions",
+      "denominator": "Total Encounters",
+      "format": "percent",
+      "dax": "DIVIDE([Readmissions], [Total Encounters])",
+      "definition": "Readmissions as a share of all encounters."
+    },
+    {
+      "name": "Avg Charge per Encounter",
+      "kind": "ratio_m",
+      "numerator": "Total Charges",
+      "denominator": "Total Encounters",
+      "format": "currency",
+      "dax": "DIVIDE([Total Charges], [Total Encounters])",
+      "definition": "Average charges per encounter."
+    },
+    {
+      "name": "Net Margin",
+      "kind": "sum",
+      "column": "Reimbursement",
+      "format": "currency",
+      "dax": "SUM(Encounters[Reimbursement]) - SUM(Encounters[Total Cost])",
+      "definition": "Reimbursement minus cost (approx.)."
+    },
+    {
+      "name": "Charges YoY %",
+      "kind": "derived",
+      "base": "Total Charges",
+      "time_intelligence": "yoy",
+      "format": "percent",
+      "dax": "Year-over-year growth of Total Charges.",
+      "definition": "Year-over-year growth of Total Charges."
+    },
+    {
+      "name": "Encounters YoY %",
+      "kind": "derived",
+      "base": "Total Encounters",
+      "time_intelligence": "yoy",
+      "format": "percent",
+      "dax": "Year-over-year growth of Total Encounters.",
+      "definition": "Year-over-year growth of encounter volume."
+    }
+  ],
+  "dimensions": [
+    {
+      "name": "Department",
+      "table": "Encounters",
+      "column": "Department"
+    },
+    {
+      "name": "Diagnosis",
+      "table": "Encounters",
+      "column": "Diagnosis"
+    },
+    {
+      "name": "Encounter Type",
+      "table": "Encounters",
+      "column": "Encounter Type"
+    },
+    {
+      "name": "Discharge Status",
+      "table": "Encounters",
+      "column": "Discharge Status"
+    },
+    {
+      "name": "Readmitted",
+      "table": "Encounters",
+      "column": "Readmitted"
+    },
+    {
+      "name": "Provider",
+      "table": "Providers",
+      "column": "Provider Name"
+    },
+    {
+      "name": "Specialty",
+      "table": "Providers",
+      "column": "Specialty"
+    },
+    {
+      "name": "Gender",
+      "table": "Patients",
+      "column": "Gender"
+    },
+    {
+      "name": "Age Group",
+      "table": "Patients",
+      "column": "Age Group"
+    },
+    {
+      "name": "City",
+      "table": "Patients",
+      "column": "City"
+    },
+    {
+      "name": "State",
+      "table": "Patients",
+      "column": "State"
+    },
+    {
+      "name": "Insurance",
+      "table": "Patients",
+      "column": "Insurance"
+    },
+    {
+      "name": "Year",
+      "table": "Encounters",
+      "column": "Admit Date",
+      "isTime": true,
+      "grain": "year"
+    },
+    {
+      "name": "Quarter",
+      "table": "Encounters",
+      "column": "Admit Date",
+      "isTime": true,
+      "grain": "quarter"
+    },
+    {
+      "name": "Month",
+      "table": "Encounters",
+      "column": "Admit Date",
+      "isTime": true,
+      "grain": "month"
+    }
+  ],
+  "synonyms": {
+    "Total Charges": [
+      "charges",
+      "billing",
+      "billed",
+      "revenue",
+      "sales",
+      "charge amount"
+    ],
+    "Total Reimbursement": [
+      "reimbursement",
+      "paid",
+      "collected",
+      "payments"
+    ],
+    "Total Cost": [
+      "cost",
+      "costs",
+      "cost of care"
+    ],
+    "Total Encounters": [
+      "encounters",
+      "visits",
+      "admissions",
+      "cases",
+      "volume"
+    ],
+    "Total Patients": [
+      "patients",
+      "unique patients",
+      "distinct patients"
+    ],
+    "Avg Length of Stay": [
+      "length of stay",
+      "los",
+      "average stay",
+      "avg los"
+    ],
+    "Readmission Rate %": [
+      "readmission rate",
+      "readmit rate",
+      "readmissions rate"
+    ],
+    "Readmissions": [
+      "readmissions",
+      "readmits"
+    ],
+    "Avg Charge per Encounter": [
+      "average charge",
+      "charge per encounter",
+      "avg charge"
+    ],
+    "Department": [
+      "department",
+      "dept",
+      "service line"
+    ],
+    "Diagnosis": [
+      "diagnosis",
+      "condition",
+      "dx",
+      "diagnoses"
+    ],
+    "Provider": [
+      "provider",
+      "doctor",
+      "physician",
+      "providers"
+    ],
+    "Specialty": [
+      "specialty",
+      "speciality"
+    ],
+    "Insurance": [
+      "insurance",
+      "payer",
+      "plan"
+    ],
+    "Gender": [
+      "gender",
+      "sex"
+    ],
+    "City": [
+      "city",
+      "cities"
+    ],
+    "State": [
+      "state",
+      "states"
+    ],
+    "Age Group": [
+      "age group",
+      "age",
+      "age band"
+    ],
+    "Encounter Type": [
+      "encounter type",
+      "visit type",
+      "type of visit"
+    ]
+  }
+}

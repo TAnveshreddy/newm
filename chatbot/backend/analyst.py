@@ -80,7 +80,8 @@ class Analyst:
         visuals = []
         for i, spec in enumerate(intent.report_specs, 1):
             sub = QueryIntent(
-                measures=spec.get("measures", ["Total Revenue"]),
+                measures=[m for m in spec.get("measures", []) if m]
+                or [next(iter(self.model.measures), "Total Revenue")],
                 dimension=spec.get("dimension"),
                 secondary_dimension=spec.get("secondary_dimension"),
                 time_grain=spec.get("time_grain"),

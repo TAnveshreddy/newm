@@ -73,6 +73,38 @@ python3 scripts/extract_from_pbit.py ../SalesAnalytics_Complete.pbit
 
 ---
 
+## Multiple reports — the report picker
+
+The chatbot can hold several reports and switch between them from the UI
+(sidebar → **Switch report**). Two ship out of the box:
+
+| Report | Profile | What it is |
+|---|---|---|
+| **SalesAnalytics** (default) | `sales` | the original hand-tuned sales model |
+| **HospitalAnalytics** | `generic` | a synthetic healthcare model (encounters, charges, length of stay, readmissions) — demonstrates loading a *different* schema |
+
+Switching reloads that report's measures, dimensions, suggested prompts and
+tables, and starts a fresh conversation. Each report is independent.
+
+**How a report is discovered:** any folder with a `semantic_model.json` (+ its
+CSVs) is a report — the built-in `data/` folder (id `sales`) plus every subfolder
+of `datasets/`. See `backend/semantic_model.py` → `DatasetRegistry`.
+
+**Add your own report** from any `.pbit` — no code changes:
+
+```bash
+python scripts/extract_from_pbit.py C:\path\to\your.pbit --dataset myreport
+```
+
+That writes `datasets/myreport/` with `profile: "generic"`, so the chatbot builds
+the catalog from *that model's own metadata*: measures are parsed from the model's
+DAX (`SUM`/`AVERAGE`/`COUNTROWS`/`DISTINCTCOUNT`), dimensions from the relationship
+graph, and time-intelligence from the fact's date column. Restart the server and it
+appears in the picker. (Measures whose DAX is too complex to parse are simply not
+offered rather than guessed.)
+
+To regenerate the healthcare sample: `python scripts/make_healthcare_dataset.py`.
+
 ## Architecture
 
 ```
