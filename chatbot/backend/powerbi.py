@@ -117,6 +117,32 @@ def refresh_access_token(cfg: EntraConfig, refresh_token: str) -> dict:
     })
 
 
+def acquire_app_token(cfg: EntraConfig) -> dict:
+    """Client-credentials flow: the app's OWN token (Service Principal, no user)."""
+    return _post_form(cfg.token_url(), {
+        "client_id": cfg.client_id,
+        "client_secret": cfg.client_secret,
+        "grant_type": "client_credentials",
+        "scope": "https://analysis.windows.net/powerbi/api/.default",
+    })
+
+
+class AppTokenSet:
+    """Service-principal token: re-acquired via client-credentials when it expires."""
+
+    def __init__(self, cfg: EntraConfig):
+        self.cfg = cfg
+        self.access_token = ""
+        self.expires_at = 0.0
+
+    def valid_token(self) -> str:
+        if time.time() >= self.expires_at:
+            t = acquire_app_token(self.cfg)
+            self.access_token = t.get("access_token", "")
+            self.expires_at = time.time() + int(t.get("expires_in", 3600)) - 60
+        return self.access_token
+
+
 class TokenSet:
     """Holds a user's tokens server-side and refreshes transparently."""
 

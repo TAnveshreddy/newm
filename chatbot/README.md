@@ -96,6 +96,17 @@ production dashboards" requirement:
 5. Switching dashboards (the sidebar picker) disconnects the previous one, loads
    the new dataset's model, and resets the conversation.
 
+**Two live sign-in styles**
+
+- `POWERBI_MODE=live` — each user signs in with Microsoft (one click, no keys
+  typed); queries run as that user (per-user permissions/RLS).
+- `POWERBI_MODE=service` — a **Service Principal**: the chatbot uses one registered
+  app identity, so users just click **Connect** with no login at all. Best when a
+  single service account should reach the dashboards. Extra prerequisites: in the
+  Power BI admin portal enable **"Allow service principals to use Power BI APIs"**,
+  and **add the service principal as a member** of each workspace whose dashboards
+  it should see. (Per-user RLS is not automatic in this mode.)
+
 **One-time setup (your side)**
 1. Register an app in **Microsoft Entra ID**. Add a **Web** redirect URI matching
    `ENTRA_REDIRECT_URI` (default `http://localhost:8000/api/auth/callback`).

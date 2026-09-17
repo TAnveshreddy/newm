@@ -39,7 +39,6 @@
       $("connect-form").classList.add("hidden");
       $("ms-signin").classList.remove("hidden");
       $("ms-signin").onclick = () => { window.location.href = "/api/auth/login"; };
-      // returning from the Microsoft redirect?
       const params = new URLSearchParams(location.search);
       if (params.get("auth_error")) {
         $("connect-err").textContent = "Microsoft sign-in failed or was cancelled. Please try again.";
@@ -48,6 +47,48 @@
         $("ms-signin").classList.add("hidden");
         await showDashboardPicker();
       }
+    } else if (cfg.authMode === "service") {
+      // service principal: one Connect click, no user login
+      $("connect-form").classList.add("hidden");
+      const btn = $("ms-signin");
+      btn.classList.remove("hidden");
+      btn.textContent = "Connect to Power BI";
+      btn.onclick = () => connectService();
+    }
+  }
+
+  function fillDashSelect(dashboards) {
+    state.dashboards = dashboards || [];
+    state.datasets = state.dashboards;   // sidebar picker reuses this
+    const sel = $("dash-select"); sel.innerHTML = "";
+    if (!state.dashboards.length) {
+      $("connect-err").textContent = "No Power BI dashboards are available to this account.";
+      return;
+    }
+    state.dashboards.forEach((d) => {
+      const o = document.createElement("option");
+      o.value = d.id;
+      o.textContent = d.reportName ? `${d.name}  ·  ${d.groupName}` : `${d.name} (dataset) · ${d.groupName}`;
+      sel.appendChild(o);
+    });
+    $("dash-picker").classList.remove("hidden");
+    $("connect-err").textContent = "";
+    $("dash-connect").onclick = () => connectDashboard(sel.value);
+  }
+
+  async function connectService() {
+    const btn = $("ms-signin");
+    btn.disabled = true; btn.textContent = "Connecting to Power BI…";
+    try {
+      const { status, body } = await api("/api/connect-service", { method: "POST", body: "{}" });
+      if (status !== 200 || body.ok === false) throw new Error(body.error || "Could not connect.");
+      state.session = body.session;
+      if (body.user) $("user-name").textContent = body.user.name;
+      btn.classList.add("hidden");
+      fillDashSelect(body.dashboards);
+    } catch (err) {
+      $("connect-err").textContent = err.message;
+      btn.disabled = false; btn.textContent = "Connect to Power BI";
     }
   }
 
@@ -56,23 +97,8 @@
     try {
       const { status, body } = await api("/api/workspaces");
       if (status !== 200 || body.ok === false) throw new Error(body.error || "Could not list dashboards.");
-      state.dashboards = body.dashboards || [];
-      state.datasets = state.dashboards;   // sidebar picker reuses this
       if (body.user) $("user-name").textContent = body.user.name;
-      const sel = $("dash-select"); sel.innerHTML = "";
-      if (!state.dashboards.length) {
-        $("connect-err").textContent = "No Power BI dashboards are available to your account.";
-        return;
-      }
-      state.dashboards.forEach((d) => {
-        const o = document.createElement("option");
-        o.value = d.id;
-        o.textContent = d.reportName ? `${d.name}  ·  ${d.groupName}` : `${d.name} (dataset) · ${d.groupName}`;
-        sel.appendChild(o);
-      });
-      $("dash-picker").classList.remove("hidden");
-      $("connect-err").textContent = "";
-      $("dash-connect").onclick = () => connectDashboard(sel.value);
+      fillDashSelect(body.dashboards);
     } catch (err) {
       $("connect-err").textContent = err.message;
     }
@@ -185,7 +211,7 @@
     if (state.busy || id === state.dataset) return;
     state.busy = true;
     try {
-      const live = state.authMode === "live";
+      const live = state.authMode === "live" || state.authMode === "service";
       const { status, body } = await api(live ? "/api/select-live" : "/api/select", {
         method: "POST", body: JSON.stringify(live ? { id } : { dataset: id }) });
       if (status !== 200 || body.ok === false) throw new Error(body.error || "Could not switch report.");

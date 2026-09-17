@@ -45,8 +45,11 @@ import powerbi as pbi                               # noqa: E402
 REGISTRY = get_registry()
 AUTH = get_auth_provider()
 
-# Live Power BI Service mode is enabled with POWERBI_MODE=live + Entra env vars.
-LIVE = os.environ.get("POWERBI_MODE", "demo").lower() == "live"
+# POWERBI_MODE: demo (default) | live (per-user Entra sign-in) | service (one app
+# identity / Service Principal, no user login).
+MODE = os.environ.get("POWERBI_MODE", "demo").lower()
+LIVE = MODE == "live"          # interactive per-user sign-in flow
+SERVICE = MODE == "service"    # service-principal flow
 ENTRA = pbi.EntraConfig()
 _OAUTH_STATES: dict[str, float] = {}   # state -> issued_at (CSRF protection)
 
@@ -172,10 +175,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         route = urlparse(self.path).path
         if route == "/api/health":
-            return self._json({"status": "ok", "datasets": REGISTRY.ids(), "mode": "live" if LIVE else "demo"})
+            return self._json({"status": "ok", "datasets": REGISTRY.ids(), "mode": MODE})
         if route == "/api/config":
-            return self._json({"authMode": "live" if LIVE else "demo",
-                               "liveConfigured": ENTRA.configured})
+            return self._json({"authMode": MODE, "liveConfigured": ENTRA.configured})
         if route == "/api/datasets":
             return self._json({"datasets": REGISTRY.catalog(), "default": REGISTRY.default_id()})
         if route == "/api/model":
@@ -192,6 +194,8 @@ class Handler(BaseHTTPRequestHandler):
         route = urlparse(self.path).path
         if route == "/api/connect":
             return self._connect()
+        if route == "/api/connect-service":
+            return self._connect_service()
         if route == "/api/select":
             return self._select()
         if route == "/api/select-live":
@@ -296,6 +300,32 @@ class Handler(BaseHTTPRequestHandler):
         if result.get("ok") and result.get("kind") != "report" and result.get("intent"):
             sess["last_intent"] = result["intent"]
         return self._json(result)
+
+    # ---- service-principal connect (no user login) ----
+    def _connect_service(self):
+        if not SERVICE:
+            return self._json({"ok": False, "error": "Service mode is not enabled."}, status=400)
+        if not ENTRA.configured:
+            return self._json({"ok": False, "error":
+                               "Entra ID is not configured on the server (set ENTRA_TENANT_ID, "
+                               "ENTRA_CLIENT_ID, ENTRA_CLIENT_SECRET)."}, status=501)
+        ats = pbi.AppTokenSet(ENTRA)
+        try:
+            ats.valid_token()   # acquire now so credential errors surface here
+            client = pbi.PowerBIClient(ats.valid_token)
+            dashboards = pbi.discover_dashboards(client)
+        except pbi.PowerBIError as exc:
+            return self._json({"ok": False, "error": str(exc)}, status=502)
+        token = secrets.token_urlsafe(24)
+        SESSIONS[token] = {
+            "live": True,
+            "user": UserContext(email="", name="Power BI (service principal)", token=token),
+            "tokenset": ats, "client": client,
+            "analyst": None, "dashboard": None, "dashboards": dashboards, "last_intent": None,
+        }
+        cookie = f"pbsid={token}; Path=/; HttpOnly; SameSite=Lax"
+        return self._json({"ok": True, "session": token, "dashboards": dashboards,
+                           "user": {"name": "Power BI (service principal)"}}, set_cookie=cookie)
 
     # ---- live Power BI Service endpoints ----
     def _auth_login(self):
