@@ -20,10 +20,11 @@ from auth import UserContext, get_executor
 
 
 class Analyst:
-    def __init__(self, model: SemanticModel):
+    def __init__(self, model: SemanticModel, executor=None):
         self.model = model
         self.planner = Planner(model)
-        self.executor = get_executor(model)
+        # Demo -> in-memory executor; live -> a LiveExecutor querying Power BI.
+        self.executor = executor or get_executor(model)
 
     # ------------------------------------------------------------------ #
     def handle(self, message: str, user: UserContext,

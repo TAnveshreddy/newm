@@ -466,11 +466,14 @@ class SemanticModel:
             phrases = set(words) | {canonical.lower()}
             for p in phrases:
                 idx.append((p.lower(), role, fname))
-        # also index measure/dimension names themselves
+        # index measure/dimension names themselves, plus auto-variants
+        # (so "revenue" resolves to "Total Revenue" even without a synonym list).
         for name in self.measures:
-            idx.append((name.lower(), "measure", name))
+            for v in _name_variants(name):
+                idx.append((v, "measure", name))
         for name in self.dimensions:
-            idx.append((name.lower(), "dimension", name))
+            for v in _name_variants(name):
+                idx.append((v, "dimension", name))
         idx.sort(key=lambda t: len(t[0]), reverse=True)
         return idx
 
@@ -541,6 +544,24 @@ class SemanticModel:
             ],
             "years": self.years,
         }
+
+
+_STRIP_PREFIXES = ("total ", "avg ", "average ", "number of ", "count of ", "sum of ")
+
+
+def _name_variants(name: str) -> set[str]:
+    """Lowercased forms of a field name for matching, e.g.
+    'Total Revenue' -> {'total revenue', 'revenue'}; 'Profit Margin %' -> {..., 'profit margin'}."""
+    low = name.lower().strip()
+    out = {low}
+    stripped = low.rstrip("%").strip()
+    if stripped:
+        out.add(stripped)
+    for pre in _STRIP_PREFIXES:
+        for base in (low, stripped):
+            if base.startswith(pre) and len(base) > len(pre) + 2:
+                out.add(base[len(pre):].strip())
+    return {v for v in out if len(v) >= 3}
 
 
 def _guess_format(name: str, format_string: str) -> str:

@@ -36,7 +36,7 @@ change, not a rewrite.
 | Ad-hoc multi-visual reports from one prompt | `backend/analyst.py` `_handle_report` |
 | Business KPIs incl. **YoY sales & profit growth by product** | `SemanticModel._build_measures`, `query_engine` YoY logic |
 | Error handling / no fabrication | `backend/analyst.py`, missing-metric guard in planner |
-| Microsoft Entra ID auth, RLS, secure token handling | `backend/auth.py` (see **Going live**) |
+| Microsoft Entra ID auth, list live workspaces/datasets, live DAX execution, RLS | `backend/powerbi.py` (see **Live Power BI Service mode**) |
 | Modern responsive chat UI | `frontend/` |
 
 ---
@@ -73,7 +73,54 @@ python3 scripts/extract_from_pbit.py ../SalesAnalytics_Complete.pbit
 
 ---
 
-## Multiple reports — the report picker
+## Live Power BI Service mode (connect to your real dashboards)
+
+Set `POWERBI_MODE=live` to connect the chatbot to the **live Power BI Service**
+instead of the bundled demo data. This satisfies the "connect to existing
+production dashboards" requirement:
+
+**Flow**
+1. The user clicks **Sign in with Microsoft** → Entra ID OAuth2 authorization-code
+   flow (`/api/auth/login` → Microsoft → `/api/auth/callback`). No API key, token,
+   client secret, dataset id or Power BI credential is ever requested from or shown
+   to the user; the access/refresh tokens live only server-side.
+2. The chatbot calls the Power BI REST API **as the user** to list the workspaces,
+   reports and datasets they're authorized to see, and shows them in a
+   **Select Power BI Dashboard** dropdown — nothing hardcoded (`/api/workspaces`).
+3. On selection (`/api/select-live`) it reads that dataset's **own** tables,
+   columns, measures and relationships via the `INFO.VIEW.*` DAX functions and
+   builds the catalog from them — so the NL→DAX layer uses the real semantic model.
+4. Every question generates DAX and runs it against the **live dataset** via the
+   REST `executeQueries` endpoint **as the signed-in user**, so the model's
+   **Row-Level Security is enforced by Power BI**. No local copy of the data is used.
+5. Switching dashboards (the sidebar picker) disconnects the previous one, loads
+   the new dataset's model, and resets the conversation.
+
+**One-time setup (your side)**
+1. Register an app in **Microsoft Entra ID**. Add a **Web** redirect URI matching
+   `ENTRA_REDIRECT_URI` (default `http://localhost:8000/api/auth/callback`).
+2. Grant **delegated** Power BI permissions: `Dataset.Read.All`, `Report.Read.All`,
+   `Workspace.Read.All` (grant admin consent). In the Power BI admin/tenant
+   settings, allow service principals / REST APIs as your org requires.
+3. Run with:
+   ```bash
+   export POWERBI_MODE=live
+   export ENTRA_TENANT_ID=<tenant-guid>
+   export ENTRA_CLIENT_ID=<app-client-id>
+   export ENTRA_CLIENT_SECRET=<app-secret>
+   export ENTRA_REDIRECT_URI=https://your-host/api/auth/callback
+   python3 backend/app.py
+   ```
+   Serve over HTTPS in production and store sessions in a shared store (e.g. Redis)
+   instead of memory.
+
+> Note: `executeQueries` requires the dataset to allow it (XMLA read / "Dataset
+> Execute Queries REST API" tenant setting; Premium/PPU or a supported capacity).
+> The live path is implemented and unit-tested against recorded API shapes, but a
+> live tenant is required to validate end-to-end — it cannot be exercised from a
+> sandbox.
+
+## Multiple reports — the report picker (demo / file mode)
 
 The chatbot can hold several reports and switch between them from the UI
 (sidebar → **Switch report**). Two ship out of the box:

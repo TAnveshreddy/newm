@@ -29,7 +29,77 @@
   const mdBold = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
                               .replace(/\*(.+?)\*/g, "<em>$1</em>");
 
-  // ---------- connect ----------
+  // ---------- init: pick demo vs live flow ----------
+  async function init() {
+    let cfg = { authMode: "demo", liveConfigured: false };
+    try { cfg = (await api("/api/config")).body || cfg; } catch (e) { /* default demo */ }
+    state.authMode = cfg.authMode;
+    if (cfg.authMode === "live") {
+      // hide the email form, show Microsoft sign-in
+      $("connect-form").classList.add("hidden");
+      $("ms-signin").classList.remove("hidden");
+      $("ms-signin").onclick = () => { window.location.href = "/api/auth/login"; };
+      // returning from the Microsoft redirect?
+      const params = new URLSearchParams(location.search);
+      if (params.get("auth_error")) {
+        $("connect-err").textContent = "Microsoft sign-in failed or was cancelled. Please try again.";
+      }
+      if (params.get("connected")) {
+        $("ms-signin").classList.add("hidden");
+        await showDashboardPicker();
+      }
+    }
+  }
+
+  async function showDashboardPicker() {
+    $("connect-err").textContent = "Loading your Power BI dashboards…";
+    try {
+      const { status, body } = await api("/api/workspaces");
+      if (status !== 200 || body.ok === false) throw new Error(body.error || "Could not list dashboards.");
+      state.dashboards = body.dashboards || [];
+      state.datasets = state.dashboards;   // sidebar picker reuses this
+      if (body.user) $("user-name").textContent = body.user.name;
+      const sel = $("dash-select"); sel.innerHTML = "";
+      if (!state.dashboards.length) {
+        $("connect-err").textContent = "No Power BI dashboards are available to your account.";
+        return;
+      }
+      state.dashboards.forEach((d) => {
+        const o = document.createElement("option");
+        o.value = d.id;
+        o.textContent = d.reportName ? `${d.name}  ·  ${d.groupName}` : `${d.name} (dataset) · ${d.groupName}`;
+        sel.appendChild(o);
+      });
+      $("dash-picker").classList.remove("hidden");
+      $("connect-err").textContent = "";
+      $("dash-connect").onclick = () => connectDashboard(sel.value);
+    } catch (err) {
+      $("connect-err").textContent = err.message;
+    }
+  }
+
+  async function connectDashboard(id) {
+    const btn = $("dash-connect");
+    btn.disabled = true; btn.textContent = "Connecting…";
+    try {
+      const { status, body } = await api("/api/select-live", {
+        method: "POST", body: JSON.stringify({ id }) });
+      if (status !== 200 || body.ok === false) throw new Error(body.error || "Could not connect the dashboard.");
+      state.dataset = body.dataset;
+      populateDatasetPicker();
+      loadModelInfo(body);
+      $("connect").classList.add("hidden");
+      $("app").classList.remove("hidden");
+      $("rls-badge").classList.remove("hidden");   // RLS is enforced live
+      greet($("user-name").textContent || "there");
+    } catch (err) {
+      $("connect-err").textContent = err.message;
+    } finally {
+      btn.disabled = false; btn.textContent = "Connect Dashboard";
+    }
+  }
+
+  // ---------- connect (demo email flow) ----------
   $("connect-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = $("email").value.trim();
@@ -65,7 +135,7 @@
   function loadModelInfo(body) {
     state.model = body;
     if (body.dataset) state.dataset = body.dataset;
-    $("model-name").textContent = body.name || "Semantic model";
+    $("model-name").textContent = (body.name || "Semantic model") + (body.live ? "  ✓" : "");
     const nMeas = body.measures.length, nRel = body.relationships.length;
     $("model-meta").textContent = `${body.tables.length} tables · ${nRel} relationships · ${nMeas} measures`;
     $("topbar-title").textContent = body.name || "Report";
@@ -115,8 +185,9 @@
     if (state.busy || id === state.dataset) return;
     state.busy = true;
     try {
-      const { status, body } = await api("/api/select", {
-        method: "POST", body: JSON.stringify({ dataset: id }) });
+      const live = state.authMode === "live";
+      const { status, body } = await api(live ? "/api/select-live" : "/api/select", {
+        method: "POST", body: JSON.stringify(live ? { id } : { dataset: id }) });
       if (status !== 200 || body.ok === false) throw new Error(body.error || "Could not switch report.");
       // reset conversation for the new report
       for (const [, c] of state.charts) c.destroy();
@@ -424,4 +495,6 @@
     $("chat-inner").innerHTML = "";
     greet($("user-name").textContent || "there");
   });
+
+  init();   // decide demo vs live sign-in flow
 })();

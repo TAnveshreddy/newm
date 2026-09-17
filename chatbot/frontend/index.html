@@ -15,8 +15,10 @@
       <div class="logo"><span class="mark">Bi</span> Power BI AI Analyst</div>
       <h1>Connect to Power BI</h1>
       <p class="sub">Sign in with your Microsoft work account. We use your identity to
-        find the Power BI datasets you're allowed to see — no passwords, API keys,
+        find the Power BI dashboards you're allowed to see — no passwords, API keys,
         tokens, or dataset IDs required.</p>
+
+      <!-- Demo mode: email sign-in -->
       <form id="connect-form">
         <div class="field">
           <label for="email">Work email</label>
@@ -24,6 +26,19 @@
         </div>
         <button class="btn-primary" id="connect-btn" type="submit">Connect to Power BI</button>
       </form>
+
+      <!-- Live mode: Microsoft sign-in -->
+      <button class="btn-primary hidden" id="ms-signin">Sign in with Microsoft</button>
+
+      <!-- Live mode: choose a dashboard after sign-in -->
+      <div id="dash-picker" class="hidden">
+        <div class="field">
+          <label for="dash-select">Select Power BI Dashboard</label>
+          <select id="dash-select" class="dataset-select"></select>
+        </div>
+        <button class="btn-primary" id="dash-connect">Connect Dashboard</button>
+      </div>
+
       <div class="err" id="connect-err"></div>
       <div class="ms-note">
         <span class="ms-logo"><i></i><i></i><i></i><i></i></span>

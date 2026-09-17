@@ -33,13 +33,22 @@ ROOT = os.path.dirname(HERE)
 FRONTEND = os.path.join(ROOT, "frontend")
 sys.path.insert(0, HERE)
 
+import secrets                                     # noqa: E402
+from http.cookies import SimpleCookie              # noqa: E402
+
 from semantic_model import get_registry, SemanticModel  # noqa: E402
 from nl_planner import QueryIntent                  # noqa: E402
 from analyst import Analyst                         # noqa: E402
-from auth import get_auth_provider, UserContext     # noqa: E402
+from auth import get_auth_provider, UserContext, DemoAuthProvider  # noqa: E402
+import powerbi as pbi                               # noqa: E402
 
 REGISTRY = get_registry()
 AUTH = get_auth_provider()
+
+# Live Power BI Service mode is enabled with POWERBI_MODE=live + Entra env vars.
+LIVE = os.environ.get("POWERBI_MODE", "demo").lower() == "live"
+ENTRA = pbi.EntraConfig()
+_OAUTH_STATES: dict[str, float] = {}   # state -> issued_at (CSRF protection)
 
 # Lazily-built Analyst per dataset id (each has its own model + planner).
 _ANALYSTS: dict[str, Analyst] = {}
@@ -100,14 +109,23 @@ class Handler(BaseHTTPRequestHandler):
     server_version = "PBIChatbot/1.0"
 
     # ---- helpers ----
-    def _json(self, obj, status=200):
+    def _json(self, obj, status=200, set_cookie=None):
         body = json.dumps(obj).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        if set_cookie:
+            self.send_header("Set-Cookie", set_cookie)
         self.end_headers()
         self.wfile.write(body)
+
+    def _redirect(self, location, set_cookie=None):
+        self.send_response(302)
+        self.send_header("Location", location)
+        if set_cookie:
+            self.send_header("Set-Cookie", set_cookie)
+        self.end_headers()
 
     def _body(self) -> dict:
         length = int(self.headers.get("Content-Length", 0) or 0)
@@ -120,7 +138,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def _session(self) -> dict | None:
         token = self.headers.get("X-Session", "")
-        return SESSIONS.get(token)
+        if token in SESSIONS:
+            return SESSIONS[token]
+        # fall back to the cookie (needed after the OAuth redirect round-trip)
+        cookie = SimpleCookie(self.headers.get("Cookie", ""))
+        if "pbsid" in cookie:
+            return SESSIONS.get(cookie["pbsid"].value)
+        return None
 
     def log_message(self, *args):  # quieter logs
         if os.environ.get("CHATBOT_VERBOSE"):
@@ -148,11 +172,20 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         route = urlparse(self.path).path
         if route == "/api/health":
-            return self._json({"status": "ok", "datasets": REGISTRY.ids()})
+            return self._json({"status": "ok", "datasets": REGISTRY.ids(), "mode": "live" if LIVE else "demo"})
+        if route == "/api/config":
+            return self._json({"authMode": "live" if LIVE else "demo",
+                               "liveConfigured": ENTRA.configured})
         if route == "/api/datasets":
             return self._json({"datasets": REGISTRY.catalog(), "default": REGISTRY.default_id()})
         if route == "/api/model":
             return self._model_summary()
+        if route == "/api/auth/login":
+            return self._auth_login()
+        if route == "/api/auth/callback":
+            return self._auth_callback()
+        if route == "/api/workspaces":
+            return self._workspaces()
         return self._serve_static(route)
 
     def do_POST(self):
@@ -161,6 +194,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._connect()
         if route == "/api/select":
             return self._select()
+        if route == "/api/select-live":
+            return self._select_live()
         if route == "/api/chat":
             return self._chat()
         self.send_error(404, "Not found")
@@ -177,18 +212,27 @@ class Handler(BaseHTTPRequestHandler):
             return sess["dataset"]
         return REGISTRY.default_id()
 
+    def _summary_of(self, analyst, dataset, name=None) -> dict:
+        model = analyst.model
+        s = model.summary()
+        s["dataset"] = dataset
+        s["name"] = name or model.meta.get("name")
+        s["suggestedPrompts"] = suggested_prompts(model)
+        s["authMode"] = "live" if LIVE else "demo"
+        s["llm"] = analyst.planner.using_llm
+        s["description"] = model.meta.get("description", "")
+        s["live"] = getattr(model, "profile", "") == "live"
+        return s
+
     def _model_summary(self, ds_id: str | None = None):
         sess = self._session()
+        if sess and sess.get("live"):
+            analyst = sess.get("analyst")
+            if not analyst:
+                return self._json({"ok": False, "error": "No dashboard selected yet."}, status=400)
+            return self._json(self._summary_of(analyst, sess["dashboard"]["id"], sess["dashboard"]["name"]))
         ds_id = ds_id or self._current_dataset(sess)
-        analyst = get_analyst(ds_id)
-        model = analyst.model
-        summary = model.summary()
-        summary["dataset"] = ds_id
-        summary["suggestedPrompts"] = suggested_prompts(model)
-        summary["authMode"] = AUTH.mode
-        summary["llm"] = analyst.planner.using_llm
-        summary["description"] = model.meta.get("description", "")
-        return self._json(summary)
+        return self._json(self._summary_of(get_analyst(ds_id), ds_id))
 
     # ---- endpoints ----
     def _connect(self):
@@ -234,18 +278,91 @@ class Handler(BaseHTTPRequestHandler):
         if not message:
             return self._json({"ok": False, "error": "Empty message."}, status=400)
 
-        ds_id = self._current_dataset(sess)
-        analyst = get_analyst(ds_id)
+        if sess.get("live"):
+            analyst = sess.get("analyst")
+            if not analyst:
+                return self._json({"ok": False, "error": "Select a dashboard first."}, status=400)
+            ds_ref = sess["dashboard"]["id"]
+        else:
+            ds_ref = self._current_dataset(sess)
+            analyst = get_analyst(ds_ref)
+
         prev = sess.get("last_intent")
         prev_intent = QueryIntent(**prev) if prev else None
         t0 = time.time()
         result = analyst.handle(message, sess["user"], prev_intent)
         result["elapsed_ms"] = int((time.time() - t0) * 1000)
-        result["dataset"] = ds_id
-        # remember intent for follow-ups (single-visual intents only)
+        result["dataset"] = ds_ref
         if result.get("ok") and result.get("kind") != "report" and result.get("intent"):
             sess["last_intent"] = result["intent"]
         return self._json(result)
+
+    # ---- live Power BI Service endpoints ----
+    def _auth_login(self):
+        if not LIVE:
+            return self._json({"ok": False, "error": "Live mode is not enabled."}, status=400)
+        if not ENTRA.configured:
+            return self._json({"ok": False, "error":
+                               "Entra ID is not configured on the server (set ENTRA_TENANT_ID, "
+                               "ENTRA_CLIENT_ID, ENTRA_CLIENT_SECRET)."}, status=501)
+        state = secrets.token_urlsafe(16)
+        _OAUTH_STATES[state] = time.time()
+        return self._redirect(ENTRA.authorize_url(state))
+
+    def _auth_callback(self):
+        qs = parse_qs(urlparse(self.path).query)
+        if qs.get("error"):
+            return self._redirect(f"/?auth_error={urlparse(self.path).query}")
+        code = (qs.get("code") or [None])[0]
+        state = (qs.get("state") or [None])[0]
+        if not code or state not in _OAUTH_STATES:
+            return self._redirect("/?auth_error=invalid_state")
+        _OAUTH_STATES.pop(state, None)
+        try:
+            tokens = pbi.exchange_code(ENTRA, code)
+        except pbi.PowerBIError:
+            return self._redirect("/?auth_error=token_exchange_failed")
+        ts = pbi.TokenSet(ENTRA, tokens)
+        client = pbi.PowerBIClient(ts.valid_token)
+        token = secrets.token_urlsafe(24)
+        SESSIONS[token] = {
+            "live": True,
+            "user": UserContext(email="", name="Power BI User", token=token),
+            "tokenset": ts, "client": client,
+            "analyst": None, "dashboard": None, "dashboards": [], "last_intent": None,
+        }
+        cookie = f"pbsid={token}; Path=/; HttpOnly; SameSite=Lax"
+        return self._redirect("/?connected=1", set_cookie=cookie)
+
+    def _workspaces(self):
+        sess = self._session()
+        if not sess or not sess.get("live"):
+            return self._json({"ok": False, "error": "Not signed in to Power BI."}, status=401)
+        try:
+            dashboards = pbi.discover_dashboards(sess["client"])
+        except pbi.PowerBIError as exc:
+            return self._json({"ok": False, "error": str(exc)}, status=502)
+        sess["dashboards"] = dashboards
+        return self._json({"ok": True, "dashboards": dashboards,
+                           "user": {"name": sess["user"].name}})
+
+    def _select_live(self):
+        sess = self._session()
+        if not sess or not sess.get("live"):
+            return self._json({"ok": False, "error": "Not signed in to Power BI."}, status=401)
+        sel = self._body().get("id", "")
+        dash = next((d for d in sess.get("dashboards", []) if d["id"] == sel), None)
+        if not dash:
+            return self._json({"ok": False, "error": "Unknown dashboard."}, status=400)
+        try:
+            model = pbi.LiveModel(sess["client"], dash["datasetId"], dash["groupId"], dash["name"])
+        except pbi.PowerBIError as exc:
+            return self._json({"ok": False, "error": f"Could not read the dataset model: {exc}"},
+                              status=502)
+        sess["analyst"] = Analyst(model, executor=pbi.LiveExecutor(model, sess["client"]))
+        sess["dashboard"] = dash
+        sess["last_intent"] = None
+        return self._json(self._summary_of(sess["analyst"], dash["id"], dash["name"]))
 
 
 def main():
