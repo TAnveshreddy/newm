@@ -40,6 +40,27 @@
       </div>
 
       <div class="err" id="connect-err"></div>
+
+      <!-- Connect to live Power BI Service by pasting the app registration values -->
+      <div class="adv-toggle"><a href="#" id="adv-link">Connect to Power BI Service →</a></div>
+      <div id="adv-form" class="hidden">
+        <div class="field">
+          <label for="cred-tenant">Tenant ID</label>
+          <input id="cred-tenant" type="text" placeholder="Directory (tenant) ID" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="cred-client">Client ID</label>
+          <input id="cred-client" type="text" placeholder="Application (client) ID" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="cred-secret">Client Secret</label>
+          <input id="cred-secret" type="password" placeholder="Client secret value" autocomplete="off" />
+        </div>
+        <button class="btn-primary" id="cred-connect">Connect to Power BI Service</button>
+        <p class="adv-note">Your app registration's service-principal values (not a user password).
+          Sent only to your local server; not saved. See README → “Live Power BI Service mode”.</p>
+      </div>
+
       <div class="ms-note">
         <span class="ms-logo"><i></i><i></i><i></i><i></i></span>
         Secured by Microsoft Entra ID · Row-Level Security enforced

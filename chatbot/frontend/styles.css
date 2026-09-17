@@ -56,6 +56,11 @@ button { font-family: inherit; cursor: pointer; }
 .ms-logo i:nth-child(1){background:#f25022}.ms-logo i:nth-child(2){background:#7fba00}
 .ms-logo i:nth-child(3){background:#00a4ef}.ms-logo i:nth-child(4){background:#ffb900}
 .err { color: var(--red); font-size: 13px; margin-top: 12px; min-height: 16px; }
+.adv-toggle { margin-top: 14px; text-align: center; font-size: 13px; }
+.adv-toggle a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.adv-toggle a:hover { text-decoration: underline; }
+#adv-form { margin-top: 14px; text-align: left; border-top: 1px solid var(--line); padding-top: 16px; }
+.adv-note { font-size: 11.5px; color: var(--muted); margin-top: 10px; line-height: 1.45; }
 
 /* ---------------- App shell ---------------- */
 .app { display: grid; grid-template-columns: 288px 1fr; height: 100vh; }

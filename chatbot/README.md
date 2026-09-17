@@ -96,6 +96,12 @@ production dashboards" requirement:
 5. Switching dashboards (the sidebar picker) disconnects the previous one, loads
    the new dataset's model, and resets the conversation.
 
+**Quick test from the UI (no env vars):** on the connect screen click
+**“Connect to Power BI Service →”**, paste your app registration's **Tenant ID,
+Client ID and Client Secret**, and click Connect. The chatbot signs in as that
+service principal and lists your dashboards. (The secret is sent only to your local
+server and not stored — use env vars / `.env` for a real deployment.)
+
 **Two live sign-in styles**
 
 - `POWERBI_MODE=live` — each user signs in with Microsoft (one click, no keys

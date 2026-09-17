@@ -125,6 +125,37 @@
     }
   }
 
+  // ---------- connect to live Power BI Service via pasted credentials ----------
+  $("adv-link").addEventListener("click", (e) => {
+    e.preventDefault();
+    $("adv-form").classList.toggle("hidden");
+  });
+  $("cred-connect").addEventListener("click", async () => {
+    const tenantId = $("cred-tenant").value.trim();
+    const clientId = $("cred-client").value.trim();
+    const clientSecret = $("cred-secret").value.trim();
+    const btn = $("cred-connect");
+    $("connect-err").textContent = "";
+    if (!tenantId || !clientId || !clientSecret) {
+      $("connect-err").textContent = "Enter Tenant ID, Client ID and Client Secret."; return;
+    }
+    btn.disabled = true; btn.textContent = "Connecting to Power BI…";
+    try {
+      const { status, body } = await api("/api/connect-credentials", {
+        method: "POST", body: JSON.stringify({ tenantId, clientId, clientSecret }) });
+      if (status !== 200 || body.ok === false) throw new Error(body.error || "Could not connect.");
+      state.session = body.session;
+      state.authMode = "service";                       // switching uses live endpoints now
+      if (body.user) $("user-name").textContent = body.user.name;
+      $("cred-secret").value = "";                       // don't leave the secret in the field
+      fillDashSelect(body.dashboards);
+    } catch (err) {
+      $("connect-err").textContent = err.message;
+    } finally {
+      btn.disabled = false; btn.textContent = "Connect to Power BI Service";
+    }
+  });
+
   // ---------- connect (demo email flow) ----------
   $("connect-form").addEventListener("submit", async (e) => {
     e.preventDefault();

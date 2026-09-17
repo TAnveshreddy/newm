@@ -54,12 +54,13 @@ class PowerBIError(Exception):
 #  Configuration (all from server-side env — never from the browser)
 # --------------------------------------------------------------------------- #
 class EntraConfig:
-    def __init__(self):
-        self.tenant = os.environ.get("ENTRA_TENANT_ID", "")
-        self.client_id = os.environ.get("ENTRA_CLIENT_ID", "")
-        self.client_secret = os.environ.get("ENTRA_CLIENT_SECRET", "")
-        self.redirect_uri = os.environ.get("ENTRA_REDIRECT_URI",
-                                           "http://localhost:8000/api/auth/callback")
+    def __init__(self, tenant=None, client_id=None, client_secret=None, redirect_uri=None):
+        # Explicit args (e.g. from the in-app connect form) win over env vars.
+        self.tenant = tenant or os.environ.get("ENTRA_TENANT_ID", "")
+        self.client_id = client_id or os.environ.get("ENTRA_CLIENT_ID", "")
+        self.client_secret = client_secret or os.environ.get("ENTRA_CLIENT_SECRET", "")
+        self.redirect_uri = redirect_uri or os.environ.get(
+            "ENTRA_REDIRECT_URI", "http://localhost:8000/api/auth/callback")
 
     @property
     def configured(self) -> bool:

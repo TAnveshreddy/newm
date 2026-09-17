@@ -196,6 +196,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._connect()
         if route == "/api/connect-service":
             return self._connect_service()
+        if route == "/api/connect-credentials":
+            return self._connect_credentials()
         if route == "/api/select":
             return self._select()
         if route == "/api/select-live":
@@ -300,6 +302,34 @@ class Handler(BaseHTTPRequestHandler):
         if result.get("ok") and result.get("kind") != "report" and result.get("intent"):
             sess["last_intent"] = result["intent"]
         return self._json(result)
+
+    # ---- connect using credentials pasted into the UI (for testing/admin setup) ----
+    def _connect_credentials(self):
+        data = self._body()
+        tid = (data.get("tenantId") or "").strip()
+        cid = (data.get("clientId") or "").strip()
+        sec = (data.get("clientSecret") or "").strip()
+        if not (tid and cid and sec):
+            return self._json({"ok": False, "error":
+                               "Enter Tenant ID, Client ID and Client Secret."}, status=400)
+        cfg = pbi.EntraConfig(tenant=tid, client_id=cid, client_secret=sec)
+        ats = pbi.AppTokenSet(cfg)
+        try:
+            ats.valid_token()   # acquire the app token now (surfaces bad creds here)
+            client = pbi.PowerBIClient(ats.valid_token)
+            dashboards = pbi.discover_dashboards(client)
+        except pbi.PowerBIError as exc:
+            return self._json({"ok": False, "error": str(exc)}, status=502)
+        token = secrets.token_urlsafe(24)
+        SESSIONS[token] = {
+            "live": True,
+            "user": UserContext(email="", name="Power BI (service principal)", token=token),
+            "tokenset": ats, "client": client,
+            "analyst": None, "dashboard": None, "dashboards": dashboards, "last_intent": None,
+        }
+        cookie = f"pbsid={token}; Path=/; HttpOnly; SameSite=Lax"
+        return self._json({"ok": True, "session": token, "dashboards": dashboards,
+                           "user": {"name": "Power BI (service principal)"}}, set_cookie=cookie)
 
     # ---- service-principal connect (no user login) ----
     def _connect_service(self):
