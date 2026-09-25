@@ -1,0 +1,13 @@
+# Netlify security & caching headers
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+/images/*
+  Cache-Control: public, max-age=2592000
+
+/assets/*
+  Cache-Control: public, max-age=604800

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://YOUR-DOMAIN.com/</loc><lastmod>2026-09-25</lastmod><priority>1.0</priority></url>
+  <url><loc>https://YOUR-DOMAIN.com/about/</loc><lastmod>2026-09-25</lastmod><priority>0.8</priority></url>
+  <url><loc>https://YOUR-DOMAIN.com/doctors/</loc><lastmod>2026-09-25</lastmod><priority>0.8</priority></url>
+  <url><loc>https://YOUR-DOMAIN.com/doctors/dr-m-naresh/</loc><lastmod>2026-09-25</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.com/doctors/dr-m-haritha/</loc><lastmod>2026-09-25</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.com/services/</loc><lastmod>2026-09-25</lastmod><priority>0.8</priority></url>
+  <url><loc>https://YOUR-DOMAIN.com/services/pediatrics/</loc><lastmod>2026-09-25</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.com/services/general-medicine/</loc><lastmod>2026-09-25</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.com/facilities/</loc><lastmod>2026-09-25</lastmod><priority>0.8</priority></url>
+  <url><loc>https://YOUR-DOMAIN.com/gallery/</loc><lastmod>2026-09-25</lastmod><priority>0.8</priority></url>
+  <url><loc>https://YOUR-DOMAIN.com/contact/</loc><lastmod>2026-09-25</lastmod><priority>0.8</priority></url>
+  <url><loc>https://YOUR-DOMAIN.com/appointment/</loc><lastmod>2026-09-25</lastmod><priority>0.8</priority></url>
+  <url><loc>https://YOUR-DOMAIN.com/privacy-policy/</loc><lastmod>2026-09-25</lastmod><priority>0.8</priority></url>
+  <url><loc>https://YOUR-DOMAIN.com/terms/</loc><lastmod>2026-09-25</lastmod><priority>0.8</priority></url>
+  <url><loc>https://YOUR-DOMAIN.com/medical-disclaimer/</loc><lastmod>2026-09-25</lastmod><priority>0.8</priority></url>
+</urlset>

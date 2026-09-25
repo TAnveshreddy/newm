@@ -1,0 +1,277 @@
+{
+  "_README": "EDIT THIS FILE to update the website, then run: node build.mjs   (see EDITING.md). Values of null or entries with \"enabled\": false are not shown to visitors (a dashed 'To be updated' placeholder is shown instead while showPlaceholders is true).",
+  "siteUrl": "https://YOUR-DOMAIN.com",
+  "showPlaceholders": true,
+  "language": "en-IN",
+  "hospital": {
+    "name": "Eternal Multi Specialty Hospital",
+    "nameTelugu": "ఎటర్నల్ మల్టీస్పెషాలిటీ హాస్పిటల్",
+    "shortName": "Eternal Hospital",
+    "tagline": "Care for children and adults, opposite the Bus Stand in Palakurthy",
+    "logo": null,
+    "address": {
+      "street": "Opp. Bus Stand, Jangaon Road",
+      "locality": "Palakurthy",
+      "district": "Jangaon",
+      "region": "Telangana",
+      "postalCode": "506 252",
+      "country": "IN",
+      "countryName": "India"
+    },
+    "geo": {
+      "latitude": 17.658194,
+      "longitude": 79.426972,
+      "_source": "17°39'29.5\"N 79°25'37.1\"E, provided by the hospital"
+    },
+    "googleMapsUrl": null,
+    "phones": [
+      {
+        "number": "8919431360",
+        "label": "Hospital · 24/7",
+        "primary": true
+      },
+      {
+        "number": "6230533836",
+        "label": "Dr. M. Naresh"
+      }
+    ],
+    "whatsapp": [
+      {
+        "number": "8919431360",
+        "label": "Hospital (24/7)",
+        "primary": true
+      },
+      {
+        "number": "6230533836",
+        "label": "Dr. M. Naresh"
+      }
+    ],
+    "emergency": {
+      "enabled": true,
+      "phone": "8919431360",
+      "title": "24/7 Emergency Services",
+      "_source": "Hospital signboard ('24/7 Emergency Services') and contact details provided ('8919431360 24/7')."
+    },
+    "hours": null,
+    "_hoursExample": [
+      {
+        "days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday"
+        ],
+        "opens": "09:00",
+        "closes": "21:00"
+      }
+    ],
+    "email": null,
+    "sameAs": []
+  },
+  "doctors": [
+    {
+      "slug": "dr-m-naresh",
+      "name": "Dr. M. Naresh",
+      "qualifications": "M.B.B.S, DCH, MIAP",
+      "additionalQualifications": [],
+      "specialization": "Pediatrics",
+      "role": "Pediatrician – Children & Newborn Specialist",
+      "roleTelugu": "చిన్న పిల్లలు మరియు నవజాత శిశు వైద్య నిపుణులు",
+      "registrationNumber": "36894",
+      "phone": "6230533836",
+      "photo": "dr-m-naresh",
+      "photoAlt": "Dr. M. Naresh, Pediatrician at Eternal Multi Specialty Hospital, Palakurthy",
+      "schemaSpecialty": "Pediatric",
+      "bio": null,
+      "consultationTimings": null,
+      "headline": "Children Specialist · Newborn & Child Care",
+      "qualificationDetails": [
+        {
+          "abbr": "M.B.B.S",
+          "full": "Bachelor of Medicine and Bachelor of Surgery"
+        },
+        {
+          "abbr": "DCH",
+          "full": "Diploma in Child Health"
+        },
+        {
+          "abbr": "MIAP",
+          "full": "Member, Indian Academy of Pediatrics"
+        }
+      ],
+      "highlights": [
+        "Newborn care",
+        "Infant & child health",
+        "Children's illnesses and check-ups"
+      ],
+      "whatsapp": "6230533836"
+    },
+    {
+      "slug": "dr-m-haritha",
+      "name": "Dr. M. Haritha",
+      "qualifications": "M.B.B.S, MD General Medicine",
+      "additionalQualifications": [
+        "Fellowship in Echocardiography"
+      ],
+      "specialization": "General Medicine",
+      "role": "General Physician – MD General Medicine",
+      "roleTelugu": "జనరల్ ఫిజీషియన్ మరియు గుండె వైద్య నిపుణురాలు",
+      "registrationNumber": "25224",
+      "phone": "8919431360",
+      "photo": "dr-m-haritha",
+      "photoAlt": "Dr. M. Haritha, General Medicine doctor at Eternal Multi Specialty Hospital, Palakurthy",
+      "schemaSpecialty": null,
+      "bio": null,
+      "consultationTimings": null,
+      "headline": "General Physician · Fellowship in Echocardiography",
+      "qualificationDetails": [
+        {
+          "abbr": "M.B.B.S",
+          "full": "Bachelor of Medicine and Bachelor of Surgery"
+        },
+        {
+          "abbr": "MD",
+          "full": "Doctor of Medicine in General Medicine"
+        },
+        {
+          "abbr": "Fellowship",
+          "full": "Fellowship in Echocardiography (heart ultrasound)"
+        }
+      ],
+      "highlights": [
+        "Adult general medicine",
+        "Heart care & echocardiography",
+        "Diagnosis and treatment of medical illnesses"
+      ],
+      "whatsapp": "8919431360"
+    }
+  ],
+  "services": [
+    {
+      "slug": "pediatrics",
+      "enabled": true,
+      "name": "Pediatrics",
+      "nameTelugu": "చిన్న పిల్లల విభాగం",
+      "icon": "child",
+      "summary": "Consultations for newborns, infants and children with our Children Specialist.",
+      "description": "The Pediatrics department at Eternal Multi Specialty Hospital, Palakurthy, is led by Dr. M. Naresh (M.B.B.S, DCH, MIAP), a Children Specialist. Parents can bring newborns, infants and children for consultation. Please call the hospital or book an appointment to confirm the doctor's availability.",
+      "doctors": [
+        "dr-m-naresh"
+      ]
+    },
+    {
+      "slug": "general-medicine",
+      "enabled": true,
+      "name": "General Medicine",
+      "nameTelugu": "జనరల్ మెడిసిన్",
+      "icon": "stethoscope",
+      "summary": "Consultations for adults with our General Physician (MD General Medicine).",
+      "description": "The General Medicine department at Eternal Multi Specialty Hospital, Palakurthy, is led by Dr. M. Haritha (M.B.B.S, MD General Medicine), who also holds a Fellowship in Echocardiography. Adults can book a consultation with the General Physician. Please call the hospital or book an appointment to confirm the doctor's availability.",
+      "doctors": [
+        "dr-m-haritha"
+      ]
+    },
+    {
+      "slug": "echocardiography",
+      "enabled": false,
+      "name": "Echocardiography (2D Echo)",
+      "icon": "heart",
+      "summary": "PLACEHOLDER: Dr. M. Haritha holds a Fellowship in Echocardiography. Set enabled to true only if the hospital offers echo tests.",
+      "description": "PLACEHOLDER",
+      "doctors": [
+        "dr-m-haritha"
+      ]
+    }
+  ],
+  "facilities": [
+    {
+      "enabled": true,
+      "name": "24/7 Emergency Services",
+      "icon": "emergency",
+      "description": "An emergency department (అత్యవసర విభాగం) on the ground floor. Call 8919431360 at any time.",
+      "image": "hospital-frontage"
+    },
+    {
+      "enabled": true,
+      "name": "Pharmacy on the premises",
+      "icon": "pharmacy",
+      "description": "Lakshmi Eternal Pharmacy (లక్ష్మీ ఎటర్నల్ ఫార్మసీ) is located at the hospital entrance.",
+      "image": "hospital-frontage"
+    },
+    {
+      "enabled": true,
+      "name": "Convenient location",
+      "icon": "location",
+      "description": "Opposite the Bus Stand on Jangaon Road, Palakurthy. Easy to reach by bus.",
+      "image": "hospital-exterior"
+    },
+    {
+      "enabled": false,
+      "name": "Consultation rooms",
+      "icon": "room",
+      "description": "PLACEHOLDER: add details and a photo of the consultation rooms."
+    },
+    {
+      "enabled": false,
+      "name": "In-patient / ward facilities",
+      "icon": "bed",
+      "description": "PLACEHOLDER: add number of beds, wards, etc. only if confirmed."
+    },
+    {
+      "enabled": false,
+      "name": "Diagnostic facilities",
+      "icon": "lab",
+      "description": "PLACEHOLDER: add laboratory, ECG, X-ray, echo etc. only if confirmed."
+    }
+  ],
+  "gallery": [
+    {
+      "image": "hospital-exterior",
+      "width": 1080,
+      "height": 809,
+      "alt": "Front view of Eternal Multi Specialty Hospital building on Jangaon Road, Palakurthy",
+      "caption": "Hospital building, Jangaon Road, Palakurthy"
+    },
+    {
+      "image": "hospital-entrance-team",
+      "width": 1280,
+      "height": 960,
+      "alt": "Hospital staff standing at the entrance of Eternal Multi Specialty Hospital",
+      "caption": "Our team at the hospital entrance"
+    },
+    {
+      "image": "hospital-signboard",
+      "width": 880,
+      "height": 210,
+      "alt": "Eternal Multispeciality Hospital signboard showing Dr. M. Naresh and Dr. M. Haritha",
+      "caption": "Hospital signboard"
+    },
+    {
+      "image": "hospital-frontage",
+      "width": 1280,
+      "height": 430,
+      "alt": "Ground floor of the hospital with Lakshmi Eternal Pharmacy and the emergency department",
+      "caption": "Pharmacy and emergency department entrance"
+    }
+  ],
+  "galleryPlaceholders": [
+    "Reception / waiting area",
+    "Consultation room",
+    "Wards / patient rooms"
+  ],
+  "reviews": [],
+  "forms": {
+    "_README": "mode: 'whatsapp' (default, no server needed) | 'endpoint' (POST JSON to a URL: Google Apps Script, Power Automate HTTP trigger or your API) | 'email' (opens the visitor's email app). See EDITING.md.",
+    "mode": "whatsapp",
+    "endpoint": null,
+    "email": null,
+    "timeSlots": [
+      "Morning",
+      "Afternoon",
+      "Evening",
+      "Any time"
+    ]
+  }
+}

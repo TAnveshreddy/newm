@@ -1,0 +1,8 @@
+# Used when the site is connected to Netlify from Git (Base directory: hospital-website).
+# For drag-and-drop deploys, upload the ZIP / the public/ folder instead.
+[build]
+  command = "node build.mjs"
+  publish = "public"
+
+[build.environment]
+  NODE_VERSION = "20"
