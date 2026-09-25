@@ -102,6 +102,16 @@ and set `forms.mode` to `"endpoint"`.
 Security: never put passwords or API keys in the website files, because everything in them is public.
 The service that receives submissions should validate the data and limit how often it can be called.
 
+## Design
+
+- Colours are set at the top of `src/assets/css/style.css` (`--navy`, `--accent` saffron, `--red`, `--wa` green).
+  Change them there to rebrand the whole site.
+- Fonts: Poppins and Noto Sans Telugu are self-hosted in `src/assets/fonts/` (SIL Open Font License), so nothing loads from outside.
+- The header search box finds doctors, departments, facilities and pages. Its search index is built
+  automatically from `content/site.json`.
+- Decorative artwork (the ECG line and the appointment-page illustration) is simple vector SVG in `src/assets/img/`.
+  Only real photographs are used for the hospital building, staff and doctors.
+
 ## Pages
 
 `/`, `/about/`, `/doctors/`, `/doctors/dr-m-naresh/`, `/doctors/dr-m-haritha/`, `/services/`,

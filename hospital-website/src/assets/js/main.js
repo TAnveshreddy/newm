@@ -19,6 +19,60 @@
     nav.addEventListener("click", function (e) { if (e.target.closest("a")) setOpen(false); });
   }
 
+
+  /* ---------- header search (doctors, departments, pages) ---------- */
+  var q = document.getElementById("site-q");
+  var list = document.getElementById("site-q-results");
+  var idxEl = document.getElementById("search-index");
+  if (q && list && idxEl) {
+    var index = JSON.parse(idxEl.textContent);
+    var active = -1;
+    var norm = function (t) { return String(t).toLowerCase().replace(/[^a-z0-9\s]/g, " "); };
+    var close = function () { list.hidden = true; q.setAttribute("aria-expanded", "false"); q.removeAttribute("aria-activedescendant"); active = -1; };
+    var render = function () {
+      var terms = norm(q.value).split(/\s+/).filter(Boolean);
+      list.textContent = "";
+      if (!terms.length) { close(); return; }
+      var hits = index.filter(function (it) {
+        var hay = norm(it.t + " " + it.s + " " + it.k);
+        return terms.every(function (t) { return hay.indexOf(t) !== -1; });
+      }).slice(0, 7);
+      if (!hits.length) {
+        var li = document.createElement("li"); li.className = "empty"; li.textContent = "No matches. Try “child”, “fever”, “heart” or a doctor’s name.";
+        list.appendChild(li);
+      }
+      hits.forEach(function (it, i) {
+        var li = document.createElement("li"); li.setAttribute("role", "option"); li.id = "sr-" + i;
+        var a = document.createElement("a"); a.href = it.u;
+        var st = document.createElement("strong"); st.textContent = it.t;
+        var sm = document.createElement("small"); sm.textContent = it.s;
+        a.appendChild(st); a.appendChild(sm); li.appendChild(a); list.appendChild(li);
+      });
+      list.hidden = false; q.setAttribute("aria-expanded", "true"); active = -1;
+    };
+    var move = function (dir) {
+      var opts = list.querySelectorAll("[role=option]");
+      if (!opts.length) return;
+      if (active >= 0) opts[active].removeAttribute("aria-selected");
+      active = (active + dir + opts.length) % opts.length;
+      opts[active].setAttribute("aria-selected", "true");
+      q.setAttribute("aria-activedescendant", opts[active].id);
+    };
+    q.addEventListener("input", render);
+    q.addEventListener("focus", function () { if (q.value) render(); });
+    q.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowDown") { e.preventDefault(); move(1); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); move(-1); }
+      else if (e.key === "Escape") { close(); }
+      else if (e.key === "Enter") {
+        var opts = list.querySelectorAll("[role=option] a");
+        var target = opts[active >= 0 ? active : 0];
+        if (target) { e.preventDefault(); window.location.href = target.href; }
+      }
+    });
+    document.addEventListener("click", function (e) { if (!e.target.closest(".site-search")) close(); });
+  }
+
   /* ---------- gallery lightbox ---------- */
   var lightbox = document.querySelector(".lightbox");
   var openers = Array.prototype.slice.call(document.querySelectorAll(".gallery-open"));

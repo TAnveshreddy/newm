@@ -122,6 +122,8 @@ const ICONS = {
   lab: '<path d="M9 2h6M10 2v6L4 20a1.5 1.5 0 0 0 1.3 2h13.4a1.5 1.5 0 0 0 1.3-2L14 8V2"/><path d="M7 15h10"/>',
   users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
   image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+  quote: '<path d="M7 7h4v4c0 3-2 5-4 6M15 7h4v4c0 3-2 5-4 6"/>',
   star: '<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>',
 };
 const icon = (name, cls = "icon") =>
@@ -148,39 +150,56 @@ const sectionHead = (eyebrow, title, intro = "", level = 2) =>
 
 function doctorCard(d, level = 3) {
   const dept = services.find((s) => s.doctors.includes(d.slug));
-  return `<article class="card doctor-card">
-  <a class="doctor-photo" href="${rel(`/doctors/${d.slug}/`)}" tabindex="-1" aria-hidden="true">${img(d.photo, d.photoAlt, { sizes: "(min-width: 900px) 260px, 45vw" })}</a>
-  <div class="doctor-body">
-    <p class="chip">${icon(d.slug === "dr-m-naresh" ? "child" : "stethoscope")} ${esc(d.specialization)}</p>
-    <h${level} class="doctor-name"><a href="${rel(`/doctors/${d.slug}/`)}">${esc(d.name)}</a></h${level}>
-    <p class="doctor-quals">${esc(d.qualifications)}</p>
-    ${d.additionalQualifications.map((q) => `<p class="doctor-extra">${icon("award")} ${esc(q)}</p>`).join("")}
-    <p class="doctor-role">${esc(d.role)}</p>
-    <p class="doctor-role-te" lang="te">${esc(d.roleTelugu)}</p>
-    <ul class="ticks">${d.highlights.map((h) => `<li>${icon("check")} ${esc(h)}</li>`).join("")}</ul>
-    <p class="reg">${icon("id")} Reg. No: <strong>${esc(d.registrationNumber)}</strong></p>
-    <div class="btn-row">
-      ${bookBtn("Book Appointment", `?doctor=${d.slug}`)}
-      ${callBtn(d.phone, "Call", "call")}
-      ${waBtn(d.whatsapp, "WhatsApp", waTemplateFor(d))}
+  const profile = rel(`/doctors/${d.slug}/`);
+  return `<article class="doc-card">
+  <a class="doc-photo" href="${profile}" tabindex="-1" aria-hidden="true">${img(d.photo, d.photoAlt, { sizes: "(min-width: 900px) 300px, 90vw" })}
+    <span class="doc-spec">${icon(dept?.icon || "stethoscope")} ${esc(d.specialization)}</span></a>
+  <div class="doc-body">
+    <h${level} class="doc-name"><a href="${profile}">${esc(d.name)}</a></h${level}>
+    <p class="doc-quals">${esc(d.qualifications)}</p>
+    ${d.additionalQualifications.map((q) => `<p class="doc-badge">${icon("award")} ${esc(q)}</p>`).join("")}
+    <p class="doc-role">${esc(d.role)}</p>
+    <p class="doc-role-te" lang="te">${esc(d.roleTelugu)}</p>
+    <ul class="doc-tags" role="list">${d.highlights.map((h) => `<li>${esc(h)}</li>`).join("")}</ul>
+    <p class="doc-reg">${icon("id")} Reg. No. <strong>${esc(d.registrationNumber)}</strong></p>
+  </div>
+  <div class="doc-actions">
+    ${bookBtn("Book Appointment", `?doctor=${d.slug}`, "accent")}
+    <div class="doc-mini">
+      <a href="${telHref(d.phone)}" class="mini mini-call" aria-label="Call ${esc(d.name)} on ${fmtPhone(d.phone)}">${icon("phone")}<span>Call</span></a>
+      <a href="${waHref(d.whatsapp, waTemplateFor(d))}" class="mini mini-wa" target="_blank" rel="noopener" aria-label="WhatsApp about ${esc(d.name)} (opens WhatsApp)">${icon("whatsapp")}<span>WhatsApp</span></a>
+      <a href="${profile}" class="mini mini-profile">${icon("users")}<span>Profile</span></a>
     </div>
-    <a class="text-link" href="${rel(`/doctors/${d.slug}/`)}">View full profile ${icon("arrow")}</a>
   </div>
 </article>`;
 }
 
 function serviceCard(s, level = 3) {
   const docs = s.doctors.map((slug) => doctorBySlug[slug]).filter(Boolean);
-  return `<article class="card service-card">
-  <div class="service-icon">${icon(s.icon)}</div>
-  <h${level}><a href="${rel(`/services/${s.slug}/`)}">${esc(s.name)}</a></h${level}>
+  return `<article class="spec-card">
+  <div class="spec-icon">${icon(s.icon)}</div>
+  <h${level}><a href="${rel(`/services/${s.slug}/`)}" class="stretched">${esc(s.name)}</a></h${level}>
   ${s.nameTelugu ? `<p class="te" lang="te">${esc(s.nameTelugu)}</p>` : ""}
   <p>${esc(s.summary)}</p>
-  ${docs.map((d) => `<p class="service-doc">${icon("stethoscope")} <span><a href="${rel(`/doctors/${d.slug}/`)}">${esc(d.name)}</a> · ${esc(d.qualifications)}</span></p>`).join("")}
-  <div class="btn-row">${bookBtn("Book Appointment", `?department=${s.slug}`)}
-  <a class="text-link" href="${rel(`/services/${s.slug}/`)}">Learn more ${icon("arrow")}</a></div>
+  ${docs.map((d) => `<p class="spec-doc">${icon("stethoscope")} <span>${esc(d.name)} · ${esc(d.qualifications)}</span></p>`).join("")}
+  <div class="spec-foot"><span class="text-link">Know more ${icon("arrow")}</span>
+  <a class="btn btn-accent btn-sm lift" href="${rel("/appointment/")}?department=${s.slug}">${icon("calendar")}<span>Book</span></a></div>
 </article>`;
 }
+
+function searchIndex() {
+  const items = [
+    ...doctors.map((d) => ({ t: d.name, s: `${d.specialization} · ${d.qualifications}`, u: rel(`/doctors/${d.slug}/`), k: [d.role, d.specialization, d.headline, ...d.highlights, ...d.additionalQualifications, "doctor"].join(" ") })),
+    ...services.map((s) => ({ t: s.name, s: "Department", u: rel(`/services/${s.slug}/`), k: [s.summary, "department speciality"].join(" ") })),
+    ...facilities.map((f) => ({ t: f.name, s: "Facility", u: rel("/facilities/"), k: f.description })),
+    { t: "Book an Appointment", s: "Appointment", u: rel("/appointment/"), k: "booking book slot opd consultation" },
+    { t: "Contact & Location", s: "Address, phone, map", u: rel("/contact/"), k: "address map directions phone whatsapp location bus stand" },
+    { t: "Photo Gallery", s: "Hospital photos", u: rel("/gallery/"), k: "photos images pictures" },
+    { t: "About Us", s: "About the hospital", u: rel("/about/"), k: "about hospital" },
+  ];
+  return items;
+}
+
 const pendingCard = (title, text, ic = "image") =>
   site.showPlaceholders
     ? `<article class="card placeholder-card" role="note">${icon(ic)}<h3>${esc(title)}</h3><p>${esc(text)}</p><p class="placeholder">To be updated – shown only while "showPlaceholders" is true</p></article>`
@@ -423,19 +442,34 @@ ${allSchema.map((s) => `<script type="application/ld+json">${JSON.stringify(s).r
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to main content</a>
-${H.emergency.enabled ? `<div class="topbar"><div class="container topbar-inner">
-  <a href="${telHref(H.emergency.phone)}" class="topbar-emergency">${icon("emergency")} <span>${esc(H.emergency.title)}: <strong>${fmtPhone(H.emergency.phone)}</strong></span></a>
-  <span class="topbar-addr">${icon("map")} ${esc(H.address.street)}, ${esc(H.address.locality)}</span>
-</div></div>` : ""}
-<header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="${rel("/")}" aria-label="${esc(H.name)} – Home">${LOGO}<span class="brand-text"><span class="brand-name">Eternal</span><span class="brand-sub">Multi Specialty Hospital</span></span></a>
-    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">${icon("menu", "icon icon-open")}${icon("close", "icon icon-close")}<span>Menu</span></button>
-    <nav id="site-nav" class="site-nav" aria-label="Main">
-      <ul role="list">${NAV.map(([n, u]) => `<li><a href="${rel(u)}"${isActive(u) ? ' aria-current="page"' : ""}>${n}</a></li>`).join("")}</ul>
-      <a class="btn btn-primary nav-cta" href="${rel("/appointment/")}">${icon("calendar")}<span>Appointment</span></a>
-    </nav>
+<div class="utility"><div class="container utility-inner">
+  <span class="u-addr">${icon("map")} ${esc(H.address.street)}, ${esc(H.address.locality)} – ${esc(H.address.postalCode)}</span>
+  <div class="u-links">
+    ${H.emergency.enabled ? `<a href="${telHref(H.emergency.phone)}" class="u-emergency">${icon("emergency")} <span>Emergency 24/7: <strong>${fmtPhone(H.emergency.phone)}</strong></span></a>` : ""}
+    <a href="${waHref(primaryWa.number, WA_TEMPLATE)}" class="u-wa" target="_blank" rel="noopener">${icon("whatsapp")} <span>WhatsApp</span></a>
   </div>
+</div></div>
+<header class="site-header">
+  <div class="container header-main">
+    <a class="brand" href="${rel("/")}" aria-label="${esc(H.name)} – Home">${LOGO}<span class="brand-text"><span class="brand-name">Eternal</span><span class="brand-sub">Multi Specialty Hospital</span></span></a>
+    <form class="site-search" role="search" action="${rel("/doctors/")}" method="get">
+      <label class="sr-only" for="site-q">Search doctors, departments and pages</label>
+      ${icon("search", "icon search-icon")}
+      <input id="site-q" name="q" type="search" placeholder="Search doctors, specialities…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="site-q-results">
+      <ul id="site-q-results" class="search-results" role="listbox" aria-label="Search results" hidden></ul>
+    </form>
+    <div class="header-actions">
+      <a class="header-call" href="${telHref(primaryPhone.number)}">${icon("phone")}<span><small>Appointments &amp; Emergency</small><strong>${fmtPhone(primaryPhone.number)}</strong></span></a>
+      <a class="btn btn-accent" href="${rel("/appointment/")}">${icon("calendar")}<span>Book Appointment</span></a>
+    </div>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menu">${icon("menu", "icon icon-open")}${icon("close", "icon icon-close")}</button>
+  </div>
+  <nav id="site-nav" class="site-nav" aria-label="Main">
+    <div class="container nav-inner">
+      <ul role="list">${NAV.map(([n, u]) => `<li><a href="${rel(u)}"${isActive(u) ? ' aria-current="page"' : ""}>${n}</a></li>`).join("")}</ul>
+      <a class="btn btn-accent nav-cta" href="${rel("/appointment/")}">${icon("calendar")}<span>Book Appointment</span></a>
+    </div>
+  </nav>
 </header>
 ${crumbHtml}
 <main id="main" tabindex="-1">
@@ -479,6 +513,8 @@ ${body}
   <a href="${waHref(primaryWa.number, WA_TEMPLATE)}" class="mb-wa" target="_blank" rel="noopener">${icon("whatsapp")}<span>WhatsApp</span></a>
   <a href="${rel("/appointment/")}" class="mb-book">${icon("calendar")}<span>Book</span></a>
 </nav>
+<a class="fab-wa" href="${waHref(primaryWa.number, WA_TEMPLATE)}" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp (opens WhatsApp)">${icon("whatsapp")}<span>Chat on WhatsApp</span></a>
+<script type="application/json" id="search-index">${JSON.stringify(searchIndex()).replace(/</g, "\\u003c")}</script>
 <script type="application/json" id="form-config">${JSON.stringify(formConfig).replace(/</g, "\\u003c")}</script>
 <script src="${rel("/assets/js/integrations.js")}" defer></script>
 <script src="${rel("/assets/js/main.js")}" defer></script>
@@ -498,82 +534,104 @@ function write(p, html) {
 
 /* ------------------------------------------------------------------ pages */
 
-const heroFacts = [
-  ["users", `${doctors.length} qualified doctors`],
-  ["child", services.map((s) => s.name).join(" & ")],
-  ...(H.emergency.enabled ? [["emergency", H.emergency.title]] : []),
-  ["map", `Opp. Bus Stand, ${H.address.locality}`],
-];
-
 function home() {
   currentPath = "/";
+  const tiles = [
+    { href: rel("/appointment/"), ic: "calendar", t: "Book Appointment", d: "Request a consultation" },
+    { href: rel("/doctors/"), ic: "stethoscope", t: "Find a Doctor", d: "Our specialists" },
+    ...(H.emergency.enabled ? [{ href: telHref(H.emergency.phone), ic: "emergency", t: "Emergency 24/7", d: `Call ${fmtPhone(H.emergency.phone)}`, cls: "tile-emergency" }] : []),
+    { href: waHref(primaryWa.number, WA_TEMPLATE), ic: "whatsapp", t: "WhatsApp Us", d: "Quick enquiry", ext: true, cls: "tile-wa" },
+    { href: directionsUrl, ic: "directions", t: "Get Directions", d: "Opp. Bus Stand", ext: true },
+  ];
+  const stats = [
+    [String(doctors.length), "Specialist Doctors"],
+    [String(services.length), "Departments"],
+    ...(H.emergency.enabled ? [["24/7", "Emergency Services"]] : []),
+    ...(facilities.some((f) => f.icon === "pharmacy") ? [["In-house", "Pharmacy"]] : []),
+  ];
+  const specialityTiles = [
+    ...services.map((s) => ({ ic: s.icon, t: s.name, te: s.nameTelugu, href: rel(`/services/${s.slug}/`) })),
+    ...facilities.filter((f) => ["emergency", "pharmacy"].includes(f.icon)).map((f) => ({ ic: f.icon, t: f.name, href: rel("/facilities/") })),
+  ];
   const body = `
-<section class="hero">
-  <div class="container hero-grid">
-    <div class="hero-text">
-      <p class="eyebrow">${icon("map")} ${esc(H.address.locality)}, ${esc(H.address.region)}</p>
-      <h1>${esc(H.name)}</h1>
-      <p class="hero-te" lang="te">${esc(H.nameTelugu)}</p>
-      <p class="hero-tagline">${esc(H.tagline)}.</p>
-      <div class="btn-row hero-actions">
-        ${bookBtn()}
-        ${callBtn(primaryPhone.number, "Call Now")}
-        ${waBtn()}
-        ${dirBtn()}
-      </div>
-      <ul class="hero-facts" role="list">${heroFacts.map(([i, t]) => `<li>${icon(i)} ${esc(t)}</li>`).join("")}</ul>
+<section class="hero-banner">
+  ${img("hospital-exterior", `${H.name} building, opposite the Bus Stand on Jangaon Road, Palakurthy`, { sizes: "100vw", eager: true, cls: "hero-bg" })}
+  <div class="hero-overlay"></div>
+  <div class="container hero-content">
+    <p class="hero-chip">${icon("map")} ${esc(H.address.locality)}, ${esc(H.address.region)}</p>
+    <h1>${esc(H.name)}</h1>
+    <p class="hero-te" lang="te">${esc(H.nameTelugu)}</p>
+    <p class="hero-tagline">${esc(H.tagline)}.</p>
+    <div class="btn-row hero-actions">
+      ${bookBtn("Book an Appointment", "", "accent")}
+      ${callBtn(primaryPhone.number, "Call Now", "white")}
+      ${waBtn(primaryWa.number, "WhatsApp Us")}
+      ${dirBtn("ghost")}
     </div>
-    <div class="hero-media">${img("hospital-exterior", `${H.name} building, opposite the Bus Stand on Jangaon Road, Palakurthy`, { sizes: "(min-width: 900px) 50vw, 100vw", eager: true })}</div>
   </div>
 </section>
 
-<section class="quick" aria-label="Quick contact">
-  <div class="container quick-grid">
-    ${H.emergency.enabled ? `<a class="quick-card quick-emergency" href="${telHref(H.emergency.phone)}">${icon("emergency")}<span><strong>${esc(H.emergency.title)}</strong>Call ${fmtPhone(H.emergency.phone)}</span></a>` : ""}
-    <a class="quick-card" href="${rel("/appointment/")}">${icon("calendar")}<span><strong>Book an Appointment</strong>Online request or WhatsApp</span></a>
-    <a class="quick-card" href="${directionsUrl}" target="_blank" rel="noopener">${icon("directions")}<span><strong>Get Directions</strong>Opp. Bus Stand, Jangaon Road</span></a>
-  </div>
-</section>
-
-<section class="section" aria-labelledby="doctors-h">
+<section class="action-panel" aria-label="Quick actions">
   <div class="container">
-    ${sectionHead("Our Doctors", '<span id="doctors-h">Qualified doctors in Palakurthy</span>', "Meet the specialists who look after your family, from newborns to adults.")}
-    <div class="doctor-grid">${doctors.map((d) => doctorCard(d)).join("")}</div>
+    <ul class="tiles" role="list">${tiles.map((t) => `<li><a class="tile ${t.cls || ""}" href="${t.href}"${t.ext ? ' target="_blank" rel="noopener"' : ""}><span class="tile-icon">${icon(t.ic)}</span><span class="tile-text"><strong>${esc(t.t)}</strong><small>${esc(t.d)}</small></span></a></li>`).join("")}</ul>
   </div>
 </section>
 
-<section class="section alt" aria-labelledby="services-h">
+<section class="stats" aria-label="Hospital at a glance">
+  <div class="container"><ul class="stats-grid" role="list">${stats.map(([n, l]) => `<li><strong>${esc(n)}</strong><span>${esc(l)}</span></li>`).join("")}</ul></div>
+</section>
+
+<section class="section" aria-labelledby="spec-h">
   <div class="container">
-    ${sectionHead("Departments", '<span id="services-h">Departments &amp; services</span>', "Specialist consultations available at our hospital in Palakurthy.")}
+    ${sectionHead("Our Specialities", '<span id="spec-h">Care you can reach, close to home</span>', `Specialist consultations and services at ${esc(H.name)}, Palakurthy.`)}
+    <ul class="spec-tiles" role="list">${specialityTiles.map((t) => `<li><a href="${t.href}" class="spec-tile"><span class="spec-icon">${icon(t.ic)}</span><strong>${esc(t.t)}</strong>${t.te ? `<small lang="te">${esc(t.te)}</small>` : ""}</a></li>`).join("")}</ul>
+  </div>
+</section>
+
+<section class="section alt" aria-labelledby="doctors-h">
+  <div class="container">
+    <div class="head-row">${sectionHead("Meet Our Doctors", '<span id="doctors-h">Qualified doctors in Palakurthy</span>', "Experienced care for your family, from newborns to adults.")}
+    ${btn(rel("/doctors/"), "View all doctors", { variant: "outline", ic: "arrow" })}</div>
+    <div class="doc-grid">${doctors.map((d) => doctorCard(d)).join("")}</div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="services-h">
+  <div class="container">
+    ${sectionHead("Departments", '<span id="services-h">Departments &amp; services</span>')}
     <div class="card-grid">${services.map((s) => serviceCard(s)).join("")}${pendingServices.map((s) => pendingCard(s.name, s.summary, s.icon)).join("")}</div>
   </div>
 </section>
 
-<section class="section" aria-labelledby="about-h">
+<section class="section why" aria-labelledby="about-h">
   <div class="container split">
-    <div class="split-media">${img("hospital-entrance-team", `The team of ${H.name} at the hospital entrance`, { sizes: "(min-width: 900px) 50vw, 100vw" })}</div>
+    <div class="split-media framed">${img("hospital-entrance-team", `The team of ${H.name} at the hospital entrance`, { sizes: "(min-width: 900px) 50vw, 100vw" })}</div>
     <div>
-      ${sectionHead("About Us", `<span id="about-h">A multi specialty hospital in the heart of Palakurthy</span>`)}
-      <p>${esc(H.name)} is located opposite the Bus Stand on Jangaon Road, Palakurthy. The hospital offers <strong>Pediatrics</strong> care with Dr. M. Naresh (M.B.B.S, DCH, MIAP) and <strong>General Medicine</strong> with Dr. M. Haritha (M.B.B.S, MD General Medicine, Fellowship in Echocardiography).</p>
-      ${H.emergency.enabled ? `<p>The hospital provides <strong>24/7 emergency services</strong> and has a pharmacy at its entrance.</p>` : ""}
-      <div class="btn-row">${btn(rel("/about/"), "More about us", { variant: "outline", ic: "arrow" })}</div>
+      ${sectionHead("Why Eternal", `<span id="about-h">A multi specialty hospital in the heart of Palakurthy</span>`)}
+      <ul class="why-list" role="list">
+        <li>${icon("child")}<div><strong>Children's specialist</strong><span>Dr. M. Naresh – M.B.B.S, DCH, MIAP (Pediatrics)</span></div></li>
+        <li>${icon("stethoscope")}<div><strong>General Physician</strong><span>Dr. M. Haritha – M.B.B.S, MD General Medicine, Fellowship in Echocardiography</span></div></li>
+        ${H.emergency.enabled ? `<li>${icon("emergency")}<div><strong>24/7 Emergency Services</strong><span>Call ${fmtPhone(H.emergency.phone)} any time</span></div></li>` : ""}
+        <li>${icon("map")}<div><strong>Easy to reach</strong><span>Opposite the Bus Stand, Jangaon Road, Palakurthy</span></div></li>
+      </ul>
+      <div class="btn-row">${btn(rel("/about/"), "More about us", { variant: "primary", ic: "arrow" })}</div>
     </div>
   </div>
 </section>
 
 <section class="section alt" aria-labelledby="fac-h">
   <div class="container">
-    ${sectionHead("Facilities", '<span id="fac-h">Hospital facilities</span>')}
+    <div class="head-row">${sectionHead("Facilities", '<span id="fac-h">Hospital facilities</span>')}
+    ${btn(rel("/facilities/"), "All facilities", { variant: "outline", ic: "arrow" })}</div>
     <div class="card-grid">${facilities.map(facilityCard).join("")}</div>
-    <div class="btn-row center">${btn(rel("/facilities/"), "All facilities", { variant: "outline", ic: "arrow" })}</div>
   </div>
 </section>
 
 <section class="section" aria-labelledby="gal-h">
   <div class="container">
-    ${sectionHead("Gallery", '<span id="gal-h">Photos of our hospital</span>')}
+    <div class="head-row">${sectionHead("Gallery", '<span id="gal-h">Inside Eternal Hospital</span>')}
+    ${btn(rel("/gallery/"), "View gallery", { variant: "outline", ic: "image" })}</div>
     ${galleryGrid(site.gallery.slice(0, 3)).replace(/<li class="gallery-ph"[\s\S]*?<\/li>/g, "")}
-    <div class="btn-row center">${btn(rel("/gallery/"), "View gallery", { variant: "outline", ic: "image" })}</div>
   </div>
 </section>
 
@@ -581,7 +639,7 @@ ${reviewsSection()}
 
 <section class="section alt" aria-labelledby="loc-h">
   <div class="container split">
-    <div>
+    <div class="card contact-card">
       ${sectionHead("Location", '<span id="loc-h">Visit us in Palakurthy</span>')}
       ${addressBlock()}
       ${phoneList()}
@@ -613,8 +671,8 @@ function reviewsSection() {
 
 const ctaBand = () => `<section class="cta-band">
   <div class="container cta-inner">
-    <div><h2>Need to see a doctor?</h2><p>Book an appointment online, on WhatsApp, or call the hospital.</p></div>
-    <div class="btn-row">${bookBtn("Book an Appointment", "", "light")}${callBtn(primaryPhone.number, `Call ${fmtPhone(primaryPhone.number)}`, "call")}${waBtn()}</div>
+    <div class="cta-text"><h2>Need to see a doctor?</h2><p>Book an appointment online or on WhatsApp, or call the hospital directly.</p></div>
+    <div class="btn-row">${bookBtn("Book an Appointment", "", "accent")}${callBtn(primaryPhone.number, `Call ${fmtPhone(primaryPhone.number)}`, "white")}${waBtn()}</div>
   </div>
 </section>`;
 
@@ -665,7 +723,7 @@ ${ctaBand()}`;
 function doctorsIndex() {
   currentPath = "/doctors/";
   const body = `${pageHead("Our Doctors", "Doctors in Palakurthy", `Qualified specialists at ${esc(H.name)}. Book an appointment, call or send a WhatsApp message.`)}
-<section class="section"><div class="container"><div class="doctor-grid">${doctors.map((d) => doctorCard(d, 2)).join("")}</div></div></section>
+<section class="section"><div class="container"><div class="doc-grid">${doctors.map((d) => doctorCard(d, 2)).join("")}</div></div></section>
 ${ctaBand()}`;
   layout({
     path: "/doctors/",
@@ -691,8 +749,8 @@ function doctorPage(d) {
       <p class="doctor-role-te" lang="te">${esc(d.roleTelugu)}</p>
       <p class="reg">${icon("id")} Medical Registration No: <strong>${esc(d.registrationNumber)}</strong></p>
       <div class="btn-row">
-        ${bookBtn("Book Appointment", `?doctor=${d.slug}`)}
-        ${callBtn(d.phone, `Call ${fmtPhone(d.phone)}`)}
+        ${bookBtn("Book Appointment", `?doctor=${d.slug}`, "accent")}
+        ${callBtn(d.phone, `Call ${fmtPhone(d.phone)}`, "white")}
         ${waBtn(d.whatsapp, "WhatsApp", waTemplateFor(d))}
       </div>
     </div>
@@ -842,6 +900,7 @@ function appointmentPage() {
 <section class="section"><div class="container split split-form">
   <div class="card">${appointmentForm()}</div>
   <aside class="stack" aria-label="Other ways to book">
+    <img src="${rel("/assets/img/illustration-care.svg")}" alt="" width="400" height="300" class="illustration" loading="lazy">
     <div class="card">
       <h2 class="h-small">Prefer to call or WhatsApp?</h2>
       ${phoneList()}
