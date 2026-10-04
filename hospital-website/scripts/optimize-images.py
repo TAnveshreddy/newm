@@ -104,3 +104,6 @@ from_screenshot("screenshot-newborn-warmers.jpg", (0, 423, 746, 979), "newborn-c
 from_screenshot("screenshot-laboratory.jpg", (0, 423, 746, 979), "laboratory", brightness=1.12)
 from_screenshot("screenshot-pharmacy-counter.jpg", (0, 206, 746, 1197), "pharmacy-counter",
                 blur_boxes=[(150, 405, 250, 465)])
+# Reception / waiting area. The waiting patient's face is blurred for privacy.
+from_screenshot("screenshot-reception-waiting.jpg", (0, 206, 746, 1196), "reception-waiting-area",
+                blur_boxes=[(445, 548, 565, 645)])

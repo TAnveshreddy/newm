@@ -200,6 +200,13 @@
     },
     {
       "enabled": true,
+      "name": "Reception & Waiting Area",
+      "icon": "users",
+      "description": "A spacious reception desk and waiting hall with seating for patients and families.",
+      "image": "reception-waiting-area"
+    },
+    {
+      "enabled": true,
       "name": "Pharmacy on the premises",
       "icon": "pharmacy",
       "description": "Lakshmi Eternal Pharmacy (లక్ష్మీ ఎటర్నల్ ఫార్మసీ) – a well-stocked medicine counter (మందుల షాపు) inside the hospital.",
@@ -228,6 +235,12 @@
     },
     {
       "enabled": true,
+      "name": "Oxygen Supply",
+      "icon": "shield",
+      "description": "Medical oxygen supply through a cylinder manifold system, available for patients who need it."
+    },
+    {
+      "enabled": true,
       "name": "Convenient location",
       "icon": "location",
       "description": "Opposite the Bus Stand on Jangaon Road, Palakurthy. Easy to reach by bus.",
@@ -251,6 +264,11 @@
       "image": "hospital-exterior",
       "alt": "Front view of Eternal Multi Specialty Hospital building on Jangaon Road, Palakurthy",
       "caption": "Hospital building, Jangaon Road, Palakurthy"
+    },
+    {
+      "image": "reception-waiting-area",
+      "alt": "Reception desk and waiting area with seating at Eternal Multi Specialty Hospital",
+      "caption": "Reception & waiting area"
     },
     {
       "image": "consultation-room",
@@ -289,7 +307,6 @@
     }
   ],
   "galleryPlaceholders": [
-    "Reception / waiting area",
     "Wards / patient rooms"
   ],
   "reviews": [],

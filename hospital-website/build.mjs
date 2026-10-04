@@ -623,7 +623,7 @@ function home() {
   <div class="container">
     <div class="head-row">${sectionHead("Facilities", '<span id="fac-h">Hospital facilities</span>')}
     ${btn(rel("/facilities/"), "All facilities", { variant: "outline", ic: "arrow" })}</div>
-    <div class="card-grid">${facilities.map(facilityCard).join("")}</div>
+    <div class="card-grid">${facilities.slice(0, 6).map(facilityCard).join("")}</div>
   </div>
 </section>
 
