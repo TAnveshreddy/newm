@@ -555,7 +555,7 @@ function home() {
   ];
   const body = `
 <section class="hero-banner">
-  ${img("hospital-exterior", `${H.name} building, opposite the Bus Stand on Jangaon Road, Palakurthy`, { sizes: "100vw", eager: true, cls: "hero-bg" })}
+  ${img("hospital-front-banner", `Front of ${H.name} with the emergency entrance and an ambulance, Jangaon Road, Palakurthy`, { sizes: "100vw", eager: true, cls: "hero-bg" })}
   <div class="hero-overlay"></div>
   <div class="container hero-content">
     <p class="hero-chip">${icon("map")} ${esc(H.address.locality)}, ${esc(H.address.region)}</p>

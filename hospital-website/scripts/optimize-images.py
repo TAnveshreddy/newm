@@ -53,6 +53,16 @@ og = exterior.crop((0, top, w, top + target_h)).resize((1200, 630), Image.LANCZO
 og.save(OUT / "og-image.jpg", "JPEG", quality=82, optimize=True, progressive=True)
 print("og-image.jpg  1200x630")
 
+# Home-page banner (supplied artwork of the hospital front).
+# The signboard in this artwork shows incorrect doctor qualifications and
+# registration numbers, so that strip is blurred. The hospital name and
+# EMERGENCY sign stay visible. Remove the blur only if the artwork is corrected.
+from PIL import ImageFilter
+banner = Image.open(SRC / "hospital-front-banner.webp").convert("RGB")
+strip = (60, 326, 790, 414)
+banner.paste(banner.crop(strip).filter(ImageFilter.GaussianBlur(14)), strip[:2])
+save_sizes(banner, "hospital-front-banner", [640, 1317])
+
 # Entrance photo with the hospital team.
 entrance = load("hospital-entrance-team.jpg")
 save_sizes(entrance, "hospital-entrance-team", [640, 1280])
