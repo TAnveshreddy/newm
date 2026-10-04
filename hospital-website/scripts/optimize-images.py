@@ -78,3 +78,29 @@ save_sizes(frontage, "hospital-frontage", [640, 1280])
 # Doctor portraits: square crops, no retouching.
 save_sizes(square(load("dr-m-naresh.jpg"), cx=0.5, cy=0.45), "dr-m-naresh", [320, 640], quality=84)
 save_sizes(square(load("dr-m-haritha.jpg"), cx=0.5, cy=0.5), "dr-m-haritha", [320, 640], quality=84)
+
+# ---------------------------------------------------------------------------
+# Interior photos supplied as phone screenshots (746 px wide). Crop away the
+# app bars, fix exposure/contrast, sharpen and upscale with Lanczos so they
+# look like normal photos. Replace originals/screenshot-*.jpg with the
+# original camera photos for true HD; then adjust the crop boxes below.
+from PIL import ImageEnhance
+
+def from_screenshot(src, box, name, brightness=1.0, contrast=1.06, blur_boxes=()):
+    im = load(src).crop(box)
+    for b in blur_boxes:  # hide small private details (e.g. payment numbers)
+        im.paste(im.crop(b).filter(ImageFilter.GaussianBlur(8)), b[:2])
+    im = ImageOps.autocontrast(im, cutoff=0.5)
+    im = ImageEnhance.Brightness(im).enhance(brightness)
+    im = ImageEnhance.Contrast(im).enhance(contrast)
+    im = ImageEnhance.Color(im).enhance(1.05)
+    big = im.resize((im.width * 2, im.height * 2), Image.LANCZOS)
+    big = big.filter(ImageFilter.UnsharpMask(radius=2, percent=90, threshold=2))
+    save_sizes(big, name, [640, 1200], quality=86)
+
+from_screenshot("screenshot-consultation-room.jpg", (0, 206, 746, 1196), "consultation-room")
+from_screenshot("screenshot-pharmacy-shelves.jpg", (0, 423, 746, 979), "pharmacy-shelves")
+from_screenshot("screenshot-newborn-warmers.jpg", (0, 423, 746, 979), "newborn-care-warmers")
+from_screenshot("screenshot-laboratory.jpg", (0, 423, 746, 979), "laboratory", brightness=1.12)
+from_screenshot("screenshot-pharmacy-counter.jpg", (0, 206, 746, 1197), "pharmacy-counter",
+                blur_boxes=[(150, 405, 250, 465)])

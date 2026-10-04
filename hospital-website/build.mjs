@@ -551,7 +551,7 @@ function home() {
   ];
   const specialityTiles = [
     ...services.map((s) => ({ ic: s.icon, t: s.name, te: s.nameTelugu, href: rel(`/services/${s.slug}/`) })),
-    ...facilities.filter((f) => ["emergency", "pharmacy"].includes(f.icon)).map((f) => ({ ic: f.icon, t: f.name, href: rel("/facilities/") })),
+    ...facilities.filter((f) => ["emergency", "pharmacy", "lab", "child"].includes(f.icon)).map((f) => ({ ic: f.icon, t: f.name, href: rel("/facilities/") })),
   ];
   const body = `
 <section class="hero-banner">
@@ -775,6 +775,13 @@ function doctorPage(d) {
     ${d.consultationTimings ? `<p>${esc(d.consultationTimings)}</p>` : `<p>Please call <a href="${telHref(d.phone)}">${fmtPhone(d.phone)}</a> to confirm availability.</p>${placeholder("Consultation timings")}`}
   </div>
 </div></section>
+${d.clinicPhoto ? `<section class="section clinic-photo"><div class="container split">
+  <div class="split-media framed">${img(d.clinicPhoto, d.clinicPhotoAlt || d.name, { sizes: "(min-width: 900px) 50vw, 100vw" })}</div>
+  <div>${sectionHead("Consultation Room", `Meet ${esc(d.name)} at the hospital`)}
+    <p>${esc(d.name)} sees patients in a child-friendly consultation room at ${esc(H.name)}, ${esc(H.address.locality)}.</p>
+    <div class="btn-row">${bookBtn("Book Appointment", `?doctor=${d.slug}`, "accent")}${waBtn(d.whatsapp, "WhatsApp", waTemplateFor(d))}</div>
+  </div>
+</div></section>` : ""}
 <section class="section alt"><div class="container">
   ${sectionHead("Location", `Consult ${esc(d.name)} in Palakurthy`)}
   <div class="split">${addressBlock()}<div>${mapBlock()}</div></div>
@@ -815,6 +822,7 @@ function servicePage(s) {
   <div class="prose">
     <h2>About the department</h2>
     <p>${esc(s.description)}</p>
+    ${s.image ? `<figure class="inline-photo">${img(s.image, s.imageAlt || s.name, { sizes: "(min-width: 900px) 600px, 100vw", cls: "rounded" })}<figcaption>${esc(s.imageAlt || "")}</figcaption></figure>` : ""}
     ${s.nameTelugu ? `<p lang="te" class="te">${esc(s.nameTelugu)}</p>` : ""}
     <div class="btn-row">${bookBtn("Book Appointment", `?department=${s.slug}`)}${callBtn()}</div>
   </div>

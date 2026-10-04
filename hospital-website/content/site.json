@@ -106,7 +106,9 @@
         "Infant & child health",
         "Children's illnesses and check-ups"
       ],
-      "whatsapp": "6230533836"
+      "whatsapp": "6230533836",
+      "clinicPhoto": "consultation-room",
+      "clinicPhotoAlt": "Dr. M. Naresh in his consultation room at Eternal Multi Specialty Hospital"
     },
     {
       "slug": "dr-m-haritha",
@@ -145,7 +147,8 @@
         "Heart care & echocardiography",
         "Diagnosis and treatment of medical illnesses"
       ],
-      "whatsapp": "8919431360"
+      "whatsapp": "8919431360",
+      "clinicPhoto": null
     }
   ],
   "services": [
@@ -156,10 +159,12 @@
       "nameTelugu": "చిన్న పిల్లల విభాగం",
       "icon": "child",
       "summary": "Consultations for newborns, infants and children with our Children Specialist.",
-      "description": "The Pediatrics department at Eternal Multi Specialty Hospital, Palakurthy, is led by Dr. M. Naresh (M.B.B.S, DCH, MIAP), a Children Specialist. Parents can bring newborns, infants and children for consultation. Please call the hospital or book an appointment to confirm the doctor's availability.",
+      "description": "The Pediatrics department at Eternal Multi Specialty Hospital, Palakurthy, is led by Dr. M. Naresh (M.B.B.S, DCH, MIAP), a Children Specialist. Parents can bring newborns, infants and children for consultation. The hospital has a newborn care area with radiant warmers. Please call the hospital or book an appointment to confirm the doctor's availability.",
       "doctors": [
         "dr-m-naresh"
-      ]
+      ],
+      "image": "newborn-care-warmers",
+      "imageAlt": "Newborn care area with radiant warmers at Eternal Multi Specialty Hospital"
     },
     {
       "slug": "general-medicine",
@@ -197,8 +202,29 @@
       "enabled": true,
       "name": "Pharmacy on the premises",
       "icon": "pharmacy",
-      "description": "Lakshmi Eternal Pharmacy (లక్ష్మీ ఎటర్నల్ ఫార్మసీ) is located at the hospital entrance.",
-      "image": "hospital-frontage"
+      "description": "Lakshmi Eternal Pharmacy (లక్ష్మీ ఎటర్నల్ ఫార్మసీ) – a well-stocked medicine counter (మందుల షాపు) inside the hospital.",
+      "image": "pharmacy-shelves"
+    },
+    {
+      "enabled": true,
+      "name": "In-house Laboratory",
+      "icon": "lab",
+      "description": "An in-house laboratory with a blood analyser for diagnostic tests, so samples are processed within the hospital.",
+      "image": "laboratory"
+    },
+    {
+      "enabled": true,
+      "name": "Newborn Care",
+      "icon": "child",
+      "description": "A newborn care area equipped with radiant warmers and a patient monitor for babies.",
+      "image": "newborn-care-warmers"
+    },
+    {
+      "enabled": true,
+      "name": "Consultation Room",
+      "icon": "room",
+      "description": "A comfortable, child-friendly doctor's consultation room with an examination table.",
+      "image": "consultation-room"
     },
     {
       "enabled": true,
@@ -209,56 +235,61 @@
     },
     {
       "enabled": false,
-      "name": "Consultation rooms",
-      "icon": "room",
-      "description": "PLACEHOLDER: add details and a photo of the consultation rooms."
-    },
-    {
-      "enabled": false,
       "name": "In-patient / ward facilities",
       "icon": "bed",
       "description": "PLACEHOLDER: add number of beds, wards, etc. only if confirmed."
     },
     {
       "enabled": false,
-      "name": "Diagnostic facilities",
-      "icon": "lab",
-      "description": "PLACEHOLDER: add laboratory, ECG, X-ray, echo etc. only if confirmed."
+      "name": "Other diagnostics",
+      "icon": "heart",
+      "description": "PLACEHOLDER: add ECG, X-ray, echo etc. only if confirmed."
     }
   ],
   "gallery": [
     {
       "image": "hospital-exterior",
-      "width": 1080,
-      "height": 809,
       "alt": "Front view of Eternal Multi Specialty Hospital building on Jangaon Road, Palakurthy",
       "caption": "Hospital building, Jangaon Road, Palakurthy"
     },
     {
+      "image": "consultation-room",
+      "alt": "Dr. M. Naresh at his desk in the consultation room of Eternal Multi Specialty Hospital",
+      "caption": "Consultation room – Dr. M. Naresh"
+    },
+    {
+      "image": "newborn-care-warmers",
+      "alt": "Radiant warmers for newborn babies in the newborn care area",
+      "caption": "Newborn care area with radiant warmers"
+    },
+    {
+      "image": "laboratory",
+      "alt": "Laboratory technician working at the blood analyser in the hospital laboratory",
+      "caption": "In-house laboratory"
+    },
+    {
+      "image": "pharmacy-shelves",
+      "alt": "Well-stocked shelves of medicines in the hospital pharmacy",
+      "caption": "Pharmacy – medicine shelves"
+    },
+    {
       "image": "hospital-entrance-team",
-      "width": 1280,
-      "height": 960,
       "alt": "Hospital staff standing at the entrance of Eternal Multi Specialty Hospital",
       "caption": "Our team at the hospital entrance"
     },
     {
-      "image": "hospital-signboard",
-      "width": 880,
-      "height": 210,
-      "alt": "Eternal Multispeciality Hospital signboard showing Dr. M. Naresh and Dr. M. Haritha",
-      "caption": "Hospital signboard"
+      "image": "pharmacy-counter",
+      "alt": "Pharmacy counter (మందుల షాపు) inside the hospital",
+      "caption": "Pharmacy counter"
     },
     {
       "image": "hospital-frontage",
-      "width": 1280,
-      "height": 430,
       "alt": "Ground floor of the hospital with Lakshmi Eternal Pharmacy and the emergency department",
       "caption": "Pharmacy and emergency department entrance"
     }
   ],
   "galleryPlaceholders": [
     "Reception / waiting area",
-    "Consultation room",
     "Wards / patient rooms"
   ],
   "reviews": [],

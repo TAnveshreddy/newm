@@ -245,7 +245,8 @@ main:focus { outline: none; }
 
 /* speciality tiles */
 .spec-tiles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-@media (min-width: 760px) { .spec-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; } }
+@media (min-width: 760px) { .spec-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; } }
+@media (min-width: 1100px) { .spec-tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 .spec-tile { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 26px 12px 22px; height: 100%; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); text-decoration: none; color: var(--text); transition: box-shadow .2s, transform .2s, border-color .2s; }
 .spec-tile:hover { box-shadow: var(--shadow); transform: translateY(-3px); border-color: transparent; color: var(--text); }
 .spec-tile strong { color: var(--navy); font-weight: 600; line-height: 1.3; }
@@ -455,3 +456,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--navy-3); outline
 .card-grid > *, .doc-grid > *, .split > *, .profile-details > * { min-width: 0; }
 
 @media print { .site-header, .utility, .mobile-bar, .fab-wa, .cta-band, .map-wrap, form { display: none !important; } body { padding: 0; } }
+
+.inline-photo { margin: 1.2rem 0; }
+.inline-photo figcaption { font-size: .9rem; color: var(--muted); padding-top: 8px; }
+.clinic-photo .split-media img { width: 100%; max-height: 640px; object-fit: cover; object-position: center 40%; }
+.clinic-photo { position: relative; z-index: 0; }
