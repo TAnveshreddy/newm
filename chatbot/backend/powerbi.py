@@ -234,6 +234,14 @@ def strip_col_key(key: str) -> tuple[Optional[str], str]:
 # --------------------------------------------------------------------------- #
 #  Discover reports/datasets the user can see (for the dropdown)
 # --------------------------------------------------------------------------- #
+def list_workspace_names(client: PowerBIClient) -> list[str]:
+    """Workspace display names the connected identity can see (for diagnostics)."""
+    try:
+        return [w.get("name", "(unnamed)") for w in client.list_workspaces()]
+    except PowerBIError:
+        return []
+
+
 def discover_dashboards(client: PowerBIClient) -> list[dict]:
     """Return a flat, de-duplicated list of selectable dashboards:
        [{id(dataset), name, datasetId, groupId, groupName, reportName}].

@@ -57,12 +57,24 @@
     }
   }
 
-  function fillDashSelect(dashboards) {
+  function fillDashSelect(dashboards, workspaces) {
     state.dashboards = dashboards || [];
     state.datasets = state.dashboards;   // sidebar picker reuses this
     const sel = $("dash-select"); sel.innerHTML = "";
     if (!state.dashboards.length) {
-      $("connect-err").textContent = "No Power BI dashboards are available to this account.";
+      const ws = workspaces || [];
+      const err = $("connect-err");
+      let msg = "Connected to Power BI, but this app can't see any reports yet. ";
+      if (ws.length) {
+        msg += `It has access to ${ws.length} workspace(s) (${ws.join(", ")}) but none contain a dataset it can read. `;
+      } else {
+        msg += "It isn't a member of any workspace. ";
+      }
+      msg += "Fix: in Power BI, open the workspace that holds your reports → Manage access → "
+           + "add this app (PowerBI-Chatbot) as a Member. Reports in your personal “My workspace” "
+           + "are never visible to a service principal — move them into a workspace first.";
+      err.textContent = msg;
+      $("dash-picker").classList.add("hidden");
       return;
     }
     state.dashboards.forEach((d) => {
@@ -85,7 +97,7 @@
       state.session = body.session;
       if (body.user) $("user-name").textContent = body.user.name;
       btn.classList.add("hidden");
-      fillDashSelect(body.dashboards);
+      fillDashSelect(body.dashboards, body.workspaces);
     } catch (err) {
       $("connect-err").textContent = err.message;
       btn.disabled = false; btn.textContent = "Connect to Power BI";
@@ -98,7 +110,7 @@
       const { status, body } = await api("/api/workspaces");
       if (status !== 200 || body.ok === false) throw new Error(body.error || "Could not list dashboards.");
       if (body.user) $("user-name").textContent = body.user.name;
-      fillDashSelect(body.dashboards);
+      fillDashSelect(body.dashboards, body.workspaces);
     } catch (err) {
       $("connect-err").textContent = err.message;
     }
@@ -148,7 +160,7 @@
       state.authMode = "service";                       // switching uses live endpoints now
       if (body.user) $("user-name").textContent = body.user.name;
       $("cred-secret").value = "";                       // don't leave the secret in the field
-      fillDashSelect(body.dashboards);
+      fillDashSelect(body.dashboards, body.workspaces);
     } catch (err) {
       $("connect-err").textContent = err.message;
     } finally {

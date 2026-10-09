@@ -318,6 +318,7 @@ class Handler(BaseHTTPRequestHandler):
             ats.valid_token()   # acquire the app token now (surfaces bad creds here)
             client = pbi.PowerBIClient(ats.valid_token)
             dashboards = pbi.discover_dashboards(client)
+            workspaces = pbi.list_workspace_names(client)
         except pbi.PowerBIError as exc:
             return self._json({"ok": False, "error": str(exc)}, status=502)
         token = secrets.token_urlsafe(24)
@@ -329,6 +330,7 @@ class Handler(BaseHTTPRequestHandler):
         }
         cookie = f"pbsid={token}; Path=/; HttpOnly; SameSite=Lax"
         return self._json({"ok": True, "session": token, "dashboards": dashboards,
+                           "workspaces": workspaces, "mode": "service",
                            "user": {"name": "Power BI (service principal)"}}, set_cookie=cookie)
 
     # ---- service-principal connect (no user login) ----
@@ -344,6 +346,7 @@ class Handler(BaseHTTPRequestHandler):
             ats.valid_token()   # acquire now so credential errors surface here
             client = pbi.PowerBIClient(ats.valid_token)
             dashboards = pbi.discover_dashboards(client)
+            workspaces = pbi.list_workspace_names(client)
         except pbi.PowerBIError as exc:
             return self._json({"ok": False, "error": str(exc)}, status=502)
         token = secrets.token_urlsafe(24)
@@ -355,6 +358,7 @@ class Handler(BaseHTTPRequestHandler):
         }
         cookie = f"pbsid={token}; Path=/; HttpOnly; SameSite=Lax"
         return self._json({"ok": True, "session": token, "dashboards": dashboards,
+                           "workspaces": workspaces, "mode": "service",
                            "user": {"name": "Power BI (service principal)"}}, set_cookie=cookie)
 
     # ---- live Power BI Service endpoints ----
@@ -400,11 +404,12 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({"ok": False, "error": "Not signed in to Power BI."}, status=401)
         try:
             dashboards = pbi.discover_dashboards(sess["client"])
+            workspaces = pbi.list_workspace_names(sess["client"])
         except pbi.PowerBIError as exc:
             return self._json({"ok": False, "error": str(exc)}, status=502)
         sess["dashboards"] = dashboards
-        return self._json({"ok": True, "dashboards": dashboards,
-                           "user": {"name": sess["user"].name}})
+        return self._json({"ok": True, "dashboards": dashboards, "workspaces": workspaces,
+                           "mode": "live", "user": {"name": sess["user"].name}})
 
     def _select_live(self):
         sess = self._session()
