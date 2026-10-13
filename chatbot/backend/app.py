@@ -171,8 +171,27 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
-    # ---- routing ----
+    # ---- routing (wrappers guarantee a JSON reply even on an unexpected error,
+    #      so the browser never sees a bare "Failed to fetch") ----
     def do_GET(self):
+        try:
+            return self._route_get()
+        except Exception as exc:  # noqa: BLE001
+            return self._unhandled(exc)
+
+    def do_POST(self):
+        try:
+            return self._route_post()
+        except Exception as exc:  # noqa: BLE001
+            return self._unhandled(exc)
+
+    def _unhandled(self, exc):
+        if urlparse(self.path).path.startswith("/api/"):
+            return self._json({"ok": False, "error": f"Server error: {type(exc).__name__}: {exc}"},
+                              status=500)
+        self.send_error(500, "Server error")
+
+    def _route_get(self):
         route = urlparse(self.path).path
         if route == "/api/health":
             return self._json({"status": "ok", "datasets": REGISTRY.ids(), "mode": MODE})
@@ -190,7 +209,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._workspaces()
         return self._serve_static(route)
 
-    def do_POST(self):
+    def _route_post(self):
         route = urlparse(self.path).path
         if route == "/api/connect":
             return self._connect()
@@ -423,6 +442,17 @@ class Handler(BaseHTTPRequestHandler):
             model = pbi.LiveModel(sess["client"], dash["datasetId"], dash["groupId"], dash["name"])
         except pbi.PowerBIError as exc:
             return self._json({"ok": False, "error": f"Could not read the dataset model: {exc}"},
+                              status=502)
+        # Empty model => executeQueries isn't returning data. Surface the real reason.
+        if not model.measures and not model.meta.get("tables"):
+            reason = model.meta_error or ""
+            hint = ("Connected to the dataset, but could not read its tables/measures. This almost "
+                    "always means the dataset can't be queried via the REST API. Check: (1) Power BI "
+                    "Admin portal → Tenant settings → 'Dataset Execute Queries REST API' is "
+                    "Enabled; (2) the workspace is on Premium / PPU / Fabric capacity (a plain trial "
+                    "lists reports but can't query them — Start the Fabric trial and assign the "
+                    "workspace to it).")
+            return self._json({"ok": False, "error": hint + (f"  Power BI said: {reason}" if reason else "")},
                               status=502)
         sess["analyst"] = Analyst(model, executor=pbi.LiveExecutor(model, sess["client"]))
         sess["dashboard"] = dash

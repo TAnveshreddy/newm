@@ -312,6 +312,7 @@ class LiveModel(SemanticModel):
         self.profile = "live"
         self.data_dir = ""
         self._distinct_cache: dict[str, list] = {}
+        self.meta_error: Optional[str] = None   # first executeQueries error, if any
 
         measures_rows = self._safe(DAX_MEASURES)
         columns_rows = self._safe(DAX_COLUMNS)
@@ -331,7 +332,9 @@ class LiveModel(SemanticModel):
     def _safe(self, dax: str) -> list[dict]:
         try:
             return self.client.execute_dax(self.dataset_id, dax, self.group_id)
-        except PowerBIError:
+        except PowerBIError as exc:
+            if self.meta_error is None:   # remember the first real error to surface it
+                self.meta_error = str(exc)
             return []
 
     @staticmethod
@@ -472,11 +475,21 @@ class LiveExecutor:
         res = QueryResult()
         res.measures = intent.measures or [next(iter(self.model.measures), "")]
         res.dimension = intent.dimension
+        if not self.model.measures and not self.model.dimensions:
+            res.error = ("The connected dataset returned no tables/measures. "
+                         + (self.model.meta_error or
+                            "executeQueries is not returning data — check the 'Dataset Execute "
+                            "Queries REST API' tenant setting and that the workspace is on "
+                            "Premium/PPU/Fabric capacity."))
+            return res
         try:
             dax = generate_dax(self.model, intent)
             rows = self.client.execute_dax(self.model.dataset_id, dax, self.model.group_id)
         except PowerBIError as exc:
             res.error = f"Power BI query failed: {exc}"
+            return res
+        except Exception as exc:  # noqa: BLE001 - never crash the request handler
+            res.error = f"Query error: {type(exc).__name__}: {exc}"
             return res
         return map_rows_to_result(self.model, intent, rows, res)
 
